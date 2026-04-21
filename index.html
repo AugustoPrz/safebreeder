@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ParasiControl — Gestión HPG Bovinos</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap');
+:root{--bg:#0d1117;--surface:#161b24;--surface2:#1e2533;--border:#2a3347;--accent:#4ade80;--warn:#f59e0b;--danger:#ef4444;--info:#60a5fa;--text:#e2e8f0;--muted:#7c8fa6;--radius:12px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:18px 32px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100}
+.logo-icon{width:42px;height:42px;background:linear-gradient(135deg,var(--accent),#16a34a);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px}
+header h1{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:var(--text);letter-spacing:-.5px}
+header span{font-size:.75rem;color:var(--muted);font-weight:300;display:block;margin-top:1px}
+.header-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.nav{display:flex;gap:4px;background:var(--surface);border-bottom:1px solid var(--border);padding:0 32px;overflow-x:auto}
+.nav-tab{padding:12px 20px;cursor:pointer;color:var(--muted);font-weight:500;font-size:.9rem;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap}
+.nav-tab:hover{color:var(--text)}
+.nav-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+main{padding:28px 32px;max-width:1300px;margin:0 auto}
+.section{display:none}
+.section.active{display:block}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:20px}
+.card-title{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;color:var(--text);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.card-title .badge{font-family:'DM Sans',sans-serif;font-size:.7rem;font-weight:500;background:var(--surface2);color:var(--muted);padding:2px 8px;border-radius:20px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:900px){.grid-2{grid-template-columns:1fr}main{padding:20px 16px}header{padding:14px 16px}.nav{padding:0 16px}}
+label{display:block;font-size:.8rem;color:var(--muted);font-weight:500;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+input,select,textarea{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:.9rem;transition:border-color .2s;margin-bottom:14px}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
+select option{background:var(--surface2)}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:500;cursor:pointer;border:none;transition:all .2s;text-decoration:none}
+.btn-primary{background:linear-gradient(135deg,var(--accent),#16a34a);color:#0a1a0e;font-weight:600}
+.btn-primary:hover{opacity:.9;transform:translateY(-1px)}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+.btn-danger{background:transparent;border:1px solid #7f1d1d;color:var(--danger);font-size:.75rem;padding:6px 12px}
+.btn-danger:hover{background:#7f1d1d22}
+.btn-info{background:transparent;border:1px solid #1e3a5f;color:var(--info);font-size:.75rem;padding:6px 12px}
+.btn-info:hover{background:#1e3a5f44}
+.btn-sm{padding:6px 12px;font-size:.8rem}
+.btn-pdf{background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;font-weight:600}
+.btn-pdf:hover{opacity:.9}
+.estab-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.estab-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:20px;cursor:pointer;transition:all .2s;position:relative}
+.estab-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 8px 24px rgba(74,222,128,.1)}
+.estab-card.selected{border-color:var(--accent);background:#0d2e18}
+.estab-name{font-family:'Syne',sans-serif;font-weight:700;font-size:1.05rem;margin-bottom:6px}
+.estab-meta{font-size:.8rem;color:var(--muted);line-height:1.6}
+.estab-badge{position:absolute;top:12px;right:12px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-size:.72rem;color:var(--muted)}
+.lote-list{display:flex;flex-direction:column;gap:12px}
+.lote-item{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;transition:all .2s;flex-wrap:wrap;gap:10px}
+.lote-item:hover{border-color:var(--info)}
+.lote-item.selected{border-color:var(--info);background:#0d1a2e}
+.lote-name{font-weight:600;font-size:.95rem}
+.lote-meta{font-size:.78rem;color:var(--muted);margin-top:3px}
+.lote-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.hpg-table,.pesada-table{width:100%;border-collapse:collapse;font-size:.88rem}
+.hpg-table th,.pesada-table th{background:var(--surface2);padding:10px 14px;text-align:left;font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
+.hpg-table td,.pesada-table td{padding:8px 14px;border-bottom:1px solid #1a2235;vertical-align:middle}
+.hpg-table tr:hover td,.pesada-table tr:hover td{background:var(--surface2)}
+.hpg-input{width:90px;margin-bottom:0;padding:6px 10px;text-align:center}
+.nivel-badge{padding:4px 10px;border-radius:20px;font-size:.72rem;font-weight:600;letter-spacing:.3px}
+.nivel-0{background:#052e16;color:#4ade80;border:1px solid #166534}
+.nivel-1{background:#1c1917;color:#fbbf24;border:1px solid #713f12}
+.nivel-2{background:#450a0a;color:#f87171;border:1px solid #7f1d1d}
+.nivel-neg{background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;margin-bottom:20px}
+.stat-box{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center}
+.stat-val{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;line-height:1}
+.stat-label{font-size:.75rem;color:var(--muted);margin-top:4px}
+.stat-green .stat-val{color:var(--accent)}.stat-yellow .stat-val{color:var(--warn)}.stat-red .stat-val{color:var(--danger)}.stat-blue .stat-val{color:var(--info)}
+.chart-wrap{position:relative;width:100%;height:300px}
+.resumen-table{width:100%;border-collapse:collapse;font-size:.85rem}
+.resumen-table th{background:var(--surface2);padding:10px 14px;text-align:center;font-size:.72rem;color:var(--muted);text-transform:uppercase;border-bottom:1px solid var(--border)}
+.resumen-table td{padding:10px 14px;border-bottom:1px solid #1a2235;text-align:center}
+.resumen-table td:first-child{text-align:left;font-weight:600}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;width:90%;max-width:560px;max-height:90vh;overflow-y:auto;animation:fadeUp .2s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.modal-title{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;margin-bottom:20px}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:8px}
+.sep-line{height:1px;background:var(--border);margin:20px 0}
+.text-muted{color:var(--muted);font-size:.85rem}
+.mt-8{margin-top:8px}.mb-0{margin-bottom:0}
+.flex{display:flex;align-items:center;gap:12px}
+.flex-between{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.breadcrumb{display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--muted);margin-bottom:20px}
+.breadcrumb .sep{color:var(--border)}.breadcrumb .active{color:var(--text);font-weight:500}
+.breadcrumb span{cursor:pointer}.breadcrumb span:hover{color:var(--accent)}
+.empty{text-align:center;padding:48px 24px;color:var(--muted)}
+.empty .icon{font-size:3rem;margin-bottom:12px}
+.empty h3{font-family:'Syne',sans-serif;font-size:1rem;color:var(--text);margin-bottom:6px}
+.empty p{font-size:.85rem}
+.thresholds{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+.threshold-pill{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:.78rem;display:flex;align-items:center;gap:8px}
+.threshold-dot{width:8px;height:8px;border-radius:50%}
+.scroll-x{overflow-x:auto}
+.tabs-secondary{display:flex;gap:4px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:4px;margin-bottom:20px;width:fit-content}
+.tab-s{padding:7px 16px;border-radius:7px;cursor:pointer;font-size:.85rem;color:var(--muted);transition:all .2s;font-weight:500}
+.tab-s.active{background:var(--surface);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.tab-s:hover{color:var(--text)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:700px){.form-row,.form-row-3{grid-template-columns:1fr}}
+.toggle-group{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.toggle-btn{padding:7px 13px;border-radius:8px;cursor:pointer;font-size:.82rem;border:1px solid var(--border);background:transparent;color:var(--muted);transition:all .2s;font-family:'DM Sans',sans-serif}
+.toggle-btn:hover{border-color:var(--text);color:var(--text)}
+.toggle-btn.active-yes{border-color:var(--accent);background:#052e16;color:var(--accent)}
+.toggle-btn.active-no{border-color:#475569;background:#0f172a;color:#94a3b8}
+.toggle-btn.active-mod{border-color:var(--warn);background:#1c1306;color:var(--warn)}
+.toggle-btn.active-bad{border-color:var(--danger);background:#450a0a;color:#f87171}
+.gain-pos{color:var(--accent);font-weight:600}
+.gain-neg{color:var(--danger);font-weight:600}
+.sec-hdr{font-family:'Syne',sans-serif;font-size:.82rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;display:flex;align-items:center;gap:10px;margin-top:4px}
+.sec-hdr::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* ===== PRINT ===== */
+@media print{
+  body{background:#fff!important;color:#111!important;font-size:10.5pt}
+  header,.nav,.tabs-secondary,.thresholds,.lote-actions,.header-right,.no-print{display:none!important}
+  #sec-establecimientos,#sec-resumen{display:none!important}
+  #sec-carga{display:block!important}
+  #carga-panel,#carga-sin-seleccion{display:block!important}
+  #carga-sin-seleccion{display:none!important}
+  main{padding:0;max-width:100%}
+  .card{background:#fff!important;border:1px solid #ccc!important;border-radius:4px;break-inside:avoid;page-break-inside:avoid;margin-bottom:14px;padding:16px}
+  .card-title,.modal-title,.estab-name,.lote-name,.stat-val{color:#111!important}
+  label,.stat-label,.lote-meta,.text-muted,.estab-meta,.muted-print{color:#555!important}
+  input,select,textarea{background:#f8f8f8!important;border:1px solid #ccc!important;color:#111!important;padding:5px 8px!important;font-size:9.5pt!important}
+  .hpg-table th,.pesada-table th,.resumen-table th{background:#f0f0f0!important;color:#444!important}
+  .hpg-table td,.pesada-table td,.resumen-table td{color:#111!important;border-color:#ddd!important}
+  .stat-box{background:#f8f8f8!important;border-color:#ddd!important}
+  .nivel-0{background:#d1fae5!important;color:#065f46!important;border-color:#6ee7b7!important}
+  .nivel-1{background:#fef3c7!important;color:#92400e!important;border-color:#fbbf24!important}
+  .nivel-2{background:#fee2e2!important;color:#991b1b!important;border-color:#f87171!important}
+  .nivel-neg{background:#f3f4f6!important;color:#6b7280!important;border-color:#d1d5db!important}
+  .gain-pos{color:#065f46!important}.gain-neg{color:#991b1b!important}
+  #tabla-resumen-fila,#pesadas-resumen{background:#f0f0f0!important;color:#111!important}
+  .tab-content{display:block!important}
+  .grid-2{grid-template-columns:1fr 1fr}
+  .stats-row{grid-template-columns:repeat(4,1fr)}
+  .breadcrumb{color:#555!important}.breadcrumb .active{color:#111!important}
+  #pdf-cover{display:block!important}
+  .toggle-btn.active-no,.toggle-btn.active-mod,.toggle-btn.active-yes,.toggle-btn.active-bad{border:1px solid #999!important;background:#f0f0f0!important;color:#111!important}
+  @page{margin:1.4cm;size:A4}
+}
+#pdf-cover{display:none}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-icon">🔬</div>
+  <div>
+    <h1>ParasiControl</h1>
+    <span>Monitoreo HPG — Bovinos de Recría</span>
+  </div>
+  <div class="header-right">
+    <button class="btn btn-outline btn-sm no-print" onclick="exportarDatos()">⬇ Exportar datos</button>
+    <button class="btn btn-primary btn-sm no-print" onclick="abrirModalEstablecimiento()">+ Establecimiento</button>
+  </div>
+</header>
+
+<nav class="nav no-print">
+  <div class="nav-tab active" onclick="mostrarSeccion('sec-establecimientos',this)">🏡 Establecimientos</div>
+  <div class="nav-tab" onclick="mostrarSeccion('sec-carga',this)">📋 Carga de Datos</div>
+  <div class="nav-tab" onclick="mostrarSeccion('sec-resumen',this)">📊 Resumen & Gráficos</div>
+</nav>
+
+<main>
+
+<!-- ===== ESTABLECIMIENTOS ===== -->
+<div id="sec-establecimientos" class="section active">
+  <div class="flex-between" style="margin-bottom:20px">
+    <div>
+      <div style="font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:700">Establecimientos</div>
+      <div class="text-muted mt-8">Gestión de campos y lotes de recría</div>
+    </div>
+    <button class="btn btn-primary no-print" onclick="abrirModalEstablecimiento()">+ Nuevo establecimiento</button>
+  </div>
+  <div id="lista-establecimientos" class="estab-grid"></div>
+  <div class="sep-line"></div>
+  <div id="panel-lotes" style="display:none">
+    <div class="flex-between" style="margin-bottom:16px">
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:1rem;font-weight:700">Lotes de <span id="nombre-estab-sel" style="color:var(--accent)"></span></div>
+        <div class="text-muted">Rodeos / lotes de recría del establecimiento</div>
+      </div>
+      <button class="btn btn-outline no-print" onclick="abrirModalLote()">+ Nuevo lote</button>
+    </div>
+    <div id="lista-lotes" class="lote-list"></div>
+  </div>
+</div>
+
+<!-- ===== CARGA ===== -->
+<div id="sec-carga" class="section">
+
+  <!-- PDF COVER (solo print) -->
+  <div id="pdf-cover">
+    <div style="text-align:center;padding:16px 0 22px;border-bottom:2px solid #222;margin-bottom:22px">
+      <div style="font-size:18pt;font-weight:800" id="pdf-title">Informe Parasitológico</div>
+      <div style="font-size:10.5pt;color:#444;margin-top:4px" id="pdf-subtitle"></div>
+      <div style="font-size:9.5pt;color:#666;margin-top:2px" id="pdf-date"></div>
+    </div>
+  </div>
+
+  <div id="carga-sin-seleccion" class="card">
+    <div class="empty"><div class="icon">📋</div><h3>Seleccioná un lote</h3><p>Creá un establecimiento y un lote en "Establecimientos"</p></div>
+  </div>
+
+  <div id="carga-panel" style="display:none">
+    <div id="breadcrumb-carga" class="breadcrumb no-print"></div>
+    <div class="flex-between" style="margin-bottom:18px">
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700"><span id="carga-lote-nombre" style="color:var(--info)"></span></div>
+        <div class="text-muted">HPG · Tratamientos · Pesadas mensuales</div>
+      </div>
+      <button class="btn btn-pdf no-print" onclick="generarPDF()">🖨 Informe PDF</button>
+    </div>
+
+    <!-- Sub-tabs -->
+    <div class="tabs-secondary no-print">
+      <div class="tab-s active" onclick="showTab('tab-hpg',this)">🔬 HPG</div>
+      <div class="tab-s" onclick="showTab('tab-trat',this)">💊 Tratamiento</div>
+      <div class="tab-s" onclick="showTab('tab-pes',this)">⚖️ Pesadas</div>
+    </div>
+
+    <!-- Period selector -->
+    <div class="card no-print" style="padding:14px 20px;margin-bottom:16px">
+      <div class="flex" style="gap:14px;flex-wrap:wrap">
+        <div style="flex:1;min-width:130px">
+          <label>Mes</label>
+          <select id="sel-mes" onchange="cargarMes()" style="margin-bottom:0">
+            <option>Enero</option><option>Febrero</option><option>Marzo</option><option>Abril</option>
+            <option>Mayo</option><option>Junio</option><option>Julio</option><option>Agosto</option>
+            <option>Septiembre</option><option>Octubre</option><option>Noviembre</option><option>Diciembre</option>
+          </select>
+        </div>
+        <div style="flex:1;min-width:90px">
+          <label>Año</label>
+          <input type="number" id="sel-anio" value="2024" min="2020" max="2035" style="margin-bottom:0" onchange="cargarMes()">
+        </div>
+        <div style="flex:1;min-width:100px;display:flex;align-items:flex-end;padding-bottom:14px">
+          <button class="btn btn-primary" style="width:100%" onclick="guardarTodo()">💾 Guardar período</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB HPG -->
+    <div id="tab-hpg" class="tab-content">
+      <div class="thresholds no-print">
+        <div class="threshold-pill"><div class="threshold-dot" style="background:var(--accent)"></div><strong>Sin parasitosis</strong>: 0–150 HPG</div>
+        <div class="threshold-pill"><div class="threshold-dot" style="background:var(--warn)"></div><strong>Moderada</strong>: 150–500 HPG</div>
+        <div class="threshold-pill"><div class="threshold-dot" style="background:var(--danger)"></div><strong>Alta</strong>: &gt;500 HPG</div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="flex-between" style="padding:14px 20px;border-bottom:1px solid var(--border)">
+          <div class="card-title" style="margin:0">Muestras HPG <span class="badge" id="badge-hpg"></span></div>
+          <button class="btn btn-outline btn-sm no-print" onclick="agregarFilaHPG()">+ Agregar muestra</button>
+        </div>
+        <div class="scroll-x">
+          <table class="hpg-table">
+            <thead><tr><th>#</th><th>Caravana/ID</th><th>Peso (kg)</th><th>HPG</th><th>Nivel</th><th class="no-print"> </th></tr></thead>
+            <tbody id="tbody-hpg"></tbody>
+          </table>
+        </div>
+        <div id="resumen-hpg-bar" style="background:var(--surface2);border-top:2px solid var(--border);padding:12px 24px;display:flex;gap:28px;font-size:.84rem;flex-wrap:wrap">
+          <span>Muestras: <strong id="rn">0</strong></span>
+          <span>Promedio: <strong id="rprom" style="color:var(--accent)">—</strong></span>
+          <span>Máximo: <strong id="rmax" style="color:var(--danger)">—</strong></span>
+          <span>Positivos: <strong id="rpos">—</strong></span>
+        </div>
+      </div>
+      <div class="card" style="margin-top:0">
+        <label>Observaciones HPG</label>
+        <textarea id="obs-hpg" rows="2" placeholder="Ej: Post-desparasitación, animales con signos…" style="margin-bottom:0"></textarea>
+      </div>
+    </div>
+
+    <!-- TAB TRATAMIENTO -->
+    <div id="tab-trat" class="tab-content" style="display:none">
+      <div class="card">
+        <div class="card-title">💊 Tratamiento Antiparasitario</div>
+        <div class="form-row">
+          <div><label>Fecha del tratamiento</label><input type="date" id="t-fecha"></div>
+          <div>
+            <label>Droga / Principio activo</label>
+            <select id="t-droga">
+              <option value="">Sin tratamiento este período</option>
+              <option>Ivermectina</option><option>Doramectina</option><option>Abamectina</option>
+              <option>Moxidectina</option><option>Levamisol</option><option>Fenbendazol</option>
+              <option>Albendazol</option><option>Ricobendazol</option><option>Closantel</option>
+              <option>Combinado (especificar)</option><option>Otro</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div><label>Nombre comercial</label><input type="text" id="t-comercial" placeholder="Ej: Dectomax, Cydectin…"></div>
+          <div>
+            <label>Vía de administración</label>
+            <select id="t-via"><option>—</option><option>Subcutánea</option><option>Pour-on</option><option>Oral</option><option>Intramuscular</option><option>Endovenosa</option></select>
+          </div>
+        </div>
+        <div class="form-row-3">
+          <div><label>Dosis (ml o mg/kg)</label><input type="text" id="t-dosis" placeholder="Ej: 1 ml/50kg"></div>
+          <div><label>Peso prom. tropa (kg)</label><input type="number" id="t-peso" placeholder="Ej: 220" min="0"></div>
+          <div>
+            <label>Criterio de dosificación</label>
+            <select id="t-criterio"><option>El más pesado del lote</option><option>Peso individual</option><option>Peso promedio</option><option>El más pesado por categoría</option></select>
+          </div>
+        </div>
+        <div class="sep-line"></div>
+        <div class="sec-hdr">Estado sanitario general</div>
+        <div class="form-row">
+          <div>
+            <label>Estado corporal (1–5)</label>
+            <select id="t-ec"><option value="">—</option><option>1 — Muy flaco</option><option>2 — Flaco</option><option>3 — Moderado</option><option>4 — Bueno</option><option>5 — Gordo</option></select>
+          </div>
+          <div>
+            <label>Presencia de ectoparásitos</label>
+            <div class="toggle-group" id="tog-ecto">
+              <button class="toggle-btn" data-val="No" onclick="setTog('tog-ecto','No',this)">🟢 No</button>
+              <button class="toggle-btn" data-val="Leve" onclick="setTog('tog-ecto','Leve',this)">🟡 Leve</button>
+              <button class="toggle-btn" data-val="Moderada" onclick="setTog('tog-ecto','Moderada',this)">🟠 Moderada</button>
+              <button class="toggle-btn" data-val="Severa" onclick="setTog('tog-ecto','Severa',this)">🔴 Severa</button>
+            </div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div><label>Tipo de ectoparásito</label><input type="text" id="t-ecto-tipo" placeholder="Ej: garrapatas, sarna, piojos…"></div>
+          <div>
+            <label>Signos clínicos / Diarrea</label>
+            <div class="toggle-group" id="tog-diarrea">
+              <button class="toggle-btn" data-val="No" onclick="setTog('tog-diarrea','No',this)">🟢 No</button>
+              <button class="toggle-btn" data-val="Leve" onclick="setTog('tog-diarrea','Leve',this)">🟡 Leve</button>
+              <button class="toggle-btn" data-val="Severa" onclick="setTog('tog-diarrea','Severa',this)">🔴 Severa</button>
+            </div>
+          </div>
+        </div>
+        <div><label>Observaciones sanitarias</label><textarea id="t-obs" rows="2" placeholder="Hallazgos, muertes, consultas…" style="margin-bottom:0"></textarea></div>
+      </div>
+    </div>
+
+    <!-- TAB PESADAS -->
+    <div id="tab-pes" class="tab-content" style="display:none">
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="flex-between" style="padding:14px 20px;border-bottom:1px solid var(--border)">
+          <div class="card-title" style="margin:0">Pesadas Control <span class="badge" id="badge-pes"></span></div>
+          <button class="btn btn-outline btn-sm no-print" onclick="agregarFilaPes()">+ Agregar animal</button>
+        </div>
+        <div class="scroll-x">
+          <table class="pesada-table">
+            <thead><tr><th>#</th><th>Caravana/ID</th><th>Peso actual (kg)</th><th>Mes anterior</th><th>Ganancia total</th><th>GDP (kg/día)</th><th class="no-print"> </th></tr></thead>
+            <tbody id="tbody-pes"></tbody>
+          </table>
+        </div>
+        <div id="resumen-pes-bar" style="background:var(--surface2);border-top:2px solid var(--border);padding:12px 24px;display:flex;gap:28px;font-size:.84rem;flex-wrap:wrap">
+          <span>Animales: <strong id="pn">0</strong></span>
+          <span>Peso prom.: <strong id="pprom" style="color:var(--info)">—</strong></span>
+          <span>GDP prom.: <strong id="pgdp" style="color:var(--accent)">—</strong></span>
+        </div>
+      </div>
+      <div class="card" style="margin-top:0">
+        <label>Observaciones de pesada</label>
+        <textarea id="obs-pes" rows="2" placeholder="Ej: Animales en potrero X, condición del día…" style="margin-bottom:0"></textarea>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== RESUMEN ===== -->
+<div id="sec-resumen" class="section">
+  <div class="flex-between" style="margin-bottom:20px">
+    <div>
+      <div style="font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:700">Resumen & Análisis</div>
+      <div class="text-muted">Dashboard de carga parasitaria por establecimiento</div>
+    </div>
+    <select id="filtro-estab" onchange="actualizarResumen()" style="min-width:200px;margin-bottom:0">
+      <option value="">Todos los establecimientos</option>
+    </select>
+  </div>
+  <div id="res-vacio" class="card" style="display:none">
+    <div class="empty"><div class="icon">📊</div><h3>Sin datos</h3><p>Cargá muestras HPG para ver el análisis</p></div>
+  </div>
+  <div id="res-contenido">
+    <div class="stats-row" id="stats-glob"></div>
+    <div class="grid-2">
+      <div class="card"><div class="card-title">📊 HPG Promedio por Lote</div><div class="chart-wrap"><canvas id="ch-bar"></canvas></div></div>
+      <div class="card"><div class="card-title">🥧 Distribución Parasitaria</div><div class="chart-wrap"><canvas id="ch-torta"></canvas></div></div>
+    </div>
+    <div class="card"><div class="card-title">📈 Evolución Mensual</div><div class="chart-wrap" style="height:320px"><canvas id="ch-line"></canvas></div></div>
+    <div class="card"><div class="card-title">⚖️ Ganancia Diaria de Peso (GDP)</div><div class="chart-wrap"><canvas id="ch-gdp"></canvas></div></div>
+    <div class="card"><div class="card-title">📋 Tabla Resumen HPG</div><div class="scroll-x"><table class="resumen-table" id="t-resumen"><thead></thead><tbody></tbody></table></div></div>
+  </div>
+</div>
+
+</main>
+
+<!-- MODAL ESTABLECIMIENTO -->
+<div class="modal-overlay" id="modal-estab">
+  <div class="modal">
+    <div class="modal-title">🏡 Nuevo Establecimiento</div>
+    <label>Nombre *</label><input type="text" id="me-nombre" placeholder="Ej: El Triunfo">
+    <label>Propietario</label><input type="text" id="me-prop" placeholder="Nombre del propietario">
+    <div class="form-row">
+      <div><label>Partido / Localidad</label><input type="text" id="me-partido" placeholder="Ej: Tandil"></div>
+      <div><label>Provincia</label><input type="text" id="me-prov" value="Buenos Aires"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="cerrarModal('modal-estab')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarEstab()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL LOTE -->
+<div class="modal-overlay" id="modal-lote">
+  <div class="modal">
+    <div class="modal-title">🐄 Nuevo Lote de Recría</div>
+    <label>Nombre del lote *</label><input type="text" id="ml-nombre" placeholder="Ej: Rodeo 1, Recría Hembras…">
+    <div class="form-row">
+      <div>
+        <label>Categoría</label>
+        <select id="ml-cat">
+          <option>Recría machos</option><option>Recría hembras</option><option>Terneros destetados</option>
+          <option>Novillos</option><option>Vaquillonas</option><option>Otro</option>
+        </select>
+      </div>
+      <div><label>Cantidad de animales</label><input type="number" id="ml-cant" placeholder="Ej: 45" min="1"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="cerrarModal('modal-lote')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarLote()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== DB =====
+let db = JSON.parse(localStorage.getItem('pc_v3')||'null') || {e:[],l:[],h:{},t:{},p:{}};
+let ui = {estab:null,lote:null,tab:'tab-hpg'};
+let CH = {};
+function save(){ localStorage.setItem('pc_v3',JSON.stringify(db)); }
+
+// ===== UTILS =====
+function $(id){ return document.getElementById(id); }
+function getMes(){ return `${$('sel-mes').value}_${$('sel-anio').value}`; }
+function prevKey(key){
+  const M=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const [m,y]=key.split('_'); const i=M.indexOf(m);
+  return i===0?`Diciembre_${+y-1}`:`${M[i-1]}_${y}`;
+}
+
+// ===== NAV =====
+function mostrarSeccion(id,el){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  $(id).classList.add('active'); el.classList.add('active');
+  if(id==='sec-resumen') actualizarResumen();
+}
+function navTo(id){
+  const map={'sec-establecimientos':0,'sec-carga':1,'sec-resumen':2};
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  $(id).classList.add('active');
+  if(map[id]!==undefined) document.querySelectorAll('.nav-tab')[map[id]].classList.add('active');
+  if(id==='sec-resumen') actualizarResumen();
+}
+function showTab(id,el){
+  document.querySelectorAll('.tab-content').forEach(t=>t.style.display='none');
+  document.querySelectorAll('.tab-s').forEach(t=>t.classList.remove('active'));
+  $(id).style.display='block'; el.classList.add('active'); ui.tab=id; cargarMes();
+}
+
+// ===== MODAL =====
+function cerrarModal(id){ $(id).classList.remove('open'); }
+function abrirModalEstablecimiento(){
+  ['me-nombre','me-prop','me-partido'].forEach(id=>$(id).value='');
+  $('me-prov').value='Buenos Aires';
+  $('modal-estab').classList.add('open');
+}
+function abrirModalLote(){
+  if(!ui.estab){alert('Seleccioná un establecimiento.');return;}
+  $('ml-nombre').value=''; $('ml-cant').value='';
+  $('modal-lote').classList.add('open');
+}
+
+// ===== TOGGLE =====
+function setTog(gid,val,el){
+  document.getElementById(gid).querySelectorAll('.toggle-btn').forEach(b=>{
+    b.classList.remove('active-yes','active-no','active-mod','active-bad'); b.dataset.a='';
+  });
+  el.dataset.a='1';
+  if(val==='No') el.classList.add('active-no');
+  else if(val==='Severa') el.classList.add('active-bad');
+  else el.classList.add('active-mod');
+}
+function getTog(gid){ const a=document.getElementById(gid).querySelector('[data-a="1"]'); return a?a.dataset.val:''; }
+function loadTog(gid,val){
+  const btns=document.getElementById(gid).querySelectorAll('.toggle-btn');
+  btns.forEach(b=>{b.classList.remove('active-yes','active-no','active-mod','active-bad');b.dataset.a='';});
+  btns.forEach(b=>{
+    if(b.dataset.val===val){
+      b.dataset.a='1';
+      if(val==='No') b.classList.add('active-no');
+      else if(val==='Severa') b.classList.add('active-bad');
+      else b.classList.add('active-mod');
+    }
+  });
+}
+
+// ===== ESTABLECIMIENTOS =====
+function guardarEstab(){
+  const n=$('me-nombre').value.trim(); if(!n){alert('Ingresá el nombre.');return;}
+  db.e.push({id:Date.now()+'',nombre:n,propietario:$('me-prop').value.trim(),partido:$('me-partido').value.trim(),provincia:$('me-prov').value.trim()});
+  save(); cerrarModal('modal-estab'); renderEstabs();
+}
+function renderEstabs(){
+  const c=$('lista-establecimientos');
+  if(!db.e.length){c.innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="icon">🏡</div><h3>Sin establecimientos</h3><p>Creá tu primer establecimiento</p></div>`;return;}
+  c.innerHTML=db.e.map(e=>{
+    const n=db.l.filter(l=>l.eid===e.id).length; const s=ui.estab===e.id?'selected':'';
+    return`<div class="estab-card ${s}" onclick="selEstab('${e.id}')">
+      <div class="estab-badge">${n} lote${n!==1?'s':''}</div>
+      <div class="estab-name">${e.nombre}</div>
+      <div class="estab-meta">${e.propietario?`👤 ${e.propietario}<br>`:''} ${e.partido?`📍 ${e.partido}${e.provincia?', '+e.provincia:''}`:''}</div>
+      <div style="margin-top:10px"><button class="btn btn-danger btn-sm" onclick="event.stopPropagation();delEstab('${e.id}')">🗑 Eliminar</button></div>
+    </div>`;
+  }).join('');
+}
+function selEstab(id){
+  ui.estab=id; renderEstabs(); renderLotes();
+  $('panel-lotes').style.display='block';
+  $('nombre-estab-sel').textContent=db.e.find(e=>e.id===id)?.nombre||'';
+}
+function delEstab(id){
+  if(!confirm('¿Eliminar establecimiento y todos sus datos?'))return;
+  db.e=db.e.filter(e=>e.id!==id);
+  db.l.filter(l=>l.eid===id).forEach(l=>{delete db.h[l.id];delete db.t[l.id];delete db.p[l.id];});
+  db.l=db.l.filter(l=>l.eid!==id);
+  if(ui.estab===id){ui.estab=null;$('panel-lotes').style.display='none';}
+  save(); renderEstabs();
+}
+
+// ===== LOTES =====
+function guardarLote(){
+  const n=$('ml-nombre').value.trim(); if(!n){alert('Ingresá el nombre.');return;}
+  db.l.push({id:Date.now()+'',eid:ui.estab,nombre:n,cat:$('ml-cat').value,cant:parseInt($('ml-cant').value)||null});
+  save(); cerrarModal('modal-lote'); renderLotes();
+}
+function renderLotes(){
+  const c=$('lista-lotes'), lotes=db.l.filter(l=>l.eid===ui.estab);
+  if(!lotes.length){c.innerHTML=`<div class="empty"><div class="icon">🐄</div><h3>Sin lotes</h3><p>Agregá lotes con "Nuevo lote"</p></div>`;return;}
+  c.innerHTML=lotes.map(l=>{
+    const mh=Object.keys(db.h[l.id]||{}).length, mp=Object.keys(db.p[l.id]||{}).length;
+    const mt=Object.keys(db.t[l.id]||{}).filter(k=>db.t[l.id][k]?.droga).length;
+    const s=ui.lote===l.id?'selected':'';
+    return`<div class="lote-item ${s}">
+      <div onclick="irLote('${l.id}')" style="flex:1;cursor:pointer;min-width:180px">
+        <div class="lote-name">🐄 ${l.nombre}</div>
+        <div class="lote-meta">${l.cat} · ${l.cant?l.cant+' animales':'—'} · ${mh} mes${mh!==1?'es':''} HPG · ${mp} pesada${mp!==1?'s':''} · ${mt} trat.</div>
+      </div>
+      <div class="lote-actions">
+        <button class="btn btn-info btn-sm" onclick="pdfLote('${l.id}')">🖨 PDF</button>
+        <button class="btn btn-outline btn-sm" onclick="irLote('${l.id}')">📋 Cargar</button>
+        <button class="btn btn-danger btn-sm" onclick="delLote('${l.id}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function irLote(id){
+  ui.lote=id; renderLotes(); navTo('sec-carga'); iniciarPanel();
+}
+function delLote(id){
+  if(!confirm('¿Eliminar lote y todos sus datos?'))return;
+  db.l=db.l.filter(l=>l.id!==id);
+  delete db.h[id]; delete db.t[id]; delete db.p[id];
+  if(ui.lote===id) ui.lote=null;
+  save(); renderLotes();
+}
+
+// ===== PANEL PRINCIPAL =====
+function iniciarPanel(){
+  const lote=db.l.find(l=>l.id===ui.lote);
+  if(!lote){$('carga-sin-seleccion').style.display='block';$('carga-panel').style.display='none';return;}
+  const estab=db.e.find(e=>e.id===lote.eid);
+  $('carga-sin-seleccion').style.display='none';
+  $('carga-panel').style.display='block';
+  $('carga-lote-nombre').textContent=`${estab?.nombre||''} — ${lote.nombre}`;
+  $('breadcrumb-carga').innerHTML=`<span onclick="navTo('sec-establecimientos')">🏡 ${estab?.nombre||''}</span><span class="sep">›</span><span class="active">🐄 ${lote.nombre}</span>`;
+  const now=new Date();
+  const M=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  $('sel-mes').value=M[now.getMonth()]; $('sel-anio').value=now.getFullYear();
+  cargarMes();
+}
+
+function cargarMes(){
+  const key=getMes(), lid=ui.lote; if(!lid) return;
+  $('badge-hpg').textContent=key.replace('_',' ');
+  $('badge-pes').textContent=key.replace('_',' ');
+  // HPG
+  if(!db.h[lid]) db.h[lid]={};
+  const hd=db.h[lid][key]||{filas:[],obs:''};
+  $('obs-hpg').value=hd.obs||'';
+  renderHPG(hd.filas);
+  // Trat
+  if(!db.t[lid]) db.t[lid]={};
+  const td=db.t[lid][key]||{};
+  $('t-fecha').value=td.fecha||''; $('t-droga').value=td.droga||'';
+  $('t-comercial').value=td.comercial||''; $('t-via').value=td.via||'—';
+  $('t-dosis').value=td.dosis||''; $('t-peso').value=td.peso||'';
+  $('t-criterio').value=td.criterio||'El más pesado del lote';
+  $('t-ec').value=td.ec||'';
+  loadTog('tog-ecto',td.ecto||''); loadTog('tog-diarrea',td.diarrea||'');
+  $('t-ecto-tipo').value=td.ectoTipo||''; $('t-obs').value=td.obs||'';
+  // Pesadas
+  if(!db.p[lid]) db.p[lid]={};
+  const pd=db.p[lid][key]||{filas:[],obs:''};
+  $('obs-pes').value=pd.obs||'';
+  renderPes(pd.filas,key);
+}
+
+// ===== HPG =====
+function nC(h){ if(h===null||h===undefined||h==='')return'#7c8fa6'; const v=+h; if(isNaN(v))return'#7c8fa6'; if(v<=150)return'#4ade80'; if(v<=500)return'#f59e0b'; return'#ef4444'; }
+function nB(h){ if(h===null||h===undefined||h==='')return'<span class="nivel-badge nivel-neg">Sin dato</span>'; const v=+h; if(isNaN(v))return'<span class="nivel-badge nivel-neg">—</span>'; if(v===0)return'<span class="nivel-badge nivel-0">🟢 Negativo</span>'; if(v<=150)return'<span class="nivel-badge nivel-0">🟢 Bajo</span>'; if(v<=500)return'<span class="nivel-badge nivel-1">🟡 Moderado</span>'; return'<span class="nivel-badge nivel-2">🔴 Alto</span>'; }
+
+function renderHPG(filas){
+  const tb=$('tbody-hpg');
+  if(!filas.length){tb.innerHTML=`<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">Sin muestras. Clic en "+ Agregar muestra"</td></tr>`;resHPG([]);return;}
+  tb.innerHTML=filas.map((f,i)=>`<tr>
+    <td style="color:var(--muted)">${i+1}</td>
+    <td><input class="hpg-input" style="width:110px" type="text" value="${f.car||''}" placeholder="ID/N°" oninput="updH(${i},'car',this.value)"></td>
+    <td><input class="hpg-input" type="number" value="${f.p!=null?f.p:''}" placeholder="—" min="0" oninput="updH(${i},'p',this.value)"></td>
+    <td><input class="hpg-input" type="number" value="${f.h!=null?f.h:''}" placeholder="0" min="0" oninput="updH(${i},'h',this.value)" style="border-color:${nC(f.h)}44"></td>
+    <td>${nB(f.h)}</td>
+    <td class="no-print"><button class="btn btn-danger btn-sm" onclick="delH(${i})">✕</button></td>
+  </tr>`).join('');
+  resHPG(filas);
+}
+function updH(i,c,v){
+  const key=getMes(),lid=ui.lote;
+  if(!db.h[lid][key]) db.h[lid][key]={filas:[],obs:''};
+  const f=db.h[lid][key].filas[i];
+  f[c]=(c==='h'||c==='p')?(v===''?null:+v):v;
+  const trs=$('tbody-hpg').querySelectorAll('tr');
+  if(trs[i]){trs[i].cells[4].innerHTML=nB(f.h); const inp=trs[i].cells[3]?.querySelector('input'); if(inp)inp.style.borderColor=nC(f.h)+'44';}
+  resHPG(db.h[lid][key].filas);
+}
+function resHPG(filas){
+  const hs=filas.map(f=>f.h).filter(h=>h!=null&&!isNaN(h)).map(Number);
+  $('rn').textContent=filas.length;
+  $('rprom').textContent=hs.length?Math.round(hs.reduce((a,b)=>a+b,0)/hs.length):'—';
+  $('rmax').textContent=hs.length?Math.max(...hs):'—';
+  const pos=hs.filter(h=>h>0).length;
+  $('rpos').textContent=hs.length?`${pos}/${hs.length} (${Math.round(pos/hs.length*100)}%)`:'—';
+}
+function agregarFilaHPG(){
+  const key=getMes(),lid=ui.lote; if(!lid)return;
+  if(!db.h[lid]) db.h[lid]={}; if(!db.h[lid][key]) db.h[lid][key]={filas:[],obs:''};
+  db.h[lid][key].filas.push({car:'',p:null,h:null}); renderHPG(db.h[lid][key].filas);
+}
+function delH(i){
+  const key=getMes(),lid=ui.lote; db.h[lid][key].filas.splice(i,1); renderHPG(db.h[lid][key].filas);
+}
+
+// ===== PESADAS =====
+function renderPes(filas,key){
+  const lid=ui.lote; const pK=prevKey(key); const prevD=db.p[lid]?.[pK];
+  const tb=$('tbody-pes');
+  if(!filas.length){tb.innerHTML=`<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--muted)">Sin pesadas. Clic en "+ Agregar animal"</td></tr>`;resPes([],[]);return;}
+  const prevPesos=[];
+  tb.innerHTML=filas.map((f,i)=>{
+    const pf=prevD?.filas?.find(x=>x.car&&x.car===f.car);
+    const pp=pf?.p??null; prevPesos.push(pp);
+    const gt=f.p!=null&&pp!=null?(f.p-pp).toFixed(1):null;
+    const gdp=gt!=null?(+gt/30).toFixed(2):null;
+    const gc=gdp!=null?(+gdp>=0?'gain-pos':'gain-neg'):'';
+    return`<tr>
+      <td style="color:var(--muted)">${i+1}</td>
+      <td><input class="hpg-input" style="width:110px" type="text" value="${f.car||''}" placeholder="ID/N°" oninput="updP(${i},'car',this.value)"></td>
+      <td><input class="hpg-input" type="number" value="${f.p!=null?f.p:''}" placeholder="kg" min="0" oninput="updP(${i},'p',this.value)"></td>
+      <td style="color:var(--muted)">${pp!=null?pp+' kg':'—'}</td>
+      <td class="${gc}">${gt!=null?(+gt>=0?'+':'')+gt+' kg':'—'}</td>
+      <td class="${gc}">${gdp!=null?(+gdp>=0?'+':'')+gdp:'—'}</td>
+      <td class="no-print"><button class="btn btn-danger btn-sm" onclick="delP(${i})">✕</button></td>
+    </tr>`;
+  }).join('');
+  resPes(filas,prevPesos);
+}
+function resPes(filas,prevPesos){
+  const ps=filas.map(f=>f.p).filter(x=>x!=null&&!isNaN(x)).map(Number);
+  const gdps=filas.map((f,i)=>{ if(f.p==null||prevPesos[i]==null)return null; return(f.p-prevPesos[i])/30; }).filter(g=>g!=null);
+  $('pn').textContent=filas.length;
+  $('pprom').textContent=ps.length?Math.round(ps.reduce((a,b)=>a+b,0)/ps.length)+' kg':'—';
+  $('pgdp').textContent=gdps.length?(gdps.reduce((a,b)=>a+b,0)/gdps.length).toFixed(2)+' kg/día':'—';
+}
+function updP(i,c,v){
+  const key=getMes(),lid=ui.lote;
+  if(!db.p[lid][key]) db.p[lid][key]={filas:[],obs:''};
+  db.p[lid][key].filas[i][c]=c==='p'?(v===''?null:+v):v;
+  renderPes(db.p[lid][key].filas,key);
+}
+function agregarFilaPes(){
+  const key=getMes(),lid=ui.lote; if(!lid)return;
+  if(!db.p[lid]) db.p[lid]={}; if(!db.p[lid][key]) db.p[lid][key]={filas:[],obs:''};
+  db.p[lid][key].filas.push({car:'',p:null}); renderPes(db.p[lid][key].filas,key);
+}
+function delP(i){
+  const key=getMes(),lid=ui.lote; db.p[lid][key].filas.splice(i,1); renderPes(db.p[lid][key].filas,key);
+}
+
+// ===== GUARDAR =====
+function guardarTodo(){
+  const key=getMes(),lid=ui.lote; if(!lid)return;
+  if(!db.h[lid]) db.h[lid]={}; if(!db.h[lid][key]) db.h[lid][key]={filas:[],obs:''};
+  db.h[lid][key].obs=$('obs-hpg').value;
+  if(!db.t[lid]) db.t[lid]={};
+  db.t[lid][key]={fecha:$('t-fecha').value,droga:$('t-droga').value,comercial:$('t-comercial').value,via:$('t-via').value,dosis:$('t-dosis').value,peso:$('t-peso').value,criterio:$('t-criterio').value,ec:$('t-ec').value,ecto:getTog('tog-ecto'),diarrea:getTog('tog-diarrea'),ectoTipo:$('t-ecto-tipo').value,obs:$('t-obs').value};
+  if(!db.p[lid]) db.p[lid]={}; if(!db.p[lid][key]) db.p[lid][key]={filas:[],obs:''};
+  db.p[lid][key].obs=$('obs-pes').value;
+  save();
+  const btn=event.target; const orig=btn.textContent;
+  btn.textContent='✅ Guardado'; setTimeout(()=>btn.textContent=orig,1500);
+  renderLotes();
+}
+
+// ===== PDF =====
+function pdfLote(lid){
+  ui.lote=lid; navTo('sec-carga'); iniciarPanel(); setTimeout(generarPDF,300);
+}
+function generarPDF(){
+  const lote=db.l.find(l=>l.id===ui.lote);
+  const estab=lote?db.e.find(e=>e.id===lote.eid):null;
+  const key=getMes();
+  $('pdf-title').textContent=`Informe Parasitológico — ${lote?.nombre||''}`;
+  $('pdf-subtitle').textContent=`${estab?.nombre||''}${estab?.partido?', '+estab.partido:''}${estab?.provincia?', '+estab.provincia:''}${estab?.propietario?' | Prop.: '+estab.propietario:''}`;
+  $('pdf-date').textContent=`Período: ${key.replace('_',' ')} | Generado: ${new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'})}`;
+  document.querySelectorAll('.tab-content').forEach(t=>t.style.display='block');
+  window.print();
+  setTimeout(()=>{ document.querySelectorAll('.tab-content').forEach(t=>t.style.display='none'); $(ui.tab).style.display='block'; },600);
+}
+
+// ===== RESUMEN =====
+function actualizarResumen(){
+  const filtro=$('filtro-estab').value;
+  const sel=$('filtro-estab'); const cur=sel.value;
+  sel.innerHTML='<option value="">Todos los establecimientos</option>'+db.e.map(e=>`<option value="${e.id}" ${cur===e.id?'selected':''}>${e.nombre}</option>`).join('');
+
+  let lotes=db.l; if(filtro) lotes=lotes.filter(l=>l.eid===filtro);
+  let total=0;
+  lotes.forEach(l=>{ const m=db.h[l.id]||{}; Object.values(m).forEach(mes=>total+=(mes.filas||[]).filter(f=>f.h!=null).length); });
+
+  if(!total){$('res-vacio').style.display='block';$('res-contenido').style.display='none';return;}
+  $('res-vacio').style.display='none';$('res-contenido').style.display='block';
+
+  const MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const stats=lotes.map(l=>{
+    const md=db.h[l.id]||{}; let all=[]; const porMes={};
+    Object.entries(md).forEach(([k,d])=>{
+      const hs=(d.filas||[]).map(f=>f.h).filter(h=>h!=null&&!isNaN(h)).map(Number);
+      if(hs.length){porMes[k]=Math.round(hs.reduce((a,b)=>a+b,0)/hs.length); all=all.concat(hs);}
+    });
+    const prom=all.length?Math.round(all.reduce((a,b)=>a+b,0)/all.length):0;
+    const bajo=all.filter(h=>h<=150).length, mod=all.filter(h=>h>150&&h<=500).length, alto=all.filter(h=>h>500).length;
+    // GDP
+    const pd=db.p[l.id]||{}; let gdps=[];
+    Object.entries(pd).forEach(([k,d])=>{
+      const pk=prevKey(k); const pp=pd[pk];
+      if(!pp) return;
+      (d.filas||[]).forEach(f=>{
+        const pf=pp.filas?.find(x=>x.car&&x.car===f.car);
+        if(f.p!=null&&pf?.p!=null) gdps.push((f.p-pf.p)/30);
+      });
+    });
+    const gdpP=gdps.length?(gdps.reduce((a,b)=>a+b,0)/gdps.length).toFixed(2):null;
+    return{l,prom,bajo,mod,alto,total:all.length,porMes,gdpP};
+  }).filter(s=>s.total>0);
+
+  let tb=0,tm=0,ta=0; stats.forEach(s=>{tb+=s.bajo;tm+=s.mod;ta+=s.alto;});
+  const tt=tb+tm+ta;
+  $('stats-glob').innerHTML=`
+    <div class="stat-box stat-blue"><div class="stat-val">${stats.length}</div><div class="stat-label">Lotes</div></div>
+    <div class="stat-box stat-blue"><div class="stat-val">${tt}</div><div class="stat-label">Muestras</div></div>
+    <div class="stat-box stat-green"><div class="stat-val">${Math.round(tb/tt*100)||0}%</div><div class="stat-label">Sin/Baja parasit.</div></div>
+    <div class="stat-box stat-yellow"><div class="stat-val">${Math.round(tm/tt*100)||0}%</div><div class="stat-label">Moderada</div></div>
+    <div class="stat-box stat-red"><div class="stat-val">${Math.round(ta/tt*100)||0}%</div><div class="stat-label">Alta</div></div>`;
+
+  const COL=['#4ade80','#60a5fa','#f59e0b','#f472b6','#a78bfa','#34d399','#fb923c','#38bdf8'];
+  const co=id=>document.getElementById(id).getContext('2d');
+
+  if(CH.bar) CH.bar.destroy();
+  CH.bar=new Chart(co('ch-bar'),{type:'bar',data:{labels:stats.map(s=>s.l.nombre),datasets:[{label:'HPG Promedio',data:stats.map(s=>s.prom),backgroundColor:stats.map(s=>s.prom<=150?'#4ade8088':s.prom<=500?'#f59e0b88':'#ef444488'),borderColor:stats.map(s=>s.prom<=150?'#4ade80':s.prom<=500?'#f59e0b':'#ef4444'),borderWidth:2,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#7c8fa6'},grid:{color:'#2a334722'}},y:{ticks:{color:'#7c8fa6'},grid:{color:'#2a3347'},title:{display:true,text:'HPG',color:'#7c8fa6'}}}}});
+
+  if(CH.torta) CH.torta.destroy();
+  CH.torta=new Chart(co('ch-torta'),{type:'doughnut',data:{labels:['Sin/Baja (0–150)','Moderada (151–500)','Alta (>500)'],datasets:[{data:[tb,tm,ta],backgroundColor:['#4ade80cc','#f59e0bcc','#ef4444cc'],borderColor:['#4ade80','#f59e0b','#ef4444'],borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#7c8fa6',padding:16}}}}});
+
+  const anios=new Set(); stats.forEach(s=>Object.keys(s.porMes).forEach(k=>anios.add(k.split('_')[1])));
+  const anioA=[...anios].sort().pop()||''+new Date().getFullYear();
+  if(CH.line) CH.line.destroy();
+  CH.line=new Chart(co('ch-line'),{type:'line',data:{labels:MESES.map(m=>m.substring(0,3)),datasets:stats.map((s,i)=>({label:s.l.nombre,data:MESES.map(m=>{ const k=`${m}_${anioA}`; return s.porMes[k]??null; }),borderColor:COL[i%COL.length],backgroundColor:COL[i%COL.length]+'22',tension:.4,spanGaps:false,pointRadius:5,fill:false}))},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{color:'#7c8fa6'}}},scales:{x:{ticks:{color:'#7c8fa6'},grid:{color:'#2a334722'}},y:{ticks:{color:'#7c8fa6'},grid:{color:'#2a3347'}}}}});
+
+  const gd=stats.filter(s=>s.gdpP!=null);
+  if(CH.gdp) CH.gdp.destroy();
+  if(gd.length){
+    CH.gdp=new Chart(co('ch-gdp'),{type:'bar',data:{labels:gd.map(s=>s.l.nombre),datasets:[{label:'GDP kg/día',data:gd.map(s=>+s.gdpP),backgroundColor:gd.map(s=>+s.gdpP>=0?'#4ade8088':'#ef444488'),borderColor:gd.map(s=>+s.gdpP>=0?'#4ade80':'#ef4444'),borderWidth:2,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#7c8fa6'},grid:{color:'#2a334722'}},y:{ticks:{color:'#7c8fa6'},grid:{color:'#2a3347'},title:{display:true,text:'kg/día',color:'#7c8fa6'}}}}});
+  } else {
+    const ctx=co('ch-gdp'); ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
+    ctx.fillStyle='#7c8fa6'; ctx.font='14px DM Sans'; ctx.textAlign='center';
+    ctx.fillText('Sin datos de pesadas comparativas aún',ctx.canvas.width/2,ctx.canvas.height/2);
+  }
+
+  const tabla=$('t-resumen');
+  tabla.querySelector('thead').innerHTML=`<tr><th>Lote / Rodeo</th>${MESES.map(m=>`<th>${m.substring(0,3)}</th>`).join('')}<th>Prom.</th></tr>`;
+  tabla.querySelector('tbody').innerHTML=stats.map(s=>{
+    const cells=MESES.map(m=>{const k=`${m}_${anioA}`;const v=s.porMes[k];if(v===undefined)return'<td style="color:var(--muted)">—</td>';const c=v<=150?'var(--accent)':v<=500?'var(--warn)':'var(--danger)';return`<td style="color:${c};font-weight:600">${v}</td>`;});
+    const pc=s.prom<=150?'var(--accent)':s.prom<=500?'var(--warn)':'var(--danger)';
+    return`<tr><td>${s.l.nombre}<br><span style="font-size:.72rem;color:var(--muted)">${s.l.cat}</span></td>${cells.join('')}<td style="color:${pc};font-weight:700">${s.prom}</td></tr>`;
+  }).join('');
+}
+
+function exportarDatos(){
+  const b=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=`parasicontrol_${new Date().toISOString().slice(0,10)}.json`; a.click();
+}
+
+// ===== INIT =====
+function init(){
+  if(!db.e.length){
+    db.e.push({id:'e1',nombre:'La Esperanza',propietario:'Propietario Demo',partido:'Tandil',provincia:'Buenos Aires'});
+    db.l.push({id:'l1',eid:'e1',nombre:'Rodeo 1',cat:'Recría machos',cant:45},{id:'l2',eid:'e1',nombre:'Recría Hembras',cat:'Recría hembras',cant:38},{id:'l3',eid:'e1',nombre:'Terneros 2024',cat:'Terneros destetados',cant:60});
+    const M=['Abril','Mayo','Junio','Julio','Agosto','Septiembre'];
+    const HB={l1:[90,140,0,50,280,0],l2:[0,130,0,240,490,95],l3:[5,75,85,255,350,980]};
+    const PW={l1:[210,217,224,230,237,242],l2:[182,188,194,200,207,213],l3:[158,166,174,182,190,197]};
+    ['l1','l2','l3'].forEach(lid=>{
+      db.h[lid]={}; db.t[lid]={}; db.p[lid]={};
+      M.forEach((mes,mi)=>{
+        const base=HB[lid][mi];
+        db.h[lid][`${mes}_2024`]={filas:Array.from({length:6},(_,i)=>({car:(i+1)+'',p:148+Math.round(Math.random()*60),h:Math.max(0,base+Math.round((Math.random()-.5)*base*.5))})),obs:''};
+        db.p[lid][`${mes}_2024`]={filas:Array.from({length:6},(_,i)=>({car:(i+1)+'',p:PW[lid][mi]+Math.round(Math.random()*8-4)})),obs:''};
+        if(mi===2) db.t[lid][`${mes}_2024`]={fecha:`2024-0${mi+4}-15`,droga:'Ivermectina',comercial:'Ivomec',via:'Subcutánea',dosis:'1ml/50kg',peso:''+PW[lid][mi],criterio:'El más pesado del lote',ec:'3 — Moderado',ecto:'No',diarrea:'No',ectoTipo:'',obs:'Tratamiento preventivo estacional'};
+      });
+    });
+    save();
+  }
+  renderEstabs();
+  if(db.e.length) selEstab(db.e[0].id);
+  if(db.l.length){ ui.lote=db.l[0].id; iniciarPanel(); }
+}
+init();
+</script>
+</body>
+</html>
