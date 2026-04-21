@@ -1,0 +1,111 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #fafaf7;
+  --surface: #ffffff;
+  --surface-2: #f3f4ed;
+  --border: #e3e6dc;
+
+  --primary: #4d7c2a;
+  --primary-hover: #3e6622;
+  --primary-soft: #e7efd9;
+  --primary-soft-text: #365b1a;
+
+  --accent: #7a8450;
+  --sun: #c8a415;
+  --sun-soft: #fdf3c7;
+  --sun-soft-text: #946a0a;
+  --clay: #b5461f;
+  --clay-soft: #fadcce;
+  --clay-soft-text: #8a2f15;
+  --sky: #2f6690;
+  --sky-soft: #dbeaf5;
+
+  --text: #1f2518;
+  --text-muted: #6b6f5d;
+
+  --radius: 12px;
+  --shadow-sm: 0 1px 2px rgba(31, 37, 24, 0.05);
+  --shadow-md: 0 4px 12px rgba(31, 37, 24, 0.08);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-soft-text: var(--primary-soft-text);
+
+  --color-accent: var(--accent);
+  --color-sun: var(--sun);
+  --color-sun-soft: var(--sun-soft);
+  --color-sun-soft-text: var(--sun-soft-text);
+  --color-clay: var(--clay);
+  --color-clay-soft: var(--clay-soft);
+  --color-clay-soft-text: var(--clay-soft-text);
+  --color-sky: var(--sky);
+  --color-sky-soft: var(--sky-soft);
+
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+
+  --font-display: var(--font-syne);
+  --font-sans: var(--font-dm-sans);
+
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+body {
+  font-family: var(--font-dm-sans), system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-syne), system-ui, sans-serif;
+  letter-spacing: -0.01em;
+}
+
+input,
+select,
+textarea,
+button {
+  font-family: inherit;
+}
+
+/* scrollbar subtle */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 6px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+/* focus rings */
+*:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
