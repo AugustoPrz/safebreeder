@@ -94,7 +94,7 @@ export const t = {
     weight: "Peso (kg)",
     value: "HPG",
     level: "Nivel",
-    addRow: "Agregar fila",
+    addRow: "Agregar muestra",
     legend: "0-150 bajo · 150-500 moderado · >500 alto",
     low: "Bajo",
     moderate: "Moderado",

@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/Button";
 import { MonthYearSelector } from "@/components/MonthYearSelector";
-import { useLot, useEstablishment } from "@/hooks/useDb";
+import { useLot, useEstablishment, useLotCounts } from "@/hooks/useDb";
 import { useMonthKey } from "@/hooks/useMonthKey";
 import { useHydrated } from "@/hooks/useHydrated";
 import { t } from "@/lib/i18n";
@@ -24,7 +24,14 @@ export default function LotLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const lot = useLot(lotId);
   const est = useEstablishment(lot?.establishmentId);
+  const counts = useLotCounts(lotId);
   const [month, setMonth] = useMonthKey();
+
+  const tabCounts: Record<string, number> = {
+    hpg: counts.hpgMonths,
+    treatment: counts.treatments,
+    weights: counts.weightMonths,
+  };
 
   if (!hydrated) {
     return <div className="py-10 text-center text-text-muted">{t.common.loading}</div>;
@@ -101,22 +108,34 @@ export default function LotLayout({ children }: { children: ReactNode }) {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-border mb-5 overflow-x-auto">
-        <div className="flex gap-1 min-w-max">
+      <div className="border-b border-border mb-5">
+        <div className="flex gap-1 flex-wrap">
           {tabs.map((tab) => {
             const href = `/lots/${lotId}/${tab.segment}?m=${month}`;
             const active = activeSegment?.segment === tab.segment;
+            const count = tabCounts[tab.segment] ?? 0;
             return (
               <Link
                 key={tab.segment}
                 href={href}
-                className={`px-4 h-11 inline-flex items-center text-sm font-medium border-b-2 -mb-px transition-colors ${
+                className={`px-4 h-11 inline-flex items-center gap-1.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
                   active
                     ? "border-primary text-primary"
                     : "border-transparent text-text-muted hover:text-text"
                 }`}
               >
                 {tab.label}
+                {count > 0 ? (
+                  <span
+                    className={`text-xs px-1.5 min-w-[1.25rem] h-5 inline-flex items-center justify-center rounded-full tabular-nums ${
+                      active
+                        ? "bg-primary-soft text-primary-soft-text"
+                        : "bg-surface-2 text-text-muted"
+                    }`}
+                  >
+                    {count}
+                  </span>
+                ) : null}
               </Link>
             );
           })}
