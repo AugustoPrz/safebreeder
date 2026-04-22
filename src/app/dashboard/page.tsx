@@ -21,7 +21,7 @@ import {
   summarizeWeights,
 } from "@/lib/calc";
 import { t } from "@/lib/i18n";
-import type { HpgRecord, Lot } from "@/lib/types";
+import type { HpgRecord, Lot, WeightRecord } from "@/lib/types";
 
 export default function DashboardPage() {
   const establishments = useStore((s) => s.db.establishments);
@@ -313,6 +313,11 @@ export default function DashboardPage() {
     [lots, hpgByLot, activeYear],
   );
 
+  const gdpTableRows = useMemo(
+    () => buildGdpTableRows(lots, weightsByLot, activeYear),
+    [lots, weightsByLot, activeYear],
+  );
+
   if (establishments.length === 0) {
     return (
       <Card>
@@ -558,6 +563,107 @@ export default function DashboardPage() {
               </table>
             </div>
           </Card>
+
+          <Card>
+            <div className="px-5 py-3 border-b border-border flex items-center justify-between">
+              <h3 className="font-semibold">{t.dashboard.tableGdpTitle}</h3>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setTableYear(activeYear - 1)}
+                  aria-label="Año anterior"
+                  className="h-7 w-7 rounded-md hover:bg-surface-2 text-text-muted inline-flex items-center justify-center"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className="w-4 h-4"
+                  >
+                    <polyline points="15 18 9 12 15 6" />
+                  </svg>
+                </button>
+                <span className="text-sm font-medium min-w-[3rem] text-center tabular-nums">
+                  {activeYear}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setTableYear(activeYear + 1)}
+                  aria-label="Año siguiente"
+                  className="h-7 w-7 rounded-md hover:bg-surface-2 text-text-muted inline-flex items-center justify-center"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className="w-4 h-4"
+                  >
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-surface-2/60 text-text-muted text-xs uppercase">
+                  <tr>
+                    <th className="px-3 py-2.5 text-left sticky left-0 bg-surface-2/60">
+                      Lote
+                    </th>
+                    <th className="px-3 py-2.5 text-left">Categoría</th>
+                    {gdpTableRows.months.map((m) => (
+                      <th
+                        key={m.key}
+                        className="px-2 py-2.5 text-center whitespace-nowrap"
+                      >
+                        {m.label}
+                      </th>
+                    ))}
+                    <th className="px-3 py-2.5 text-center whitespace-nowrap border-l border-border">
+                      Prom
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {gdpTableRows.rows.map((row) => (
+                    <tr key={row.lotId} className="border-t border-border">
+                      <td className="px-3 py-2 font-medium sticky left-0 bg-surface">
+                        {row.lotName}
+                      </td>
+                      <td className="px-3 py-2 text-text-muted whitespace-nowrap">
+                        {row.category}
+                      </td>
+                      {gdpTableRows.months.map((m) => {
+                        const v = row.values[m.key];
+                        return (
+                          <td key={m.key} className="px-2 py-2 text-center">
+                            {v === null ? (
+                              <span className="text-text-muted">—</span>
+                            ) : (
+                              <span className={`font-medium ${gdpColor(v)}`}>
+                                {v.toFixed(2)}
+                              </span>
+                            )}
+                          </td>
+                        );
+                      })}
+                      <td className="px-3 py-2 text-center font-semibold border-l border-border">
+                        {row.average === null ? (
+                          <span className="text-text-muted">—</span>
+                        ) : (
+                          <span className={gdpColor(row.average)}>
+                            {row.average.toFixed(2)}
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
         </>
       )}
       </div>
@@ -638,6 +744,12 @@ function hpgColor(value: number): string {
   return "";
 }
 
+function gdpColor(value: number): string {
+  if (value > 0) return "text-primary";
+  if (value < 0) return "text-clay";
+  return "text-text-muted";
+}
+
 function buildTableRows(
   lots: Lot[],
   hpgByLot: Record<string, Record<string, HpgRecord>>,
@@ -672,6 +784,73 @@ function buildTableRows(
         : Math.round(
             monthlyAverages.reduce((s, v) => s + v, 0) / monthlyAverages.length,
           );
+    return {
+      lotId: lot.id,
+      lotName: lot.name,
+      category: t.lot.categories[lot.category],
+      values,
+      average,
+    };
+  });
+
+  return { months, rows };
+}
+
+function buildGdpTableRows(
+  lots: Lot[],
+  weightsByLot: Record<string, Record<string, WeightRecord>>,
+  year: number,
+) {
+  const months = Array.from({ length: 12 }, (_, i) => ({
+    key: `${year}-${String(i + 1).padStart(2, "0")}`,
+    label: t.months[i].slice(0, 3),
+  }));
+
+  const rows = lots.map((lot) => {
+    const lotMonths = weightsByLot[lot.id] ?? {};
+    const values: Record<string, number | null> = {};
+    const monthlyGdps: number[] = [];
+    for (const m of months) {
+      const current = lotMonths[m.key];
+      if (!current) {
+        values[m.key] = null;
+        continue;
+      }
+      const priorKeys = Object.keys(lotMonths)
+        .filter((k) => k < m.key)
+        .sort();
+      const prevKey = priorKeys[priorKeys.length - 1];
+      if (!prevKey) {
+        values[m.key] = null;
+        continue;
+      }
+      const prev = lotMonths[prevKey];
+      const perTag = summarizeWeights(current.rows, prev.rows);
+      let adg: number | null = perTag.avgAdg;
+      if (adg === null) {
+        const lastSum = summarizeWeights(current.rows);
+        const prevSum = summarizeWeights(prev.rows);
+        const days = monthsDiffDays(prevKey, m.key);
+        if (
+          lastSum.avgWeight !== null &&
+          prevSum.avgWeight !== null &&
+          days > 0
+        ) {
+          adg = (lastSum.avgWeight - prevSum.avgWeight) / days;
+        }
+      }
+      if (adg === null) {
+        values[m.key] = null;
+      } else {
+        const rounded = Number(adg.toFixed(3));
+        values[m.key] = rounded;
+        monthlyGdps.push(rounded);
+      }
+    }
+    const average =
+      monthlyGdps.length === 0
+        ? null
+        : monthlyGdps.reduce((s, v) => s + v, 0) / monthlyGdps.length;
     return {
       lotId: lot.id,
       lotName: lot.name,

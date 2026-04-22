@@ -164,6 +164,7 @@ export const t = {
     chartWeight: "Peso promedio por lote (kg)",
     chartTreatments: "Tratamientos por droga",
     tableTitle: "Resumen HPG mensual por lote",
+    tableGdpTitle: "Resumen GDP mensual por lote (kg/día)",
     noData: "Aún no hay datos para mostrar. Cargá HPG en algún lote para ver el panel.",
   },
 
