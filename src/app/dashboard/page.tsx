@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { Card, CardBody } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Field, Select } from "@/components/ui/Input";
@@ -31,120 +31,8 @@ export default function DashboardPage() {
   const treatmentsByLot = useStore((s) => s.db.treatments);
 
   const [filter, setFilter] = useState<string>("");
-  const [exporting, setExporting] = useState(false);
-  const captureRef = useRef<HTMLDivElement>(null);
-
-  const downloadPdf = async () => {
-    if (!captureRef.current) return;
-    setExporting(true);
-    const restores: Array<() => void> = [];
-    try {
-      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
-        import("html2canvas-pro"),
-        import("jspdf"),
-      ]);
-
-      const svgs = Array.from(
-        captureRef.current.querySelectorAll("svg"),
-      ) as SVGSVGElement[];
-      await Promise.all(
-        svgs.map(async (svg) => {
-          const rect = svg.getBoundingClientRect();
-          if (!rect.width || !rect.height) return;
-          const clone = svg.cloneNode(true) as SVGSVGElement;
-          clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-          clone.setAttribute("width", String(rect.width));
-          clone.setAttribute("height", String(rect.height));
-          const xml = new XMLSerializer().serializeToString(clone);
-          const dataUrl =
-            "data:image/svg+xml;charset=utf-8," + encodeURIComponent(xml);
-          const img = new Image();
-          img.src = dataUrl;
-          await new Promise<void>((resolve, reject) => {
-            img.onload = () => resolve();
-            img.onerror = () => reject(new Error("svg load"));
-          });
-          const canvas = document.createElement("canvas");
-          canvas.width = rect.width * 2;
-          canvas.height = rect.height * 2;
-          const ctx = canvas.getContext("2d");
-          if (!ctx) return;
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          const replacement = document.createElement("img");
-          replacement.style.width = `${rect.width}px`;
-          replacement.style.height = `${rect.height}px`;
-          replacement.style.display = "block";
-          await new Promise<void>((resolve, reject) => {
-            replacement.onload = () => resolve();
-            replacement.onerror = () => reject(new Error("img load"));
-            replacement.src = canvas.toDataURL("image/png");
-          });
-          const parent = svg.parentElement;
-          if (!parent) return;
-          const nextSibling = svg.nextSibling;
-          parent.insertBefore(replacement, svg);
-          parent.removeChild(svg);
-          restores.push(() => {
-            replacement.remove();
-            parent.insertBefore(svg, nextSibling);
-          });
-        }),
-      );
-
-      const canvas = await html2canvas(captureRef.current, {
-        scale: 2,
-        backgroundColor: "#ffffff",
-      });
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF({ unit: "pt", format: "a4" });
-      const pageW = pdf.internal.pageSize.getWidth();
-      const pageH = pdf.internal.pageSize.getHeight();
-      const margin = 24;
-      const imgW = pageW - margin * 2;
-      const imgH = (canvas.height * imgW) / canvas.width;
-      let y = margin;
-      let remaining = imgH;
-      const sliceH = pageH - margin * 2;
-      const srcRatio = canvas.height / imgH;
-      let srcY = 0;
-      while (remaining > 0) {
-        const currentH = Math.min(sliceH, remaining);
-        const sliceCanvas = document.createElement("canvas");
-        sliceCanvas.width = canvas.width;
-        sliceCanvas.height = currentH * srcRatio;
-        const ctx = sliceCanvas.getContext("2d")!;
-        ctx.drawImage(
-          canvas,
-          0,
-          srcY,
-          canvas.width,
-          sliceCanvas.height,
-          0,
-          0,
-          canvas.width,
-          sliceCanvas.height,
-        );
-        pdf.addImage(
-          sliceCanvas.toDataURL("image/png"),
-          "PNG",
-          margin,
-          y,
-          imgW,
-          currentH,
-        );
-        remaining -= currentH;
-        srcY += sliceCanvas.height;
-        if (remaining > 0) {
-          pdf.addPage();
-          y = margin;
-        }
-      }
-      const date = new Date().toISOString().slice(0, 10);
-      pdf.save(`safebreeder_estadisticas_${date}.pdf`);
-    } finally {
-      for (const r of restores) r();
-      setExporting(false);
-    }
+  const downloadPdf = () => {
+    window.print();
   };
 
   const lots = useMemo(
@@ -355,40 +243,27 @@ export default function DashboardPage() {
           <button
             type="button"
             onClick={downloadPdf}
-            disabled={exporting}
-            aria-label="Descargar PDF"
-            className="h-11 w-11 rounded-lg bg-surface-2 inline-flex items-center justify-center hover:bg-border shrink-0 disabled:opacity-50"
+            aria-label="Imprimir / Exportar PDF"
+            className="h-11 w-11 rounded-lg bg-surface-2 inline-flex items-center justify-center hover:bg-border shrink-0 no-print"
           >
-            {exporting ? (
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                className="w-5 h-5 animate-spin"
-              >
-                <path d="M21 12a9 9 0 1 1-6.2-8.55" />
-              </svg>
-            ) : (
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="w-5 h-5"
-              >
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
-              </svg>
-            )}
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="w-5 h-5"
+            >
+              <polyline points="6 9 6 2 18 2 18 9" />
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+              <rect x="6" y="14" width="12" height="8" />
+            </svg>
           </button>
         </div>
       </div>
 
-      <div ref={captureRef} className="space-y-6">
+      <div className="space-y-6 print-area">
 
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <Kpi label={t.dashboard.kpiLots} value={formatInt(metrics.lots)} />

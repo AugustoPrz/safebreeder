@@ -110,3 +110,38 @@ button {
   outline-offset: 2px;
   border-radius: 6px;
 }
+
+/* print: show only the print-area, strip chrome */
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+  html,
+  body {
+    background: #fff !important;
+  }
+  aside,
+  header,
+  nav,
+  .no-print {
+    display: none !important;
+  }
+  main {
+    padding: 0 !important;
+    max-width: none !important;
+    margin: 0 !important;
+  }
+  .print-area {
+    break-inside: auto;
+  }
+  .print-area > * {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  /* force colors to print */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
