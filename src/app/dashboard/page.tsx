@@ -37,11 +37,54 @@ export default function DashboardPage() {
   const downloadPdf = async () => {
     if (!captureRef.current) return;
     setExporting(true);
+    const restores: Array<() => void> = [];
     try {
       const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
         import("html2canvas-pro"),
         import("jspdf"),
       ]);
+
+      const svgs = Array.from(
+        captureRef.current.querySelectorAll("svg"),
+      ) as SVGSVGElement[];
+      await Promise.all(
+        svgs.map(async (svg) => {
+          const rect = svg.getBoundingClientRect();
+          if (!rect.width || !rect.height) return;
+          const clone = svg.cloneNode(true) as SVGSVGElement;
+          clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+          clone.setAttribute("width", String(rect.width));
+          clone.setAttribute("height", String(rect.height));
+          const xml = new XMLSerializer().serializeToString(clone);
+          const dataUrl =
+            "data:image/svg+xml;charset=utf-8," + encodeURIComponent(xml);
+          const img = new Image();
+          img.src = dataUrl;
+          await new Promise<void>((resolve, reject) => {
+            img.onload = () => resolve();
+            img.onerror = () => reject(new Error("svg load"));
+          });
+          const canvas = document.createElement("canvas");
+          canvas.width = rect.width * 2;
+          canvas.height = rect.height * 2;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) return;
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          const replacement = document.createElement("img");
+          replacement.src = canvas.toDataURL("image/png");
+          replacement.style.width = `${rect.width}px`;
+          replacement.style.height = `${rect.height}px`;
+          replacement.style.display = "block";
+          const originalDisplay = svg.style.display;
+          svg.style.display = "none";
+          svg.parentElement?.insertBefore(replacement, svg);
+          restores.push(() => {
+            replacement.remove();
+            svg.style.display = originalDisplay;
+          });
+        }),
+      );
+
       const canvas = await html2canvas(captureRef.current, {
         scale: 2,
         backgroundColor: "#ffffff",
@@ -93,6 +136,7 @@ export default function DashboardPage() {
       const date = new Date().toISOString().slice(0, 10);
       pdf.save(`safebreeder_estadisticas_${date}.pdf`);
     } finally {
+      for (const r of restores) r();
       setExporting(false);
     }
   };
