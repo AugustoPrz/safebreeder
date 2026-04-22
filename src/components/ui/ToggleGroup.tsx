@@ -1,8 +1,11 @@
 "use client";
 
+export type ToggleTone = "muted" | "primary" | "sun" | "clay";
+
 interface Option<T extends string> {
   value: T;
   label: string;
+  tone?: ToggleTone;
 }
 
 interface Props<T extends string> {
@@ -11,6 +14,13 @@ interface Props<T extends string> {
   onChange: (v: T) => void;
   className?: string;
 }
+
+const ACTIVE_TONE: Record<ToggleTone, string> = {
+  muted: "bg-surface text-text-muted shadow-sm",
+  primary: "bg-surface text-primary shadow-sm",
+  sun: "bg-surface text-sun-soft-text shadow-sm",
+  clay: "bg-surface text-clay shadow-sm",
+};
 
 export function ToggleGroup<T extends string>({
   value,
@@ -25,15 +35,14 @@ export function ToggleGroup<T extends string>({
     >
       {options.map((opt) => {
         const active = opt.value === value;
+        const activeClasses = ACTIVE_TONE[opt.tone ?? "primary"];
         return (
           <button
             key={opt.value}
             type="button"
             onClick={() => onChange(opt.value)}
             className={`px-3 h-9 rounded-md text-sm font-medium transition-colors ${
-              active
-                ? "bg-surface text-primary shadow-sm"
-                : "text-text-muted hover:text-text"
+              active ? activeClasses : "text-text-muted hover:text-text"
             }`}
           >
             {opt.label}

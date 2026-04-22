@@ -33,17 +33,25 @@ const emptyTreatment: Treatment = {
   notes: "",
 };
 
-const ectoOptions: { value: EctoLevel; label: string }[] = [
-  { value: "none", label: t.treatment.ectoLevels.none },
-  { value: "mild", label: t.treatment.ectoLevels.mild },
-  { value: "moderate", label: t.treatment.ectoLevels.moderate },
-  { value: "severe", label: t.treatment.ectoLevels.severe },
+const ectoOptions: {
+  value: EctoLevel;
+  label: string;
+  tone: "muted" | "primary" | "sun" | "clay";
+}[] = [
+  { value: "none", label: t.treatment.ectoLevels.none, tone: "muted" },
+  { value: "mild", label: t.treatment.ectoLevels.mild, tone: "primary" },
+  { value: "moderate", label: t.treatment.ectoLevels.moderate, tone: "sun" },
+  { value: "severe", label: t.treatment.ectoLevels.severe, tone: "clay" },
 ];
 
-const diarrheaOptions: { value: DiarrheaLevel; label: string }[] = [
-  { value: "none", label: t.treatment.diarrheaLevels.none },
-  { value: "mild", label: t.treatment.diarrheaLevels.mild },
-  { value: "severe", label: t.treatment.diarrheaLevels.severe },
+const diarrheaOptions: {
+  value: DiarrheaLevel;
+  label: string;
+  tone: "primary" | "sun" | "clay";
+}[] = [
+  { value: "none", label: t.treatment.diarrheaLevels.none, tone: "primary" },
+  { value: "mild", label: t.treatment.diarrheaLevels.mild, tone: "sun" },
+  { value: "severe", label: t.treatment.diarrheaLevels.severe, tone: "clay" },
 ];
 
 export function TreatmentForm({ lotId, monthKey }: Props) {
