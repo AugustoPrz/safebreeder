@@ -19,8 +19,20 @@ export default function EstablishmentDetailPage() {
   const est = useEstablishment(establishmentId);
   const lots = useLotsByEstablishment(establishmentId);
   const deleteLot = useStore((s) => s.deleteLot);
+  const hpgByLot = useStore((s) => s.db.hpg);
+  const weightsByLot = useStore((s) => s.db.weights);
+  const treatmentsByLot = useStore((s) => s.db.treatments);
   const router = useRouter();
   const [showCreate, setShowCreate] = useState(false);
+
+  const latestMonth = (lotId: string): string | null => {
+    const keys = new Set<string>();
+    for (const k of Object.keys(hpgByLot[lotId] ?? {})) keys.add(k);
+    for (const k of Object.keys(weightsByLot[lotId] ?? {})) keys.add(k);
+    for (const k of Object.keys(treatmentsByLot[lotId] ?? {})) keys.add(k);
+    if (keys.size === 0) return null;
+    return Array.from(keys).sort().pop() ?? null;
+  };
 
   if (!est) {
     return (
@@ -98,7 +110,12 @@ export default function EstablishmentDetailPage() {
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div>
                     <Link
-                      href={`/lots/${lot.id}/hpg`}
+                      href={(() => {
+                        const last = latestMonth(lot.id);
+                        return last
+                          ? `/lots/${lot.id}/hpg?m=${last}`
+                          : `/lots/${lot.id}/hpg`;
+                      })()}
                       className="font-semibold hover:text-primary transition-colors"
                     >
                       {lot.name}
