@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { useStore } from "@/lib/store";
 import { t } from "@/lib/i18n";
 
-export function DataMenu() {
+export function DataMenu({ openUp = false }: { openUp?: boolean } = {}) {
   const [open, setOpen] = useState(false);
   const [flash, setFlash] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -63,7 +63,11 @@ export function DataMenu() {
             onClick={() => setOpen(false)}
             aria-hidden
           />
-          <div className="absolute right-0 top-12 z-40 w-56 bg-surface border border-border rounded-xl shadow-md overflow-hidden">
+          <div
+            className={`absolute right-0 z-40 w-56 bg-surface border border-border rounded-xl shadow-md overflow-hidden ${
+              openUp ? "bottom-full mb-2" : "top-12"
+            }`}
+          >
             <button
               type="button"
               onClick={doExport}

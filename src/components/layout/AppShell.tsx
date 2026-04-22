@@ -89,7 +89,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         <div className="p-2 border-t border-border flex items-center gap-1">
           <UserMenu />
-          <DataMenu />
+          <DataMenu openUp />
         </div>
       </aside>
 
