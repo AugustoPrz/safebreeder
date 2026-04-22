@@ -5,8 +5,8 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  LabelList,
   ResponsiveContainer,
-  Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
@@ -34,19 +34,15 @@ export function HpgByLotBar({ data }: Props) {
           stroke="#e3e6dc"
         />
         <YAxis tick={{ fontSize: 11, fill: "#6b6f5d" }} stroke="#e3e6dc" />
-        <Tooltip
-          contentStyle={{
-            background: "#fff",
-            border: "1px solid #e3e6dc",
-            borderRadius: 8,
-            fontSize: 12,
-          }}
-          cursor={{ fill: "rgba(77,124,42,0.06)" }}
-        />
-        <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+        <Bar dataKey="value" name="HPG promedio" radius={[6, 6, 0, 0]}>
           {data.map((d, i) => (
             <Cell key={i} fill={COLORS[classifyHpg(d.value)]} />
           ))}
+          <LabelList
+            dataKey="value"
+            position="top"
+            style={{ fontSize: 11, fill: "#1f2518", fontWeight: 600 }}
+          />
         </Bar>
       </BarChart>
     </ResponsiveContainer>

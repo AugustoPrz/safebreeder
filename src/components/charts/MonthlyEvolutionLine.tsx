@@ -2,11 +2,11 @@
 
 import {
   CartesianGrid,
+  LabelList,
   Line,
   LineChart,
   Legend,
   ResponsiveContainer,
-  Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
@@ -37,14 +37,6 @@ export function MonthlyEvolutionLine({ rows, lots }: Props) {
           stroke="#e3e6dc"
         />
         <YAxis tick={{ fontSize: 11, fill: "#6b6f5d" }} stroke="#e3e6dc" />
-        <Tooltip
-          contentStyle={{
-            background: "#fff",
-            border: "1px solid #e3e6dc",
-            borderRadius: 8,
-            fontSize: 12,
-          }}
-        />
         <Legend
           iconType="line"
           formatter={(v) => <span style={{ color: "#1f2518" }}>{v}</span>}
@@ -59,7 +51,17 @@ export function MonthlyEvolutionLine({ rows, lots }: Props) {
             strokeWidth={2}
             dot={{ r: 3 }}
             connectNulls
-          />
+          >
+            <LabelList
+              dataKey={lot.id}
+              position="top"
+              style={{
+                fontSize: 10,
+                fill: PALETTE[i % PALETTE.length],
+                fontWeight: 600,
+              }}
+            />
+          </Line>
         ))}
       </LineChart>
     </ResponsiveContainer>

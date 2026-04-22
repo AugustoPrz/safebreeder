@@ -5,8 +5,8 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  LabelList,
   ResponsiveContainer,
-  Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
@@ -26,19 +26,15 @@ export function AdgBar({ data }: Props) {
           stroke="#e3e6dc"
         />
         <YAxis tick={{ fontSize: 11, fill: "#6b6f5d" }} stroke="#e3e6dc" />
-        <Tooltip
-          contentStyle={{
-            background: "#fff",
-            border: "1px solid #e3e6dc",
-            borderRadius: 8,
-            fontSize: 12,
-          }}
-          cursor={{ fill: "rgba(77,124,42,0.06)" }}
-        />
-        <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+        <Bar dataKey="value" name="GDP (kg/día)" radius={[6, 6, 0, 0]}>
           {data.map((d, i) => (
             <Cell key={i} fill={d.value >= 0 ? "#4d7c2a" : "#b5461f"} />
           ))}
+          <LabelList
+            dataKey="value"
+            position="top"
+            style={{ fontSize: 11, fill: "#1f2518", fontWeight: 600 }}
+          />
         </Bar>
       </BarChart>
     </ResponsiveContainer>

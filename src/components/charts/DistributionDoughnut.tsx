@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  Cell,
-  Legend,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-} from "recharts";
+import { Cell, Legend, Pie, PieChart, ResponsiveContainer } from "recharts";
 import { t } from "@/lib/i18n";
 
 interface Props {
@@ -34,19 +27,13 @@ export function DistributionDoughnut({ low, moderate, high }: Props) {
           innerRadius={50}
           outerRadius={85}
           paddingAngle={2}
+          label={({ name, value }) => `${name}: ${value}`}
+          labelLine={{ stroke: "#b8bfa8", strokeWidth: 1 }}
         >
           {data.map((d, i) => (
             <Cell key={i} fill={d.color} stroke="none" />
           ))}
         </Pie>
-        <Tooltip
-          contentStyle={{
-            background: "#fff",
-            border: "1px solid #e3e6dc",
-            borderRadius: 8,
-            fontSize: 12,
-          }}
-        />
         <Legend
           iconType="circle"
           formatter={(v) => <span style={{ color: "#1f2518" }}>{v}</span>}
