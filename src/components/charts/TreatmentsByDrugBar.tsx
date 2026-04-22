@@ -50,7 +50,9 @@ export function TreatmentsByDrugBar({ data }: Props) {
           <LabelList
             dataKey="value"
             position="right"
-            style={{ fontSize: 11, fill: "#1f2518", fontWeight: 600 }}
+            fill="#1f2518"
+            fontSize={11}
+            fontWeight={600}
           />
         </Bar>
       </BarChart>

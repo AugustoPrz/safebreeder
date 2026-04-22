@@ -55,11 +55,9 @@ export function MonthlyEvolutionLine({ rows, lots }: Props) {
             <LabelList
               dataKey={lot.id}
               position="top"
-              style={{
-                fontSize: 10,
-                fill: PALETTE[i % PALETTE.length],
-                fontWeight: 600,
-              }}
+              fill={PALETTE[i % PALETTE.length]}
+              fontSize={10}
+              fontWeight={600}
             />
           </Line>
         ))}

@@ -29,9 +29,10 @@ function renderPercentLabel(props: {
       x={x}
       y={y}
       fill={fill}
+      fontSize={12}
+      fontWeight={600}
       textAnchor={x > cx ? "start" : "end"}
       dominantBaseline="central"
-      style={{ fontSize: 12, fontWeight: 600 }}
     >
       {`${Math.round(percent * 100)}%`}
     </text>

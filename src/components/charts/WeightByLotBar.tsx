@@ -30,7 +30,9 @@ export function WeightByLotBar({ data }: Props) {
             dataKey="value"
             position="top"
             formatter={((v: unknown) => `${v} kg`) as never}
-            style={{ fontSize: 11, fill: "#1f2518", fontWeight: 600 }}
+            fill="#1f2518"
+            fontSize={11}
+            fontWeight={600}
           />
         </Bar>
       </BarChart>
