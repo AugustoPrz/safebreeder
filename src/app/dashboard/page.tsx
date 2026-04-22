@@ -71,10 +71,14 @@ export default function DashboardPage() {
           if (!ctx) return;
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
           const replacement = document.createElement("img");
-          replacement.src = canvas.toDataURL("image/png");
           replacement.style.width = `${rect.width}px`;
           replacement.style.height = `${rect.height}px`;
           replacement.style.display = "block";
+          await new Promise<void>((resolve, reject) => {
+            replacement.onload = () => resolve();
+            replacement.onerror = () => reject(new Error("img load"));
+            replacement.src = canvas.toDataURL("image/png");
+          });
           const originalDisplay = svg.style.display;
           svg.style.display = "none";
           svg.parentElement?.insertBefore(replacement, svg);
@@ -88,6 +92,7 @@ export default function DashboardPage() {
       const canvas = await html2canvas(captureRef.current, {
         scale: 2,
         backgroundColor: "#ffffff",
+        ignoreElements: (el) => el instanceof SVGSVGElement,
       });
       const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF({ unit: "pt", format: "a4" });
