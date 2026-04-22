@@ -12,6 +12,11 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Safebreeder",
   description: "Gestión sanitaria y productiva del ganado",
+  openGraph: {
+    title: "Safebreeder",
+    description: "Gestión sanitaria y productiva del ganado",
+    type: "website",
+  },
 };
 
 export default function RootLayout({

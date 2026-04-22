@@ -6,8 +6,9 @@ import { ReactNode } from "react";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/Button";
-import { MonthYearSelector } from "@/components/MonthYearSelector";
+import { MonthPicker, type MonthData } from "@/components/MonthPicker";
 import { useLot, useEstablishment, useLotCounts } from "@/hooks/useDb";
+import { useStore } from "@/lib/store";
 import { useMonthKey } from "@/hooks/useMonthKey";
 import { useHydrated } from "@/hooks/useHydrated";
 import { t } from "@/lib/i18n";
@@ -25,7 +26,21 @@ export default function LotLayout({ children }: { children: ReactNode }) {
   const lot = useLot(lotId);
   const est = useEstablishment(lot?.establishmentId);
   const counts = useLotCounts(lotId);
+  const hpgMonths = useStore((s) => s.db.hpg[lotId]);
+  const treatmentMonths = useStore((s) => s.db.treatments[lotId]);
+  const weightMonths = useStore((s) => s.db.weights[lotId]);
   const [month, setMonth] = useMonthKey();
+
+  const dataByMonth: Record<string, MonthData> = {};
+  const seed = (key: string) => {
+    if (!dataByMonth[key]) {
+      dataByMonth[key] = { hpg: false, treatment: false, weights: false };
+    }
+    return dataByMonth[key];
+  };
+  for (const key of Object.keys(hpgMonths ?? {})) seed(key).hpg = true;
+  for (const key of Object.keys(treatmentMonths ?? {})) seed(key).treatment = true;
+  for (const key of Object.keys(weightMonths ?? {})) seed(key).weights = true;
 
   const tabCounts: Record<string, number> = {
     hpg: counts.hpgMonths,
@@ -84,7 +99,11 @@ export default function LotLayout({ children }: { children: ReactNode }) {
           </div>
         </div>
         <div className="flex items-end gap-2 w-full sm:w-auto">
-          <MonthYearSelector value={month} onChange={setMonth} />
+          <MonthPicker
+            value={month}
+            onChange={setMonth}
+            dataByMonth={dataByMonth}
+          />
           <Link
             href={`/lots/${lotId}/report?m=${month}`}
             aria-label={t.report.download}
