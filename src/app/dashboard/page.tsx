@@ -8,6 +8,8 @@ import { HpgByLotBar } from "@/components/charts/HpgByLotBar";
 import { DistributionDoughnut } from "@/components/charts/DistributionDoughnut";
 import { MonthlyEvolutionLine } from "@/components/charts/MonthlyEvolutionLine";
 import { AdgBar } from "@/components/charts/AdgBar";
+import { WeightByLotBar } from "@/components/charts/WeightByLotBar";
+import { TreatmentsByDrugBar } from "@/components/charts/TreatmentsByDrugBar";
 import { useStore } from "@/lib/store";
 import {
   averageHpg,
@@ -26,6 +28,7 @@ export default function DashboardPage() {
   const allLots = useStore((s) => s.db.lots);
   const hpgByLot = useStore((s) => s.db.hpg);
   const weightsByLot = useStore((s) => s.db.weights);
+  const treatmentsByLot = useStore((s) => s.db.treatments);
 
   const [filter, setFilter] = useState<string>("");
   const [exporting, setExporting] = useState(false);
@@ -194,6 +197,37 @@ export default function DashboardPage() {
       .filter((x): x is { name: string; value: number } => x !== null);
   }, [lots, weightsByLot]);
 
+  const weightData = useMemo(() => {
+    return lots
+      .map((lot) => {
+        const months = weightsByLot[lot.id];
+        if (!months) return null;
+        const keys = Object.keys(months).sort();
+        if (keys.length === 0) return null;
+        const lastKey = keys[keys.length - 1];
+        const summary = summarizeWeights(months[lastKey].rows);
+        if (summary.avgWeight === null) return null;
+        return { name: lot.name, value: Math.round(summary.avgWeight) };
+      })
+      .filter((x): x is { name: string; value: number } => x !== null);
+  }, [lots, weightsByLot]);
+
+  const treatmentsData = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const lot of lots) {
+      const months = treatmentsByLot[lot.id];
+      if (!months) continue;
+      for (const rec of Object.values(months)) {
+        const drug = rec.drug?.trim();
+        if (!drug) continue;
+        counts.set(drug, (counts.get(drug) ?? 0) + 1);
+      }
+    }
+    return Array.from(counts, ([name, value]) => ({ name, value })).sort(
+      (a, b) => b.value - a.value,
+    );
+  }, [lots, treatmentsByLot]);
+
   const [tableYear, setTableYear] = useState<number | null>(null);
 
   const defaultTableYear = useMemo(() => {
@@ -338,8 +372,29 @@ export default function DashboardPage() {
             <MonthlyEvolutionLine rows={evolution.rows} lots={evolution.lots} />
           </ChartCard>
 
-          <ChartCard title={t.dashboard.chartAdg}>
-            <AdgBar data={adgData} />
+          <div className="grid gap-4 lg:grid-cols-2">
+            <ChartCard title={t.dashboard.chartWeight}>
+              {weightData.length === 0 ? (
+                <EmptyMini text="Sin pesadas cargadas" />
+              ) : (
+                <WeightByLotBar data={weightData} />
+              )}
+            </ChartCard>
+            <ChartCard title={t.dashboard.chartAdg}>
+              {adgData.length === 0 ? (
+                <EmptyMini text="Se necesitan al menos 2 pesadas mensuales" />
+              ) : (
+                <AdgBar data={adgData} />
+              )}
+            </ChartCard>
+          </div>
+
+          <ChartCard title={t.dashboard.chartTreatments}>
+            {treatmentsData.length === 0 ? (
+              <EmptyMini text="Sin tratamientos cargados" />
+            ) : (
+              <TreatmentsByDrugBar data={treatmentsData} />
+            )}
           </ChartCard>
 
           <Card>
@@ -472,6 +527,14 @@ function Kpi({
         {label}
       </div>
       <div className={`text-2xl font-semibold mt-0.5 ${color}`}>{value}</div>
+    </div>
+  );
+}
+
+function EmptyMini({ text }: { text: string }) {
+  return (
+    <div className="w-full h-full flex items-center justify-center text-xs text-text-muted">
+      {text}
     </div>
   );
 }

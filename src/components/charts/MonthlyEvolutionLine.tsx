@@ -29,7 +29,7 @@ interface Props {
 export function MonthlyEvolutionLine({ rows, lots }: Props) {
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <LineChart data={rows} margin={{ top: 8, right: 12, left: 0, bottom: 8 }}>
+      <LineChart data={rows} margin={{ top: 24, right: 12, left: 0, bottom: 8 }}>
         <CartesianGrid stroke="#e3e6dc" strokeDasharray="3 3" vertical={false} />
         <XAxis
           dataKey="label"
