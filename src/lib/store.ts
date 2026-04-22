@@ -10,6 +10,7 @@ import type {
   Lot,
   MonthKey,
   Treatment,
+  UserProfile,
   WeightRecord,
   WeightRow,
 } from "./types";
@@ -22,8 +23,11 @@ interface StoreState {
   db: DB;
   hydrated: boolean;
   migrationSource: MigrationSource;
+  profile: UserProfile | null;
 
   setMigrationSource: (s: MigrationSource) => void;
+  setProfile: (p: UserProfile | null) => void;
+  logout: () => void;
 
   addEstablishment: (input: Omit<Establishment, "id">) => Establishment;
   deleteEstablishment: (id: string) => void;
@@ -100,8 +104,11 @@ export const useStore = create<StoreState>()(
       db: emptyDb,
       hydrated: false,
       migrationSource: null,
+      profile: null,
 
       setMigrationSource: (s) => set({ migrationSource: s }),
+      setProfile: (p) => set({ profile: p }),
+      logout: () => set({ profile: null }),
 
       addEstablishment: (input) => {
         const est: Establishment = { id: newId(), ...input };
@@ -419,7 +426,7 @@ export const useStore = create<StoreState>()(
     {
       name: STORAGE_KEY,
       storage: createJSONStorage(() => localStorage),
-      partialize: (s) => ({ db: s.db }),
+      partialize: (s) => ({ db: s.db, profile: s.profile }),
       onRehydrateStorage: () => (state) => {
         if (!state) return;
         state.hydrated = true;

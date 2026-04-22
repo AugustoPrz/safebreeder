@@ -48,5 +48,3 @@ export const BCS_OPTIONS = [
 
 export const HPG_THRESHOLD_LOW = 150;
 export const HPG_THRESHOLD_HIGH = 500;
-
-export const DEFAULT_PROVINCE = "Buenos Aires";

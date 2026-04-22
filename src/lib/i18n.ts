@@ -5,7 +5,7 @@ export const t = {
   nav: {
     establishments: "Establecimientos",
     data: "Carga de datos",
-    dashboard: "Resumen",
+    dashboard: "Estadísticas",
   },
 
   common: {

@@ -1,11 +1,13 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { Field, Input } from "@/components/ui/Input";
+import { Field, Input, Select } from "@/components/ui/Input";
 import { useStore } from "@/lib/store";
 import { t } from "@/lib/i18n";
-import { DEFAULT_PROVINCE } from "@/lib/constants";
+import arGeo from "@/lib/ar-geo.json";
+
+const DEFAULT_PROVINCE_ID = "06";
 
 interface Props {
   onDone: () => void;
@@ -16,17 +18,26 @@ export function EstablishmentForm({ onDone, onCancel }: Props) {
   const addEstablishment = useStore((s) => s.addEstablishment);
   const [name, setName] = useState("");
   const [owner, setOwner] = useState("");
-  const [district, setDistrict] = useState("");
-  const [province, setProvince] = useState(DEFAULT_PROVINCE);
+  const [provinceId, setProvinceId] = useState(DEFAULT_PROVINCE_ID);
+  const [districtId, setDistrictId] = useState("");
+
+  const partidos = useMemo(
+    () => arGeo.departamentos.filter((d) => d.provinciaId === provinceId),
+    [provinceId],
+  );
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
+    const province = arGeo.provincias.find((p) => p.id === provinceId);
+    const district = arGeo.departamentos.find((d) => d.id === districtId);
     addEstablishment({
       name: name.trim(),
       owner: owner.trim() || undefined,
-      district: district.trim() || undefined,
-      province: province.trim() || undefined,
+      provinceId: province?.id,
+      province: province?.nombre,
+      districtId: district?.id,
+      district: district?.nombre,
     });
     onDone();
   };
@@ -46,17 +57,33 @@ export function EstablishmentForm({ onDone, onCancel }: Props) {
         <Input value={owner} onChange={(e) => setOwner(e.target.value)} />
       </Field>
       <div className="grid sm:grid-cols-2 gap-3">
-        <Field label={t.establishments.district}>
-          <Input
-            value={district}
-            onChange={(e) => setDistrict(e.target.value)}
-          />
-        </Field>
         <Field label={t.establishments.province}>
-          <Input
-            value={province}
-            onChange={(e) => setProvince(e.target.value)}
-          />
+          <Select
+            value={provinceId}
+            onChange={(e) => {
+              setProvinceId(e.target.value);
+              setDistrictId("");
+            }}
+          >
+            {arGeo.provincias.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.nombre}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        <Field label={t.establishments.district}>
+          <Select
+            value={districtId}
+            onChange={(e) => setDistrictId(e.target.value)}
+          >
+            <option value="">—</option>
+            {partidos.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.nombre}
+              </option>
+            ))}
+          </Select>
         </Field>
       </div>
       <div className="flex justify-end gap-2 pt-2">

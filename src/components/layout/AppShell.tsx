@@ -4,9 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ReactNode } from "react";
 import { t } from "@/lib/i18n";
+import { useStore } from "@/lib/store";
 import { useHydrated } from "@/hooks/useHydrated";
 import { DataMenu } from "./DataMenu";
 import { StoreBootstrap } from "./StoreBootstrap";
+import { UserMenu } from "./UserMenu";
 
 const navItems = [
   {
@@ -20,6 +22,7 @@ const navItems = [
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const hydrated = useHydrated();
+  const establishments = useStore((s) => s.db.establishments);
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + "/");
@@ -38,31 +41,54 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Link>
         </div>
 
-        <nav className="flex-1 p-3 flex flex-col gap-1">
+        <nav className="flex-1 p-3 flex flex-col gap-1 overflow-y-auto">
           {navItems.map((item) => {
             const active = isActive(item.href);
             const Icon = item.icon;
+            const isEstablishments = item.href === "/establishments";
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`px-3 h-11 rounded-lg inline-flex items-center gap-3 text-sm font-medium transition-colors ${
-                  active
-                    ? "bg-primary-soft text-primary-soft-text"
-                    : "text-text-muted hover:text-text hover:bg-surface-2"
-                }`}
-              >
-                <Icon className="w-5 h-5 shrink-0" />
-                {item.label}
-              </Link>
+              <div key={item.href}>
+                <Link
+                  href={item.href}
+                  className={`px-3 h-11 rounded-lg inline-flex items-center gap-3 text-sm font-medium transition-colors w-full ${
+                    active
+                      ? "bg-primary-soft text-primary-soft-text"
+                      : "text-text-muted hover:text-text hover:bg-surface-2"
+                  }`}
+                >
+                  <Icon className="w-5 h-5 shrink-0" />
+                  {item.label}
+                </Link>
+                {isEstablishments && hydrated && establishments.length > 0 ? (
+                  <ul className="mt-1 ml-5 pl-3 border-l border-border flex flex-col gap-0.5">
+                    {establishments.map((est) => {
+                      const href = `/establishments/${est.id}`;
+                      const activeEst = pathname.startsWith(href);
+                      return (
+                        <li key={est.id}>
+                          <Link
+                            href={href}
+                            className={`px-2.5 h-8 rounded-md flex items-center text-xs font-medium truncate transition-colors ${
+                              activeEst
+                                ? "text-primary bg-primary-soft"
+                                : "text-text-muted hover:text-text hover:bg-surface-2"
+                            }`}
+                            title={est.name}
+                          >
+                            {est.name}
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : null}
+              </div>
             );
           })}
         </nav>
 
-        <div className="p-3 border-t border-border flex items-center justify-between">
-          <span className="text-[11px] text-text-muted uppercase tracking-wider font-medium">
-            Datos
-          </span>
+        <div className="p-2 border-t border-border flex items-center gap-1">
+          <UserMenu />
           <DataMenu />
         </div>
       </aside>
@@ -76,7 +102,10 @@ export function AppShell({ children }: { children: ReactNode }) {
                 {t.brand}
               </div>
             </Link>
-            <DataMenu />
+            <div className="flex items-center gap-1">
+              <UserMenu compact />
+              <DataMenu />
+            </div>
           </div>
         </header>
 

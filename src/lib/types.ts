@@ -1,3 +1,16 @@
+export type UserRole =
+  | "veterinario"
+  | "productor"
+  | "asesor"
+  | "administrador"
+  | "otro";
+
+export interface UserProfile {
+  name: string;
+  email: string;
+  role?: UserRole;
+}
+
 export type LotCategory =
   | "recriaMachos"
   | "recriaHembras"
@@ -12,6 +25,8 @@ export interface Establishment {
   owner?: string;
   district?: string;
   province?: string;
+  provinceId?: string;
+  districtId?: string;
 }
 
 export interface Lot {

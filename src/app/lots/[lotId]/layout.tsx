@@ -80,19 +80,22 @@ export default function LotLayout({ children }: { children: ReactNode }) {
           <MonthYearSelector value={month} onChange={setMonth} />
           <Link
             href={`/lots/${lotId}/report?m=${month}`}
-            className="h-11 px-3 mt-auto rounded-lg bg-surface-2 text-sm font-medium inline-flex items-center gap-1.5 hover:bg-border whitespace-nowrap"
+            aria-label={t.report.download}
+            className="h-11 w-11 mt-auto rounded-lg bg-surface-2 inline-flex items-center justify-center hover:bg-border shrink-0"
           >
             <svg
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
-              className="w-4 h-4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="w-5 h-5"
             >
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <polyline points="14 2 14 8 20 8" />
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
             </svg>
-            PDF
           </Link>
         </div>
       </div>
