@@ -9,7 +9,11 @@ import { DataMenu } from "./DataMenu";
 import { StoreBootstrap } from "./StoreBootstrap";
 
 const navItems = [
-  { href: "/establishments", label: t.nav.establishments, icon: EstablishmentsIcon },
+  {
+    href: "/establishments",
+    label: t.nav.establishments,
+    icon: EstablishmentsIcon,
+  },
   { href: "/dashboard", label: t.nav.dashboard, icon: DashboardIcon },
 ];
 
@@ -21,57 +25,79 @@ export function AppShell({ children }: { children: ReactNode }) {
     pathname === href || pathname.startsWith(href + "/");
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex">
       <StoreBootstrap />
-      {/* Top header */}
-      <header className="sticky top-0 z-30 bg-surface/90 backdrop-blur border-b border-border">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+
+      {/* Desktop sidebar */}
+      <aside className="hidden lg:flex lg:flex-col fixed inset-y-0 left-0 w-60 border-r border-border bg-surface z-30">
+        <div className="px-5 py-5 border-b border-border">
           <Link href="/establishments" className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-lg bg-primary text-white flex items-center justify-center font-bold text-lg shadow-sm">
+            <div className="w-10 h-10 rounded-lg bg-primary text-white flex items-center justify-center font-bold text-lg shadow-sm">
               S
             </div>
             <div className="leading-tight">
-              <div className="font-display font-bold text-base tracking-tight">
+              <div className="font-bold text-base tracking-tight">
                 {t.brand}
               </div>
-              <div className="text-[10px] uppercase tracking-wider text-text-muted hidden sm:block">
+              <div className="text-[10px] uppercase tracking-wider text-text-muted">
                 {t.tagline}
               </div>
             </div>
           </Link>
+        </div>
 
-          <nav className="hidden md:flex items-center gap-1">
-            {navItems.map((item) => {
-              const active = isActive(item.href);
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`px-3 h-10 rounded-lg inline-flex items-center gap-2 text-sm font-medium transition-colors ${
-                    active
-                      ? "bg-primary-soft text-primary-soft-text"
-                      : "text-text-muted hover:text-text hover:bg-surface-2"
-                  }`}
-                >
-                  <Icon className="w-4 h-4" />
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
+        <nav className="flex-1 p-3 flex flex-col gap-1">
+          {navItems.map((item) => {
+            const active = isActive(item.href);
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`px-3 h-11 rounded-lg inline-flex items-center gap-3 text-sm font-medium transition-colors ${
+                  active
+                    ? "bg-primary-soft text-primary-soft-text"
+                    : "text-text-muted hover:text-text hover:bg-surface-2"
+                }`}
+              >
+                <Icon className="w-5 h-5 shrink-0" />
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
 
+        <div className="p-3 border-t border-border flex items-center justify-between">
+          <span className="text-[11px] text-text-muted uppercase tracking-wider font-medium">
+            Datos
+          </span>
           <DataMenu />
         </div>
-      </header>
+      </aside>
 
-      {/* Main content */}
-      <main className="flex-1 mx-auto w-full max-w-6xl px-4 sm:px-6 py-6 pb-28 md:pb-10">
-        {hydrated ? children : <LoadingState />}
-      </main>
+      <div className="flex-1 min-w-0 flex flex-col lg:ml-60">
+        {/* Mobile header */}
+        <header className="lg:hidden sticky top-0 z-20 bg-surface/90 backdrop-blur border-b border-border">
+          <div className="px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+            <Link href="/establishments" className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-lg bg-primary text-white flex items-center justify-center font-bold text-lg shadow-sm">
+                S
+              </div>
+              <div className="font-bold text-base tracking-tight">
+                {t.brand}
+              </div>
+            </Link>
+            <DataMenu />
+          </div>
+        </header>
+
+        <main className="flex-1 mx-auto w-full max-w-5xl px-4 sm:px-6 py-6 pb-28 lg:pb-10">
+          {hydrated ? children : <LoadingState />}
+        </main>
+      </div>
 
       {/* Mobile bottom nav */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-surface border-t border-border">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-surface border-t border-border">
         <div className="grid grid-cols-2 h-16">
           {navItems.map((item) => {
             const active = isActive(item.href);
