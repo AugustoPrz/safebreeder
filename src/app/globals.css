@@ -53,8 +53,8 @@
   --color-text: var(--text);
   --color-text-muted: var(--text-muted);
 
-  --font-display: var(--font-montserrat);
-  --font-sans: var(--font-montserrat);
+  --font-display: var(--font-inter);
+  --font-sans: var(--font-inter);
 
   --radius-lg: 12px;
   --radius-xl: 16px;
@@ -67,7 +67,7 @@ body {
 }
 
 body {
-  font-family: var(--font-montserrat), system-ui, -apple-system, sans-serif;
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -76,7 +76,7 @@ h1,
 h2,
 h3,
 h4 {
-  font-family: var(--font-montserrat), system-ui, sans-serif;
+  font-family: var(--font-inter), system-ui, sans-serif;
   letter-spacing: -0.015em;
   font-weight: 700;
 }

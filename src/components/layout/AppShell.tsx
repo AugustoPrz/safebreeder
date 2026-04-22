@@ -31,17 +31,9 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex lg:flex-col fixed inset-y-0 left-0 w-60 border-r border-border bg-surface z-30">
         <div className="px-5 py-5 border-b border-border">
-          <Link href="/establishments" className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-lg bg-primary text-white flex items-center justify-center font-bold text-lg shadow-sm">
-              S
-            </div>
-            <div className="leading-tight">
-              <div className="font-bold text-base tracking-tight">
-                {t.brand}
-              </div>
-              <div className="text-[10px] uppercase tracking-wider text-text-muted">
-                {t.tagline}
-              </div>
+          <Link href="/establishments" className="flex items-center">
+            <div className="font-black text-lg uppercase tracking-widest text-primary">
+              {t.brand}
             </div>
           </Link>
         </div>
@@ -79,11 +71,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         {/* Mobile header */}
         <header className="lg:hidden sticky top-0 z-20 bg-surface/90 backdrop-blur border-b border-border">
           <div className="px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-            <Link href="/establishments" className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-lg bg-primary text-white flex items-center justify-center font-bold text-lg shadow-sm">
-                S
-              </div>
-              <div className="font-bold text-base tracking-tight">
+            <Link href="/establishments" className="flex items-center">
+              <div className="font-black text-base uppercase tracking-widest text-primary">
                 {t.brand}
               </div>
             </Link>
