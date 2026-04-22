@@ -187,12 +187,21 @@ export default function DashboardPage() {
         if (keys.length < 2) return null;
         const lastKey = keys[keys.length - 1];
         const prevKey = keys[keys.length - 2];
-        const summary = summarizeWeights(
+        const last = summarizeWeights(months[lastKey].rows);
+        const prev = summarizeWeights(months[prevKey].rows);
+        const perTag = summarizeWeights(
           months[lastKey].rows,
           months[prevKey].rows,
         );
-        if (summary.avgAdg === null) return null;
-        return { name: lot.name, value: Number(summary.avgAdg.toFixed(3)) };
+        const daysBetween = monthsDiffDays(prevKey, lastKey);
+        const adg =
+          perTag.avgAdg !== null
+            ? perTag.avgAdg
+            : last.avgWeight !== null && prev.avgWeight !== null && daysBetween > 0
+              ? (last.avgWeight - prev.avgWeight) / daysBetween
+              : null;
+        if (adg === null) return null;
+        return { name: lot.name, value: Number(adg.toFixed(3)) };
       })
       .filter((x): x is { name: string; value: number } => x !== null);
   }, [lots, weightsByLot]);
@@ -389,7 +398,10 @@ export default function DashboardPage() {
             </ChartCard>
           </div>
 
-          <ChartCard title={t.dashboard.chartTreatments}>
+          <ChartCard
+            title={t.dashboard.chartTreatments}
+            height={Math.max(140, treatmentsData.length * 38 + 48)}
+          >
             {treatmentsData.length === 0 ? (
               <EmptyMini text="Sin tratamientos cargados" />
             ) : (
@@ -542,9 +554,11 @@ function EmptyMini({ text }: { text: string }) {
 function ChartCard({
   title,
   children,
+  height = 280,
 }: {
   title: string;
   children: React.ReactNode;
+  height?: number;
 }) {
   return (
     <Card>
@@ -552,10 +566,19 @@ function ChartCard({
         <h3 className="font-semibold text-sm">{title}</h3>
       </div>
       <div className="p-5">
-        <div style={{ width: "100%", height: 280 }}>{children}</div>
+        <div style={{ width: "100%", height }}>{children}</div>
       </div>
     </Card>
   );
+}
+
+function monthsDiffDays(fromKey: string, toKey: string): number {
+  const a = /^(\d{4})-(\d{2})$/.exec(fromKey);
+  const b = /^(\d{4})-(\d{2})$/.exec(toKey);
+  if (!a || !b) return 0;
+  const d1 = new Date(Number(a[1]), Number(a[2]) - 1, 1);
+  const d2 = new Date(Number(b[1]), Number(b[2]) - 1, 1);
+  return Math.round((d2.getTime() - d1.getTime()) / 86400000);
 }
 
 function hpgColor(value: number): string {
