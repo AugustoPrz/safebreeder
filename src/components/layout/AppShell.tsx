@@ -24,6 +24,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   const hydrated = useHydrated();
   const establishments = useStore((s) => s.db.establishments);
 
+  if (pathname === "/") {
+    return <>{children}</>;
+  }
+
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + "/");
 
