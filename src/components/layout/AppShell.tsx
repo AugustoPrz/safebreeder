@@ -6,6 +6,7 @@ import { ReactNode } from "react";
 import { t } from "@/lib/i18n";
 import { useStore } from "@/lib/store";
 import { useHydrated } from "@/hooks/useHydrated";
+import { useProfile } from "@/hooks/useProfile";
 import { StoreBootstrap } from "./StoreBootstrap";
 import { UserMenu } from "./UserMenu";
 
@@ -31,6 +32,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const hydrated = useHydrated();
   const establishments = useStore((s) => s.db.establishments);
+  const { profile } = useProfile();
+  const isAdmin = profile?.plan === "admin";
 
   if (BARE_ROUTES.includes(pathname)) {
     return (
@@ -102,6 +105,19 @@ export function AppShell({ children }: { children: ReactNode }) {
               </div>
             );
           })}
+          {isAdmin && (
+            <Link
+              href="/admin"
+              className={`mt-2 px-3 h-11 rounded-lg inline-flex items-center gap-3 text-sm font-medium transition-colors w-full ${
+                isActive("/admin")
+                  ? "bg-amber-100 text-amber-800"
+                  : "text-text-muted hover:text-text hover:bg-surface-2"
+              }`}
+            >
+              <AdminIcon className="w-5 h-5 shrink-0" />
+              {t.nav.admin}
+            </Link>
+          )}
         </nav>
 
         <div className="p-2 border-t border-border">
@@ -209,6 +225,23 @@ function PlansIcon(props: { className?: string }) {
     >
       <path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z" />
       <circle cx="7" cy="7" r="1.5" />
+    </svg>
+  );
+}
+
+function AdminIcon(props: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <path d="M12 2 3 7v5c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V7L12 2Z" />
+      <path d="m9 12 2 2 4-4" />
     </svg>
   );
 }

@@ -7,6 +7,7 @@ export const t = {
     data: "Carga de datos",
     dashboard: "Estadísticas",
     plans: "Planes",
+    admin: "Admin",
   },
 
   common: {
