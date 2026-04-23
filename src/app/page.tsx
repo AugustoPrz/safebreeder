@@ -3,15 +3,25 @@ import Link from "next/link";
 export default function LandingPage() {
   return (
     <div className="min-h-screen p-3 sm:p-4 bg-bg">
-      <section className="relative overflow-hidden rounded-2xl sm:rounded-3xl min-h-[calc(100vh-24px)] sm:min-h-[calc(100vh-32px)] bg-gradient-to-br from-[#2b3a1e] via-[#4d5c2f] to-[#8a6f3c]">
-        {/* Soft horizon glow */}
+      <section className="relative overflow-hidden rounded-2xl sm:rounded-3xl min-h-[calc(100vh-24px)] sm:min-h-[calc(100vh-32px)] bg-[#2b3a1e]">
+        {/* Background video */}
+        <video
+          aria-hidden
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+          src="/hero.mp4"
+        />
+        {/* Dark overlay for readability */}
         <div
           aria-hidden
-          className="absolute inset-x-0 top-0 h-2/3 bg-[radial-gradient(ellipse_at_center_top,rgba(255,230,180,0.35),transparent_70%)]"
+          className="absolute inset-0 bg-gradient-to-br from-[#1a2410]/80 via-[#2b3a1e]/70 to-[#3d3018]/75"
         />
         <div
           aria-hidden
-          className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/10"
+          className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/20"
         />
 
         {/* Top nav */}
