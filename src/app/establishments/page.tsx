@@ -10,12 +10,14 @@ import { EstablishmentForm } from "@/components/forms/EstablishmentForm";
 import { useEstablishments } from "@/hooks/useDb";
 import { useStore } from "@/lib/store";
 import { t } from "@/lib/i18n";
+import type { Establishment } from "@/lib/types";
 
 export default function EstablishmentsPage() {
   const establishments = useEstablishments();
   const lots = useStore((s) => s.db.lots);
   const deleteEst = useStore((s) => s.deleteEstablishment);
   const [showCreate, setShowCreate] = useState(false);
+  const [editing, setEditing] = useState<Establishment | null>(null);
 
   const lotCount = (eid: string) =>
     lots.filter((l) => l.establishmentId === eid).length;
@@ -65,16 +67,26 @@ export default function EstablishmentsPage() {
                     >
                       {est.name}
                     </Link>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (confirm(t.common.confirmDelete)) deleteEst(est.id);
-                      }}
-                      className="text-text-muted hover:text-clay text-sm"
-                      aria-label={t.common.delete}
-                    >
-                      <TrashIcon />
-                    </button>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setEditing(est)}
+                        className="text-text-muted hover:text-text text-sm p-1"
+                        aria-label={t.common.edit}
+                      >
+                        <PencilIcon />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (confirm(t.common.confirmDelete)) deleteEst(est.id);
+                        }}
+                        className="text-text-muted hover:text-clay text-sm p-1"
+                        aria-label={t.common.delete}
+                      >
+                        <TrashIcon />
+                      </button>
+                    </div>
                   </div>
                   <dl className="text-xs text-text-muted space-y-0.5">
                     {est.owner ? (
@@ -124,7 +136,37 @@ export default function EstablishmentsPage() {
           onCancel={() => setShowCreate(false)}
         />
       </Modal>
+
+      <Modal
+        open={editing !== null}
+        onClose={() => setEditing(null)}
+        title="Editar establecimiento"
+      >
+        {editing ? (
+          <EstablishmentForm
+            establishment={editing}
+            onDone={() => setEditing(null)}
+            onCancel={() => setEditing(null)}
+          />
+        ) : null}
+      </Modal>
     </div>
+  );
+}
+
+function PencilIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="w-4 h-4"
+    >
+      <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+    </svg>
   );
 }
 

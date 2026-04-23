@@ -30,9 +30,11 @@ interface StoreState {
   logout: () => void;
 
   addEstablishment: (input: Omit<Establishment, "id">) => Establishment;
+  updateEstablishment: (id: string, patch: Partial<Omit<Establishment, "id">>) => void;
   deleteEstablishment: (id: string) => void;
 
   addLot: (input: Omit<Lot, "id">) => Lot;
+  updateLot: (id: string, patch: Partial<Omit<Lot, "id">>) => void;
   deleteLot: (id: string) => void;
 
   setHpgMonth: (lotId: string, monthKey: MonthKey, record: HpgRecord) => void;
@@ -118,6 +120,16 @@ export const useStore = create<StoreState>()(
         return est;
       },
 
+      updateEstablishment: (id, patch) =>
+        set((s) => ({
+          db: {
+            ...s.db,
+            establishments: s.db.establishments.map((e) =>
+              e.id === id ? { ...e, ...patch } : e,
+            ),
+          },
+        })),
+
       deleteEstablishment: (id) =>
         set((s) => {
           const lots = s.db.lots.filter((l) => l.establishmentId !== id);
@@ -147,6 +159,14 @@ export const useStore = create<StoreState>()(
         set((s) => ({ db: { ...s.db, lots: [...s.db.lots, lot] } }));
         return lot;
       },
+
+      updateLot: (id, patch) =>
+        set((s) => ({
+          db: {
+            ...s.db,
+            lots: s.db.lots.map((l) => (l.id === id ? { ...l, ...patch } : l)),
+          },
+        })),
 
       deleteLot: (id) =>
         set((s) => {

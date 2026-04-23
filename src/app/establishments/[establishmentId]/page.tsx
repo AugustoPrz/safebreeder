@@ -12,6 +12,8 @@ import { LotCountsRow } from "@/components/forms/LotCountsRow";
 import { useEstablishment, useLotsByEstablishment } from "@/hooks/useDb";
 import { useStore } from "@/lib/store";
 import { t } from "@/lib/i18n";
+import type { Establishment, Lot } from "@/lib/types";
+import { EstablishmentForm } from "@/components/forms/EstablishmentForm";
 
 export default function EstablishmentDetailPage() {
   const params = useParams<{ establishmentId: string }>();
@@ -24,6 +26,8 @@ export default function EstablishmentDetailPage() {
   const treatmentsByLot = useStore((s) => s.db.treatments);
   const router = useRouter();
   const [showCreate, setShowCreate] = useState(false);
+  const [editingLot, setEditingLot] = useState<Lot | null>(null);
+  const [editingEst, setEditingEst] = useState<Establishment | null>(null);
 
   const latestMonth = (lotId: string): string | null => {
     const keys = new Set<string>();
@@ -68,8 +72,30 @@ export default function EstablishmentDetailPage() {
           {t.nav.establishments}
         </Link>
         <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold">{est.name}</h1>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl sm:text-3xl font-bold truncate">
+                {est.name}
+              </h1>
+              <button
+                type="button"
+                onClick={() => setEditingEst(est)}
+                aria-label={t.common.edit}
+                className="h-8 w-8 rounded-md text-text-muted hover:text-text hover:bg-surface-2 inline-flex items-center justify-center shrink-0"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="w-4 h-4"
+                >
+                  <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                </svg>
+              </button>
+            </div>
             <div className="text-sm text-text-muted mt-1 flex flex-wrap gap-x-4">
               {est.owner ? <span>{est.owner}</span> : null}
               {est.district ? <span>· {est.district}</span> : null}
@@ -125,27 +151,47 @@ export default function EstablishmentDetailPage() {
                       {lot.headCount ? ` · ${lot.headCount} animales` : ""}
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (confirm(t.common.confirmDelete)) deleteLot(lot.id);
-                    }}
-                    className="text-text-muted hover:text-clay"
-                    aria-label={t.common.delete}
-                  >
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      className="w-4 h-4"
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setEditingLot(lot)}
+                      className="text-text-muted hover:text-text p-1"
+                      aria-label={t.common.edit}
                     >
-                      <path d="M3 6h18" />
-                      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
-                    </svg>
-                  </button>
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="w-4 h-4"
+                      >
+                        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (confirm(t.common.confirmDelete)) deleteLot(lot.id);
+                      }}
+                      className="text-text-muted hover:text-clay p-1"
+                      aria-label={t.common.delete}
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        className="w-4 h-4"
+                      >
+                        <path d="M3 6h18" />
+                        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
                 <LotCountsRow lotId={lot.id} />
                 <div className="flex gap-2 mt-3">
@@ -191,6 +237,35 @@ export default function EstablishmentDetailPage() {
           onDone={() => setShowCreate(false)}
           onCancel={() => setShowCreate(false)}
         />
+      </Modal>
+
+      <Modal
+        open={editingLot !== null}
+        onClose={() => setEditingLot(null)}
+        title="Editar lote"
+      >
+        {editingLot ? (
+          <LotForm
+            establishmentId={est.id}
+            lot={editingLot}
+            onDone={() => setEditingLot(null)}
+            onCancel={() => setEditingLot(null)}
+          />
+        ) : null}
+      </Modal>
+
+      <Modal
+        open={editingEst !== null}
+        onClose={() => setEditingEst(null)}
+        title="Editar establecimiento"
+      >
+        {editingEst ? (
+          <EstablishmentForm
+            establishment={editingEst}
+            onDone={() => setEditingEst(null)}
+            onCancel={() => setEditingEst(null)}
+          />
+        ) : null}
       </Modal>
     </div>
   );

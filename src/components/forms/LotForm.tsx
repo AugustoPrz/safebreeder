@@ -6,30 +6,41 @@ import { Field, Input, Select } from "@/components/ui/Input";
 import { useStore } from "@/lib/store";
 import { t } from "@/lib/i18n";
 import { LOT_CATEGORIES } from "@/lib/constants";
-import type { LotCategory } from "@/lib/types";
+import type { Lot, LotCategory } from "@/lib/types";
 
 interface Props {
   establishmentId: string;
   onDone: () => void;
   onCancel: () => void;
+  lot?: Lot;
 }
 
-export function LotForm({ establishmentId, onDone, onCancel }: Props) {
+export function LotForm({ establishmentId, onDone, onCancel, lot }: Props) {
   const addLot = useStore((s) => s.addLot);
-  const [name, setName] = useState("");
-  const [category, setCategory] = useState<LotCategory>("recriaMachos");
-  const [headCount, setHeadCount] = useState("");
+  const updateLot = useStore((s) => s.updateLot);
+  const [name, setName] = useState(lot?.name ?? "");
+  const [category, setCategory] = useState<LotCategory>(
+    lot?.category ?? "recriaMachos",
+  );
+  const [headCount, setHeadCount] = useState(
+    lot?.headCount != null ? String(lot.headCount) : "",
+  );
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
     const count = Number(headCount);
-    addLot({
+    const payload = {
       establishmentId,
       name: name.trim(),
       category,
       headCount: headCount && !Number.isNaN(count) ? count : undefined,
-    });
+    };
+    if (lot) {
+      updateLot(lot.id, payload);
+    } else {
+      addLot(payload);
+    }
     onDone();
   };
 

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Field, Input, Select } from "@/components/ui/Input";
 import { useStore } from "@/lib/store";
 import { t } from "@/lib/i18n";
+import type { Establishment } from "@/lib/types";
 import arGeo from "@/lib/ar-geo.json";
 
 const DEFAULT_PROVINCE_ID = "06";
@@ -12,14 +13,19 @@ const DEFAULT_PROVINCE_ID = "06";
 interface Props {
   onDone: () => void;
   onCancel: () => void;
+  establishment?: Establishment;
 }
 
-export function EstablishmentForm({ onDone, onCancel }: Props) {
+export function EstablishmentForm({ onDone, onCancel, establishment }: Props) {
   const addEstablishment = useStore((s) => s.addEstablishment);
-  const [name, setName] = useState("");
-  const [owner, setOwner] = useState("");
-  const [provinceId, setProvinceId] = useState(DEFAULT_PROVINCE_ID);
-  const [districtId, setDistrictId] = useState("");
+  const updateEstablishment = useStore((s) => s.updateEstablishment);
+  const isEdit = Boolean(establishment);
+  const [name, setName] = useState(establishment?.name ?? "");
+  const [owner, setOwner] = useState(establishment?.owner ?? "");
+  const [provinceId, setProvinceId] = useState(
+    establishment?.provinceId ?? DEFAULT_PROVINCE_ID,
+  );
+  const [districtId, setDistrictId] = useState(establishment?.districtId ?? "");
 
   const partidos = useMemo(
     () => arGeo.departamentos.filter((d) => d.provinciaId === provinceId),
@@ -31,14 +37,19 @@ export function EstablishmentForm({ onDone, onCancel }: Props) {
     if (!name.trim()) return;
     const province = arGeo.provincias.find((p) => p.id === provinceId);
     const district = arGeo.departamentos.find((d) => d.id === districtId);
-    addEstablishment({
+    const payload = {
       name: name.trim(),
       owner: owner.trim() || undefined,
       provinceId: province?.id,
       province: province?.nombre,
       districtId: district?.id,
       district: district?.nombre,
-    });
+    };
+    if (establishment) {
+      updateEstablishment(establishment.id, payload);
+    } else {
+      addEstablishment(payload);
+    }
     onDone();
   };
 
@@ -90,7 +101,7 @@ export function EstablishmentForm({ onDone, onCancel }: Props) {
         <Button type="button" variant="ghost" onClick={onCancel}>
           {t.common.cancel}
         </Button>
-        <Button type="submit">{t.common.save}</Button>
+        <Button type="submit">{isEdit ? t.common.save : t.common.save}</Button>
       </div>
     </form>
   );
