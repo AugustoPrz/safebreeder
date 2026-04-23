@@ -14,7 +14,8 @@ create table if not exists public.profiles (
   updated_at timestamptz not null default now()
 );
 
--- Seed a profile row on signup so the app always finds one
+-- Seed a profile row on signup so the app always finds one.
+-- Picks up `name` from raw_user_meta_data (set by signUp({ options: { data: { name } } }))
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
@@ -22,8 +23,12 @@ security definer
 set search_path = public
 as $$
 begin
-  insert into public.profiles (id, email)
-  values (new.id, new.email)
+  insert into public.profiles (id, email, name)
+  values (
+    new.id,
+    new.email,
+    nullif(new.raw_user_meta_data ->> 'name', '')
+  )
   on conflict (id) do nothing;
   return new;
 end;

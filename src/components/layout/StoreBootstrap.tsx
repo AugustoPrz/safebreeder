@@ -43,7 +43,7 @@ export function StoreBootstrap() {
       (event: AuthChangeEvent, session: Session | null) => {
       if (event === "SIGNED_OUT") {
         useStore.getState().resetStore();
-        router.replace("/");
+        router.replace("/login");
         return;
       }
       void hydrate(session?.user?.id ?? null);

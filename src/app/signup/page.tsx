@@ -10,6 +10,7 @@ import { supabaseBrowser } from "@/lib/supabase/browser";
 
 export default function SignupPage() {
   const router = useRouter();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -20,6 +21,10 @@ export default function SignupPage() {
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
+    if (!name.trim()) {
+      setError("Ingresá tu nombre.");
+      return;
+    }
     if (password.length < 8) {
       setError("La contraseña debe tener al menos 8 caracteres.");
       return;
@@ -35,9 +40,10 @@ export default function SignupPage() {
         email,
         password,
         options: {
+          data: { name: name.trim() },
           emailRedirectTo:
             typeof window !== "undefined"
-              ? `${window.location.origin}/onboarding`
+              ? `${window.location.origin}/establishments`
               : undefined,
         },
       });
@@ -49,7 +55,15 @@ export default function SignupPage() {
         setNeedsConfirmation(true);
         return;
       }
-      router.push("/onboarding");
+      // Make sure the profile row has the name even if the DB trigger
+      // hasn't read user_metadata yet (belt-and-suspenders).
+      if (data.user) {
+        await sb
+          .from("profiles")
+          .update({ name: name.trim() })
+          .eq("id", data.user.id);
+      }
+      router.push("/establishments");
       router.refresh();
     } finally {
       setSubmitting(false);
@@ -86,6 +100,15 @@ export default function SignupPage() {
       }
     >
       <form onSubmit={submit} className="space-y-4">
+        <Field label="Nombre" required>
+          <Input
+            autoFocus
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Tu nombre"
+            required
+          />
+        </Field>
         <Field label="Email" required>
           <Input
             type="email"
@@ -93,7 +116,6 @@ export default function SignupPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            autoFocus
           />
         </Field>
         <Field label="Contraseña" required hint="Mínimo 8 caracteres.">

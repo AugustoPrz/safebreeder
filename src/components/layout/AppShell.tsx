@@ -15,7 +15,6 @@ const BARE_ROUTES = [
   "/signup",
   "/forgot-password",
   "/reset-password",
-  "/onboarding",
 ];
 
 const navItems = [

@@ -36,7 +36,7 @@ export function UserMenu({ compact = false }: { compact?: boolean } = {}) {
     const sb = supabaseBrowser();
     await sb.auth.signOut();
     setOpen(false);
-    router.replace("/");
+    router.replace("/login");
     router.refresh();
   };
 
