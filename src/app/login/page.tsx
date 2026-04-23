@@ -16,12 +16,27 @@ export default function LoginPage() {
   );
 }
 
+// localStorage key that marks "user chose session-only login"
+export const NO_REMEMBER_KEY = "sb_no_remember";
+// sessionStorage key that marks the current browser session is alive
+const SESSION_ALIVE_KEY = "sb_session_alive";
+
+/** Called by StoreBootstrap on mount to enforce session-only logins. */
+export function enforceRememberMe(userId: string): boolean {
+  const noRemember = localStorage.getItem(NO_REMEMBER_KEY);
+  const sessionAlive = sessionStorage.getItem(SESSION_ALIVE_KEY);
+  // If the user chose "no remember" and there's no alive marker → new browser session
+  if (noRemember === userId && !sessionAlive) return true; // should sign out
+  return false;
+}
+
 function LoginInner() {
   const router = useRouter();
   const params = useSearchParams();
   const next = params.get("next") || "/establishments";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [remember, setRemember] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -31,10 +46,18 @@ function LoginInner() {
     setSubmitting(true);
     try {
       const sb = supabaseBrowser();
-      const { error } = await sb.auth.signInWithPassword({ email, password });
+      const { data, error } = await sb.auth.signInWithPassword({ email, password });
       if (error) {
         setError(error.message);
         return;
+      }
+      const userId = data.user?.id ?? "";
+      if (remember) {
+        localStorage.removeItem(NO_REMEMBER_KEY);
+        sessionStorage.removeItem(SESSION_ALIVE_KEY);
+      } else {
+        localStorage.setItem(NO_REMEMBER_KEY, userId);
+        sessionStorage.setItem(SESSION_ALIVE_KEY, userId);
       }
       router.push(next);
       router.refresh();
@@ -76,7 +99,16 @@ function LoginInner() {
             required
           />
         </Field>
-        <div className="text-right">
+        <div className="flex items-center justify-between">
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={remember}
+              onChange={(e) => setRemember(e.target.checked)}
+              className="w-4 h-4 rounded border-border accent-primary cursor-pointer"
+            />
+            <span className="text-sm text-text-muted">Recordarme</span>
+          </label>
           <Link
             href="/forgot-password"
             className="text-xs text-text-muted hover:text-text"

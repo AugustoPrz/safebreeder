@@ -89,7 +89,7 @@ export default function SignupPage() {
   return (
     <AuthCard
       title="Crear cuenta"
-      subtitle="Empezá gratis en 14 días, sin tarjeta."
+      subtitle="Probalo gratis, sin tarjeta."
       footer={
         <>
           ¿Ya tenés cuenta?{" "}

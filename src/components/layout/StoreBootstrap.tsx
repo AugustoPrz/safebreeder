@@ -6,6 +6,7 @@ import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 import { useStore } from "@/lib/store";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 import { fetchAllForUser } from "@/lib/supabase/data";
+import { enforceRememberMe, NO_REMEMBER_KEY } from "@/app/login/page";
 
 /**
  * Hydrates the local zustand cache from Supabase once a session exists,
@@ -21,6 +22,14 @@ export function StoreBootstrap() {
     const hydrate = async (userId: string | null) => {
       if (!userId) {
         useStore.getState().resetStore();
+        return;
+      }
+      // Enforce session-only login: if user chose "no remember" and browser was reopened, sign out.
+      const sb2 = supabaseBrowser();
+      if (enforceRememberMe(userId)) {
+        await sb2.auth.signOut();
+        useStore.getState().resetStore();
+        router.replace("/login");
         return;
       }
       useStore.getState().setUserId(userId);
@@ -42,6 +51,7 @@ export function StoreBootstrap() {
     const { data: sub } = sb.auth.onAuthStateChange(
       (event: AuthChangeEvent, session: Session | null) => {
       if (event === "SIGNED_OUT") {
+        localStorage.removeItem(NO_REMEMBER_KEY);
         useStore.getState().resetStore();
         router.replace("/login");
         return;
