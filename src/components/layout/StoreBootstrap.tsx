@@ -1,31 +1,60 @@
 "use client";
 
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 import { useStore } from "@/lib/store";
-import { readLegacyDb } from "@/lib/migrate";
-import { buildDemoDb } from "@/lib/demo";
-import { useHydrated } from "@/hooks/useHydrated";
+import { supabaseBrowser } from "@/lib/supabase/browser";
+import { fetchAllForUser } from "@/lib/supabase/data";
 
+/**
+ * Hydrates the local zustand cache from Supabase once a session exists,
+ * and tracks auth state changes (sign-out clears the store + redirects home).
+ */
 export function StoreBootstrap() {
-  const hydrated = useHydrated();
+  const router = useRouter();
 
   useEffect(() => {
-    if (!hydrated) return;
-    const state = useStore.getState();
-    if (state.migrationSource) return;
-    const isEmpty =
-      state.db.establishments.length === 0 && state.db.lots.length === 0;
-    if (!isEmpty) {
-      useStore.setState({ migrationSource: "empty" });
-      return;
-    }
-    const legacy = readLegacyDb();
-    if (legacy) {
-      useStore.setState({ db: legacy, migrationSource: "legacy" });
-    } else {
-      useStore.setState({ db: buildDemoDb(), migrationSource: "demo" });
-    }
-  }, [hydrated]);
+    const sb = supabaseBrowser();
+    let cancelled = false;
+
+    const hydrate = async (userId: string | null) => {
+      if (!userId) {
+        useStore.getState().resetStore();
+        return;
+      }
+      useStore.getState().setUserId(userId);
+      try {
+        const db = await fetchAllForUser(userId);
+        if (cancelled) return;
+        useStore.setState({ db, hydrated: true });
+      } catch (e) {
+        console.error("[session-hydrate]", e);
+        useStore.setState({ hydrated: true });
+      }
+    };
+
+    (async () => {
+      const { data } = await sb.auth.getUser();
+      void hydrate(data.user?.id ?? null);
+    })();
+
+    const { data: sub } = sb.auth.onAuthStateChange(
+      (event: AuthChangeEvent, session: Session | null) => {
+      if (event === "SIGNED_OUT") {
+        useStore.getState().resetStore();
+        router.replace("/");
+        return;
+      }
+      void hydrate(session?.user?.id ?? null);
+    },
+    );
+
+    return () => {
+      cancelled = true;
+      sub.subscription.unsubscribe();
+    };
+  }, [router]);
 
   return null;
 }

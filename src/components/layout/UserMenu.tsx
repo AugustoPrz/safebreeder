@@ -1,8 +1,11 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { useStore } from "@/lib/store";
-import type { UserProfile, UserRole } from "@/lib/types";
+import { useProfile } from "@/hooks/useProfile";
+import { supabaseBrowser } from "@/lib/supabase/browser";
+import type { ProfileRow } from "@/lib/supabase/types";
+import type { UserRole } from "@/lib/types";
 
 const ROLES: { value: UserRole; label: string }[] = [
   { value: "veterinario", label: "Veterinario" },
@@ -13,9 +16,8 @@ const ROLES: { value: UserRole; label: string }[] = [
 ];
 
 export function UserMenu({ compact = false }: { compact?: boolean } = {}) {
-  const profile = useStore((s) => s.profile);
-  const setProfile = useStore((s) => s.setProfile);
-  const logout = useStore((s) => s.logout);
+  const router = useRouter();
+  const { profile, update } = useProfile();
 
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -30,9 +32,13 @@ export function UserMenu({ compact = false }: { compact?: boolean } = {}) {
     return () => document.removeEventListener("mousedown", onDown);
   }, [open]);
 
-  useEffect(() => {
-    if (!profile && open) setEditing(true);
-  }, [profile, open]);
+  const handleLogout = async () => {
+    const sb = supabaseBrowser();
+    await sb.auth.signOut();
+    setOpen(false);
+    router.replace("/");
+    router.refresh();
+  };
 
   const initial = profile?.name?.trim().charAt(0).toUpperCase() || "?";
 
@@ -58,10 +64,10 @@ export function UserMenu({ compact = false }: { compact?: boolean } = {}) {
           </span>
           <span className="flex-1 min-w-0">
             <span className="block text-sm font-medium text-text truncate">
-              {profile?.name || "Iniciar sesión"}
+              {profile?.name || "Mi cuenta"}
             </span>
             <span className="block text-[11px] text-text-muted truncate">
-              {profile?.email || "Configurar perfil"}
+              {profile?.email || ""}
             </span>
           </span>
         </button>
@@ -75,27 +81,23 @@ export function UserMenu({ compact = false }: { compact?: boolean } = {}) {
               : "absolute bottom-full left-0 right-0 mb-2 bg-surface border border-border rounded-xl shadow-lg p-3 z-50"
           }
         >
-          {editing || !profile ? (
+          {editing && profile ? (
             <ProfileForm
               initial={profile}
-              onSave={(p) => {
-                setProfile(p);
+              onSave={async (patch) => {
+                await update(patch);
                 setEditing(false);
               }}
-              onCancel={() => {
-                if (profile) setEditing(false);
-                else setOpen(false);
-              }}
+              onCancel={() => setEditing(false)}
             />
-          ) : (
+          ) : profile ? (
             <ProfileView
               profile={profile}
               onEdit={() => setEditing(true)}
-              onLogout={() => {
-                logout();
-                setOpen(false);
-              }}
+              onLogout={handleLogout}
             />
+          ) : (
+            <div className="text-sm text-text-muted">Cargando perfil…</div>
           )}
         </div>
       ) : null}
@@ -108,21 +110,33 @@ function ProfileView({
   onEdit,
   onLogout,
 }: {
-  profile: UserProfile;
+  profile: ProfileRow;
   onEdit: () => void;
   onLogout: () => void;
 }) {
   const roleLabel = ROLES.find((r) => r.value === profile.role)?.label;
+  const planLabel = profile.plan
+    ? profile.plan.charAt(0).toUpperCase() + profile.plan.slice(1)
+    : null;
   return (
     <div className="space-y-3">
       <div>
-        <div className="text-sm font-semibold text-text">{profile.name}</div>
+        <div className="text-sm font-semibold text-text">
+          {profile.name ?? "Sin nombre"}
+        </div>
         <div className="text-xs text-text-muted">{profile.email}</div>
-        {roleLabel ? (
-          <div className="mt-1.5 inline-flex text-[11px] px-2 py-0.5 rounded-full bg-primary-soft text-primary-soft-text font-medium">
-            {roleLabel}
-          </div>
-        ) : null}
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+          {roleLabel ? (
+            <span className="inline-flex text-[11px] px-2 py-0.5 rounded-full bg-primary-soft text-primary-soft-text font-medium">
+              {roleLabel}
+            </span>
+          ) : null}
+          {planLabel ? (
+            <span className="inline-flex text-[11px] px-2 py-0.5 rounded-full bg-surface-2 text-text-muted font-medium">
+              Plan {planLabel}
+            </span>
+          ) : null}
+        </div>
       </div>
       <div className="flex gap-2">
         <button
@@ -149,22 +163,26 @@ function ProfileForm({
   onSave,
   onCancel,
 }: {
-  initial: UserProfile | null;
-  onSave: (p: UserProfile) => void;
+  initial: ProfileRow;
+  onSave: (patch: Partial<Omit<ProfileRow, "id">>) => Promise<void>;
   onCancel: () => void;
 }) {
-  const [name, setName] = useState(initial?.name ?? "");
-  const [email, setEmail] = useState(initial?.email ?? "");
-  const [role, setRole] = useState<UserRole | "">(initial?.role ?? "");
+  const [name, setName] = useState(initial.name ?? "");
+  const [role, setRole] = useState<UserRole | "">(initial.role ?? "");
+  const [submitting, setSubmitting] = useState(false);
 
-  const submit = (e: FormEvent) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !email.trim()) return;
-    onSave({
-      name: name.trim(),
-      email: email.trim(),
-      role: role || undefined,
-    });
+    if (!name.trim()) return;
+    setSubmitting(true);
+    try {
+      await onSave({
+        name: name.trim(),
+        role: role || null,
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const input =
@@ -191,11 +209,9 @@ function ProfileForm({
         </span>
         <input
           type="email"
-          className={input}
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="tu@email.com"
-          required
+          className={`${input} opacity-60 cursor-not-allowed`}
+          value={initial.email ?? ""}
+          readOnly
         />
       </label>
       <label className="block">
@@ -225,9 +241,10 @@ function ProfileForm({
         </button>
         <button
           type="submit"
-          className="flex-1 h-9 text-xs font-medium rounded-md bg-primary text-white hover:bg-primary-hover"
+          disabled={submitting}
+          className="flex-1 h-9 text-xs font-medium rounded-md bg-primary text-white hover:bg-primary-hover disabled:opacity-60"
         >
-          Guardar
+          {submitting ? "Guardando…" : "Guardar"}
         </button>
       </div>
     </form>

@@ -32,13 +32,13 @@ export default function LandingPage() {
           </nav>
           <div className="flex items-center gap-3 sm:gap-4">
             <Link
-              href="/establishments"
+              href="/login"
               className="hidden sm:inline text-sm font-medium text-white/85 hover:text-white transition-colors"
             >
               Iniciar sesión
             </Link>
             <Link
-              href="/establishments"
+              href="/signup"
               className="inline-flex items-center gap-2 h-10 px-4 rounded-full bg-primary text-white text-sm font-semibold hover:bg-primary-hover transition-colors"
             >
               Probar gratis
@@ -69,7 +69,7 @@ export default function LandingPage() {
               en tiempo real desde cualquier lugar.
             </p>
             <Link
-              href="/establishments"
+              href="/signup"
               className="inline-flex items-center gap-2 h-12 px-5 rounded-full bg-white text-text text-sm font-semibold hover:bg-surface transition-colors"
             >
               Probar gratis

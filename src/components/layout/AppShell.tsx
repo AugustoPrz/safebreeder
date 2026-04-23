@@ -6,9 +6,17 @@ import { ReactNode } from "react";
 import { t } from "@/lib/i18n";
 import { useStore } from "@/lib/store";
 import { useHydrated } from "@/hooks/useHydrated";
-import { DataMenu } from "./DataMenu";
 import { StoreBootstrap } from "./StoreBootstrap";
 import { UserMenu } from "./UserMenu";
+
+const BARE_ROUTES = [
+  "/",
+  "/login",
+  "/signup",
+  "/forgot-password",
+  "/reset-password",
+  "/onboarding",
+];
 
 const navItems = [
   {
@@ -17,6 +25,7 @@ const navItems = [
     icon: EstablishmentsIcon,
   },
   { href: "/dashboard", label: t.nav.dashboard, icon: DashboardIcon },
+  { href: "/plans", label: t.nav.plans, icon: PlansIcon },
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -24,8 +33,13 @@ export function AppShell({ children }: { children: ReactNode }) {
   const hydrated = useHydrated();
   const establishments = useStore((s) => s.db.establishments);
 
-  if (pathname === "/") {
-    return <>{children}</>;
+  if (BARE_ROUTES.includes(pathname)) {
+    return (
+      <>
+        <StoreBootstrap />
+        {children}
+      </>
+    );
   }
 
   const isActive = (href: string) =>
@@ -91,9 +105,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           })}
         </nav>
 
-        <div className="p-2 border-t border-border flex items-center gap-1">
+        <div className="p-2 border-t border-border">
           <UserMenu />
-          <DataMenu openUp />
         </div>
       </aside>
 
@@ -106,10 +119,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 {t.brand}
               </div>
             </Link>
-            <div className="flex items-center gap-1">
-              <UserMenu compact />
-              <DataMenu />
-            </div>
+            <UserMenu compact />
           </div>
         </header>
 
@@ -120,7 +130,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       {/* Mobile bottom nav */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-surface border-t border-border">
-        <div className="grid grid-cols-2 h-16">
+        <div className="grid grid-cols-3 h-16">
           {navItems.map((item) => {
             const active = isActive(item.href);
             const Icon = item.icon;
@@ -183,6 +193,23 @@ function DashboardIcon(props: { className?: string }) {
       <rect x="14" y="3" width="7" height="5" rx="1" />
       <rect x="14" y="12" width="7" height="9" rx="1" />
       <rect x="3" y="16" width="7" height="5" rx="1" />
+    </svg>
+  );
+}
+
+function PlansIcon(props: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z" />
+      <circle cx="7" cy="7" r="1.5" />
     </svg>
   );
 }
