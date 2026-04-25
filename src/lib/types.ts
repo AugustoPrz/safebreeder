@@ -83,11 +83,15 @@ export type VaccineType =
   | "clostridial"
   | "leptospirosis";
 
-export interface Vaccine {
+export interface VaccineRow {
   date: string;
   type: VaccineType | "";
   brand: string;
-  notes: string;
+  dose: string;
+}
+
+export interface VaccineRecord {
+  rows: VaccineRow[];
 }
 
 export type MonthKey = string;
@@ -98,7 +102,7 @@ export interface DB {
   hpg: Record<string, Record<MonthKey, HpgRecord>>;
   treatments: Record<string, Record<MonthKey, Treatment>>;
   weights: Record<string, Record<MonthKey, WeightRecord>>;
-  vaccines: Record<string, Record<MonthKey, Vaccine>>;
+  vaccines: Record<string, Record<MonthKey, VaccineRecord>>;
 }
 
 export const emptyDb: DB = {

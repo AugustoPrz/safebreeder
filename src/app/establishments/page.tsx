@@ -7,6 +7,7 @@ import { Card, CardBody } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Modal } from "@/components/ui/Modal";
 import { EstablishmentForm } from "@/components/forms/EstablishmentForm";
+import { EstablishmentsMap } from "@/components/EstablishmentsMap";
 import { useEstablishments } from "@/hooks/useDb";
 import { useStore } from "@/lib/store";
 import { t } from "@/lib/i18n";
@@ -54,7 +55,9 @@ export default function EstablishmentsPage() {
           />
         </Card>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <>
+          <EstablishmentsMap establishments={establishments} />
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {establishments.map((est) => {
             const count = lotCount(est.id);
             return (
@@ -123,7 +126,8 @@ export default function EstablishmentsPage() {
               </Card>
             );
           })}
-        </div>
+          </div>
+        </>
       )}
 
       <Modal

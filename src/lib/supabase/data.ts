@@ -8,7 +8,7 @@ import {
   type HpgRow as HpgTableRow,
   type LotRow,
   type TreatmentRow,
-  type VaccineRow,
+  type VaccineRow as VaccineTableRow,
   type WeightRow as WeightTableRow,
 } from "./types";
 import type {
@@ -17,7 +17,7 @@ import type {
   HpgRecord,
   Lot,
   Treatment,
-  Vaccine,
+  VaccineRecord,
   WeightRecord,
 } from "@/lib/types";
 import { emptyDb } from "@/lib/types";
@@ -86,9 +86,16 @@ export async function fetchAllForUser(userId: string): Promise<DB> {
   }
 
   const vaccines: DB["vaccines"] = {};
-  for (const row of (vRes.data ?? []) as VaccineRow[]) {
+  for (const row of (vRes.data ?? []) as VaccineTableRow[]) {
     vaccines[row.lot_id] ??= {};
-    vaccines[row.lot_id][row.month_key] = row.data;
+    // Backward-compat: row.data may be the legacy single-vaccine shape.
+    // Coerce to { rows: [...] } when needed.
+    const data = row.data as unknown;
+    if (data && typeof data === "object" && Array.isArray((data as { rows?: unknown }).rows)) {
+      vaccines[row.lot_id][row.month_key] = data as VaccineRecord;
+    } else {
+      vaccines[row.lot_id][row.month_key] = { rows: [] };
+    }
   }
 
   return { establishments, lots, hpg, weights, treatments, vaccines };
@@ -251,7 +258,7 @@ export async function upsertTreatment(
 export async function upsertVaccine(
   lotId: string,
   monthKey: string,
-  data: Vaccine,
+  data: VaccineRecord,
 ) {
   const sb = supabaseBrowser();
   const { error } = await sb.from("vaccines").upsert({

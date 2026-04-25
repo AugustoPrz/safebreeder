@@ -4,7 +4,7 @@ import type {
   LotCategory,
   Treatment,
   UserRole,
-  Vaccine,
+  VaccineRecord,
   WeightRecord,
 } from "@/lib/types";
 
@@ -68,7 +68,7 @@ export interface TreatmentRow {
 export interface VaccineRow {
   lot_id: string;
   month_key: string;
-  data: Vaccine;
+  data: VaccineRecord;
   updated_at: string;
 }
 

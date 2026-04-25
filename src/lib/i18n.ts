@@ -141,6 +141,8 @@ export const t = {
     date: "Fecha",
     type: "Vacuna",
     brand: "Nombre comercial",
+    dose: "Dosis",
+    addAnother: "Agregar vacuna",
     types: {
       complejoRespiratorio: "Complejo respiratorio",
       complejoRespiratorioQuerato: "Complejo respiratorio + Querato",
