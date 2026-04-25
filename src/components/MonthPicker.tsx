@@ -8,6 +8,7 @@ export interface MonthData {
   hpg: boolean;
   treatment: boolean;
   weights: boolean;
+  vaccines: boolean;
 }
 
 interface Props {
@@ -112,13 +113,14 @@ export function MonthPicker({ value, onChange, dataByMonth }: Props) {
             {t.months.map((label, idx) => {
               const key = monthKey(viewYear, idx);
               const data = dataByMonth[key];
-              const has = data && (data.hpg || data.treatment || data.weights);
+              const has = data && (data.hpg || data.treatment || data.weights || data.vaccines);
               const selected =
                 parsed.year === viewYear && parsed.month === idx;
               const parts: string[] = [];
               if (data?.hpg) parts.push("HPG");
               if (data?.treatment) parts.push("Tratamiento");
               if (data?.weights) parts.push("Pesadas");
+              if (data?.vaccines) parts.push("Vacunas");
               const title = has
                 ? parts.join(" · ")
                 : "Sin datos";

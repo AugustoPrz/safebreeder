@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="x-apple-disable-message-reformatting" />
+    <title>Confirmá tu cuenta — Safebreeder</title>
+    <style>
+      /* client-specific resets */
+      body,table,td,a { -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; }
+      table,td { mso-table-lspace:0pt; mso-table-rspace:0pt; }
+      img { -ms-interpolation-mode:bicubic; border:0; height:auto; line-height:100%; outline:none; text-decoration:none; }
+      body { margin:0 !important; padding:0 !important; width:100% !important; background:#fafaf7; }
+      a { color:#4d7c2a; text-decoration:none; }
+      @media (prefers-color-scheme: dark) {
+        body { background:#fafaf7 !important; }
+      }
+      @media only screen and (max-width:600px) {
+        .container { width:100% !important; padding-left:16px !important; padding-right:16px !important; }
+        .card { padding:32px 24px !important; }
+        .h1 { font-size:26px !important; line-height:1.2 !important; }
+        .cta { padding:14px 28px !important; font-size:15px !important; }
+      }
+    </style>
+  </head>
+  <body style="margin:0; padding:0; background:#fafaf7; font-family:'Inter','Helvetica Neue',Helvetica,Arial,sans-serif; color:#1f2518;">
+    <!-- Preheader (hidden) -->
+    <div style="display:none; max-height:0; overflow:hidden; mso-hide:all;">
+      Confirmá tu cuenta para empezar a usar Safebreeder.
+    </div>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fafaf7;">
+      <tr>
+        <td align="center" style="padding:32px 16px;">
+          <table role="presentation" class="container" width="560" cellpadding="0" cellspacing="0" border="0" style="width:560px; max-width:560px;">
+
+            <!-- Logo -->
+            <tr>
+              <td align="center" style="padding:8px 0 28px 0;">
+                <div style="font-family:'Inter','Helvetica Neue',Arial,sans-serif; font-weight:900; font-size:18px; letter-spacing:3px; color:#4d7c2a; text-transform:uppercase;">
+                  Safebreeder
+                </div>
+              </td>
+            </tr>
+
+            <!-- Card -->
+            <tr>
+              <td class="card" style="background:#ffffff; border:1px solid #e3e6dc; border-radius:16px; padding:44px 40px; box-shadow:0 1px 2px rgba(31,37,24,0.05);">
+
+                <h1 class="h1" style="margin:0 0 12px 0; font-family:'Inter','Helvetica Neue',Arial,sans-serif; font-size:30px; line-height:1.15; font-weight:700; letter-spacing:-0.015em; color:#1f2518;">
+                  Confirmá tu cuenta
+                </h1>
+                <p style="margin:0 0 28px 0; font-size:15px; line-height:1.55; color:#6b6f5d;">
+                  Gracias por registrarte en Safebreeder. Para empezar a cargar establecimientos, lotes y datos sanitarios, confirmá tu email haciendo clic en el botón.
+                </p>
+
+                <!-- CTA button (bulletproof for Outlook) -->
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td align="center" bgcolor="#4d7c2a" style="border-radius:999px;">
+                      <!--[if mso]>
+                      <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{ .ConfirmationURL }}" style="height:48px; v-text-anchor:middle; width:220px;" arcsize="50%" strokecolor="#4d7c2a" fillcolor="#4d7c2a">
+                        <w:anchorlock/>
+                        <center style="color:#ffffff; font-family:Arial,sans-serif; font-size:15px; font-weight:600;">Confirmar email</center>
+                      </v:roundrect>
+                      <![endif]-->
+                      <!--[if !mso]><!-- -->
+                      <a class="cta" href="{{ .ConfirmationURL }}" target="_blank"
+                         style="display:inline-block; background:#4d7c2a; color:#ffffff !important; font-family:'Inter','Helvetica Neue',Arial,sans-serif; font-size:15px; font-weight:600; line-height:1; padding:16px 36px; border-radius:999px; text-decoration:none; letter-spacing:0.01em;">
+                        Confirmar email
+                      </a>
+                      <!--<![endif]-->
+                    </td>
+                  </tr>
+                </table>
+
+                <!-- Fallback link -->
+                <p style="margin:32px 0 0 0; font-size:13px; line-height:1.6; color:#6b6f5d;">
+                  ¿No funciona el botón? Copiá y pegá este link en tu navegador:
+                </p>
+                <p style="margin:6px 0 0 0; font-size:13px; line-height:1.5; word-break:break-all;">
+                  <a href="{{ .ConfirmationURL }}" style="color:#4d7c2a; text-decoration:underline;">{{ .ConfirmationURL }}</a>
+                </p>
+
+                <hr style="border:0; border-top:1px solid #e3e6dc; margin:32px 0;" />
+
+                <p style="margin:0; font-size:12px; line-height:1.55; color:#6b6f5d;">
+                  Si no creaste una cuenta en Safebreeder, ignorá este mensaje — el link expira automáticamente.
+                </p>
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td align="center" style="padding:24px 8px 8px 8px;">
+                <p style="margin:0; font-size:12px; line-height:1.5; color:#6b6f5d;">
+                  Safebreeder · Gestión sanitaria y productiva del ganado
+                </p>
+              </td>
+            </tr>
+
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

@@ -4,6 +4,7 @@ import type {
   LotCategory,
   Treatment,
   UserRole,
+  Vaccine,
   WeightRecord,
 } from "@/lib/types";
 
@@ -64,6 +65,13 @@ export interface TreatmentRow {
   updated_at: string;
 }
 
+export interface VaccineRow {
+  lot_id: string;
+  month_key: string;
+  data: Vaccine;
+  updated_at: string;
+}
+
 // We deliberately leave Insert/Update loose so that patch-style updates and
 // partial inserts don't need casts at every call site. The runtime validation
 // lives in Postgres (via the schema + RLS).
@@ -83,6 +91,7 @@ export interface Database {
       hpg_records: Table<HpgRow>;
       weight_records: Table<WeightRow>;
       treatments: Table<TreatmentRow>;
+      vaccines: Table<VaccineRow>;
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

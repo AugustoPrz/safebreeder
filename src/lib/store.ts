@@ -9,6 +9,7 @@ import type {
   Lot,
   MonthKey,
   Treatment,
+  Vaccine,
   WeightRecord,
   WeightRow,
 } from "./types";
@@ -52,6 +53,13 @@ interface StoreState {
     patch: Partial<Treatment>,
   ) => void;
 
+  setVaccine: (lotId: string, monthKey: MonthKey, v: Vaccine) => void;
+  updateVaccine: (
+    lotId: string,
+    monthKey: MonthKey,
+    patch: Partial<Vaccine>,
+  ) => void;
+
   setWeightMonth: (
     lotId: string,
     monthKey: MonthKey,
@@ -85,6 +93,10 @@ function uuid(): string {
     Math.random().toString(36).slice(2, 10) +
     Math.random().toString(36).slice(2, 10)
   );
+}
+
+function emptyVaccine(): Vaccine {
+  return { date: "", type: "", brand: "", notes: "" };
 }
 
 function emptyTreatment(): Treatment {
@@ -162,6 +174,7 @@ export const useStore = create<StoreState>()((set, get) => ({
           hpg: filterRec(s.db.hpg),
           treatments: filterRec(s.db.treatments),
           weights: filterRec(s.db.weights),
+          vaccines: filterRec(s.db.vaccines),
         },
       };
     });
@@ -193,6 +206,7 @@ export const useStore = create<StoreState>()((set, get) => ({
       const { [id]: _h, ...hpg } = s.db.hpg;
       const { [id]: _t, ...treatments } = s.db.treatments;
       const { [id]: _w, ...weights } = s.db.weights;
+      const { [id]: _v, ...vaccines } = s.db.vaccines;
       return {
         db: {
           ...s.db,
@@ -200,6 +214,7 @@ export const useStore = create<StoreState>()((set, get) => ({
           hpg,
           treatments,
           weights,
+          vaccines,
         },
       };
     });
@@ -330,6 +345,40 @@ export const useStore = create<StoreState>()((set, get) => ({
       },
     }));
     if (get().userId) swallow(remote.upsertTreatment(lotId, monthKey, updated));
+  },
+
+  setVaccine: (lotId, monthKey, vaccine) => {
+    set((s) => ({
+      db: {
+        ...s.db,
+        vaccines: {
+          ...s.db.vaccines,
+          [lotId]: {
+            ...(s.db.vaccines[lotId] ?? {}),
+            [monthKey]: vaccine,
+          },
+        },
+      },
+    }));
+    if (get().userId) swallow(remote.upsertVaccine(lotId, monthKey, vaccine));
+  },
+
+  updateVaccine: (lotId, monthKey, patch) => {
+    const existing = get().db.vaccines[lotId]?.[monthKey] ?? emptyVaccine();
+    const updated: Vaccine = { ...existing, ...patch };
+    set((s) => ({
+      db: {
+        ...s.db,
+        vaccines: {
+          ...s.db.vaccines,
+          [lotId]: {
+            ...(s.db.vaccines[lotId] ?? {}),
+            [monthKey]: updated,
+          },
+        },
+      },
+    }));
+    if (get().userId) swallow(remote.upsertVaccine(lotId, monthKey, updated));
   },
 
   setWeightMonth: (lotId, monthKey, record) => {

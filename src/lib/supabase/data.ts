@@ -8,6 +8,7 @@ import {
   type HpgRow as HpgTableRow,
   type LotRow,
   type TreatmentRow,
+  type VaccineRow,
   type WeightRow as WeightTableRow,
 } from "./types";
 import type {
@@ -16,6 +17,7 @@ import type {
   HpgRecord,
   Lot,
   Treatment,
+  Vaccine,
   WeightRecord,
 } from "@/lib/types";
 import { emptyDb } from "@/lib/types";
@@ -47,15 +49,17 @@ export async function fetchAllForUser(userId: string): Promise<DB> {
     return { ...emptyDb, establishments, lots };
   }
 
-  const [hpgRes, wRes, tRes] = await Promise.all([
+  const [hpgRes, wRes, tRes, vRes] = await Promise.all([
     sb.from("hpg_records").select("*").in("lot_id", lotIds),
     sb.from("weight_records").select("*").in("lot_id", lotIds),
     sb.from("treatments").select("*").in("lot_id", lotIds),
+    sb.from("vaccines").select("*").in("lot_id", lotIds),
   ]);
 
   if (hpgRes.error) throw hpgRes.error;
   if (wRes.error) throw wRes.error;
   if (tRes.error) throw tRes.error;
+  if (vRes.error) throw vRes.error;
 
   const hpg: DB["hpg"] = {};
   for (const row of (hpgRes.data ?? []) as HpgTableRow[]) {
@@ -81,7 +85,13 @@ export async function fetchAllForUser(userId: string): Promise<DB> {
     treatments[row.lot_id][row.month_key] = row.data;
   }
 
-  return { establishments, lots, hpg, weights, treatments };
+  const vaccines: DB["vaccines"] = {};
+  for (const row of (vRes.data ?? []) as VaccineRow[]) {
+    vaccines[row.lot_id] ??= {};
+    vaccines[row.lot_id][row.month_key] = row.data;
+  }
+
+  return { establishments, lots, hpg, weights, treatments, vaccines };
 }
 
 export async function insertEstablishment(
@@ -231,6 +241,20 @@ export async function upsertTreatment(
 ) {
   const sb = supabaseBrowser();
   const { error } = await sb.from("treatments").upsert({
+    lot_id: lotId,
+    month_key: monthKey,
+    data,
+  });
+  if (error) throw error;
+}
+
+export async function upsertVaccine(
+  lotId: string,
+  monthKey: string,
+  data: Vaccine,
+) {
+  const sb = supabaseBrowser();
+  const { error } = await sb.from("vaccines").upsert({
     lot_id: lotId,
     month_key: monthKey,
     data,

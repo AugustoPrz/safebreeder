@@ -76,6 +76,20 @@ export interface WeightRecord {
   notes: string;
 }
 
+export type VaccineType =
+  | "complejoRespiratorio"
+  | "complejoRespiratorioQuerato"
+  | "queratoconjuntivitis"
+  | "clostridial"
+  | "leptospirosis";
+
+export interface Vaccine {
+  date: string;
+  type: VaccineType | "";
+  brand: string;
+  notes: string;
+}
+
 export type MonthKey = string;
 
 export interface DB {
@@ -84,6 +98,7 @@ export interface DB {
   hpg: Record<string, Record<MonthKey, HpgRecord>>;
   treatments: Record<string, Record<MonthKey, Treatment>>;
   weights: Record<string, Record<MonthKey, WeightRecord>>;
+  vaccines: Record<string, Record<MonthKey, Vaccine>>;
 }
 
 export const emptyDb: DB = {
@@ -92,4 +107,5 @@ export const emptyDb: DB = {
   hpg: {},
   treatments: {},
   weights: {},
+  vaccines: {},
 };

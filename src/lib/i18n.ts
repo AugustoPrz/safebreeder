@@ -135,6 +135,21 @@ export const t = {
     },
   },
 
+  vaccines: {
+    title: "Vacunas",
+    subtitle: "Plan de vacunación del mes",
+    date: "Fecha",
+    type: "Vacuna",
+    brand: "Nombre comercial",
+    types: {
+      complejoRespiratorio: "Complejo respiratorio",
+      complejoRespiratorioQuerato: "Complejo respiratorio + Querato",
+      queratoconjuntivitis: "Queratoconjuntivitis",
+      clostridial: "Clostridial",
+      leptospirosis: "Leptospirosis",
+    },
+  },
+
   weights: {
     title: "Pesadas",
     subtitle: "Seguimiento de peso y ganancia diaria",
