@@ -26,6 +26,10 @@ export function generateLotReport(
   const hpg = db.hpg[lotId]?.[monthKey];
   const treatment = db.treatments[lotId]?.[monthKey];
   const weights = db.weights[lotId]?.[monthKey];
+  const vaccines = db.vaccines[lotId]?.[monthKey];
+  const vaccineRows = (vaccines?.rows ?? []).filter(
+    (r) => r.date || r.type || r.brand || r.dose,
+  );
   const prevKey = previousMonthKey(monthKey);
   const prevWeights = prevKey ? db.weights[lotId]?.[prevKey] : undefined;
 
@@ -105,7 +109,49 @@ export function generateLotReport(
     y = emptyNote(doc, y, margin);
   }
 
+  // Vaccines section
+  if (y > 720) {
+    doc.addPage();
+    y = margin;
+  }
+  y = sectionTitle(doc, t.report.sectionVaccines, y, margin);
+  if (vaccineRows.length > 0) {
+    autoTable(doc, {
+      startY: y,
+      styles: { fontSize: 9, cellPadding: 4 },
+      headStyles: {
+        fillColor: [77, 124, 42],
+        textColor: [255, 255, 255],
+        fontStyle: "bold",
+      },
+      head: [
+        [
+          t.vaccines.date,
+          t.vaccines.type,
+          t.vaccines.brand,
+          t.vaccines.dose,
+        ],
+      ],
+      body: vaccineRows.map((r) => [
+        r.date || "—",
+        r.type !== "" ? t.vaccines.types[r.type] : "—",
+        r.brand || "—",
+        r.dose || "—",
+      ]),
+      margin: { left: margin, right: margin },
+    });
+    y =
+      (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable
+        .finalY + 18;
+  } else {
+    y = emptyNote(doc, y, margin);
+  }
+
   // HPG section
+  if (y > 720) {
+    doc.addPage();
+    y = margin;
+  }
   y = sectionTitle(doc, t.report.sectionHpg, y, margin);
   if (hpg && hpg.rows.length > 0) {
     autoTable(doc, {

@@ -213,6 +213,7 @@ export const t = {
     lot: "Lote",
     period: "Período",
     sectionTreatment: "Tratamiento",
+    sectionVaccines: "Vacunas",
     sectionHpg: "HPG",
     sectionWeights: "Pesadas",
     emptyPeriod: "No hay datos cargados para este período.",

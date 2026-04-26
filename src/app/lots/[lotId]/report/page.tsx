@@ -28,6 +28,10 @@ export default function ReportPage() {
   const hpg = db.hpg[lotId]?.[month];
   const treatment = db.treatments[lotId]?.[month];
   const weights = db.weights[lotId]?.[month];
+  const vaccines = db.vaccines[lotId]?.[month];
+  const vaccineRows = (vaccines?.rows ?? []).filter(
+    (r) => r.date || r.type || r.brand || r.dose,
+  );
   const prevKey = previousMonthKey(month);
   const prevWeights = prevKey ? db.weights[lotId]?.[prevKey] : undefined;
 
@@ -85,6 +89,48 @@ export default function ReportPage() {
                 />
                 <Row label={t.common.observations} value={treatment.notes} />
               </dl>
+            ) : (
+              <EmptyNote />
+            )}
+          </Section>
+
+          <Section title={t.report.sectionVaccines}>
+            {vaccineRows.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead className="text-text-muted">
+                    <tr className="border-b border-border">
+                      <th className="text-left font-medium py-1.5 pr-3">
+                        {t.vaccines.date}
+                      </th>
+                      <th className="text-left font-medium py-1.5 pr-3">
+                        {t.vaccines.type}
+                      </th>
+                      <th className="text-left font-medium py-1.5 pr-3">
+                        {t.vaccines.brand}
+                      </th>
+                      <th className="text-left font-medium py-1.5">
+                        {t.vaccines.dose}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {vaccineRows.map((r, i) => (
+                      <tr
+                        key={i}
+                        className="border-b border-border/60 last:border-b-0"
+                      >
+                        <td className="py-1.5 pr-3">{r.date || "—"}</td>
+                        <td className="py-1.5 pr-3">
+                          {r.type !== "" ? t.vaccines.types[r.type] : "—"}
+                        </td>
+                        <td className="py-1.5 pr-3">{r.brand || "—"}</td>
+                        <td className="py-1.5">{r.dose || "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             ) : (
               <EmptyNote />
             )}
