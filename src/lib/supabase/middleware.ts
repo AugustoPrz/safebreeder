@@ -11,6 +11,8 @@ const PUBLIC_PREFIXES = [
   "/icon",
   "/opengraph-image",
   "/favicon",
+  // API endpoints that handle their own auth (Bearer tokens, etc.)
+  "/api/cron",
 ];
 
 const AUTH_ONLY_PREFIXES = ["/login", "/signup"];
