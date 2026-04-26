@@ -241,7 +241,6 @@ export const useStore = create<StoreState>()((set, get) => ({
     };
     const newRow: HpgRow = {
       tagId: row?.tagId ?? "",
-      weightKg: row?.weightKg ?? null,
       hpg: row?.hpg ?? null,
     };
     const updated: HpgRecord = { ...existing, rows: [...existing.rows, newRow] };

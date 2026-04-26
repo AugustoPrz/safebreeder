@@ -116,10 +116,9 @@ export function generateLotReport(
         textColor: [255, 255, 255],
         fontStyle: "bold",
       },
-      head: [[t.hpg.tagId, t.hpg.weight, t.hpg.value, t.hpg.level]],
+      head: [[t.hpg.tagId, t.hpg.value, t.hpg.level]],
       body: hpg.rows.map((r) => [
         r.tagId || "—",
-        r.weightKg !== null ? String(r.weightKg) : "—",
         r.hpg !== null ? String(r.hpg) : "—",
         levelLabel(r.hpg),
       ]),

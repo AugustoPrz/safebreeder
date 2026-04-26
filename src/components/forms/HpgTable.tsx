@@ -212,7 +212,6 @@ export function HpgTable({ lotId, monthKey }: Props) {
               <tr>
                 <th className="px-4 py-2.5 text-left w-10">#</th>
                 <th className="px-4 py-2.5 text-left">{t.hpg.tagId}</th>
-                <th className="px-4 py-2.5 text-left">{t.hpg.weight}</th>
                 <th className="px-4 py-2.5 text-left">{t.hpg.value}</th>
                 <th className="px-4 py-2.5 text-left">{t.hpg.level}</th>
                 <th className="px-4 py-2.5 w-14"></th>
@@ -222,7 +221,7 @@ export function HpgTable({ lotId, monthKey }: Props) {
               {record.rows.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={5}
                     className="px-4 py-8 text-center text-text-muted"
                   >
                     {t.common.empty}
@@ -247,19 +246,6 @@ export function HpgTable({ lotId, monthKey }: Props) {
                             })
                           }
                           placeholder="Ej: 123"
-                        />
-                      </td>
-                      <td className="px-2 py-1.5">
-                        <Input
-                          className="h-9"
-                          type="number"
-                          inputMode="decimal"
-                          value={row.weightKg ?? ""}
-                          onChange={(e) =>
-                            updateRow(lotId, monthKey, idx, {
-                              weightKg: parseNum(e.target.value),
-                            })
-                          }
                         />
                       </td>
                       <td className="px-2 py-1.5">
@@ -344,25 +330,13 @@ export function HpgTable({ lotId, monthKey }: Props) {
                       </svg>
                     </button>
                   </div>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 gap-2">
                     <Field label={t.hpg.tagId}>
                       <Input
                         value={row.tagId}
                         onChange={(e) =>
                           updateRow(lotId, monthKey, idx, {
                             tagId: e.target.value,
-                          })
-                        }
-                      />
-                    </Field>
-                    <Field label={t.hpg.weight}>
-                      <Input
-                        type="number"
-                        inputMode="decimal"
-                        value={row.weightKg ?? ""}
-                        onChange={(e) =>
-                          updateRow(lotId, monthKey, idx, {
-                            weightKg: parseNum(e.target.value),
                           })
                         }
                       />

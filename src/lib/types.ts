@@ -39,7 +39,6 @@ export interface Lot {
 
 export interface HpgRow {
   tagId: string;
-  weightKg: number | null;
   hpg: number | null;
 }
 
