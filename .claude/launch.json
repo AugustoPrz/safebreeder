@@ -3,9 +3,9 @@
   "configurations": [
     {
       "name": "safebreeder",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["--yes", "http-server", ".next/standalone", "-p", "3333"],
-      "port": 3333
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3000
     }
   ]
 }

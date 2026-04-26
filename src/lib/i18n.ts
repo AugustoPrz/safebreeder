@@ -106,6 +106,24 @@ export const t = {
     average: "Promedio",
     max: "Máximo",
     positives: "Positivos",
+    sampleDate: "Fecha de muestreo",
+    reminder: {
+      title: "Recordatorio del próximo muestreo",
+      helper: "Te avisamos a los 27 días — 3 días antes de cumplir el ciclo de 30.",
+      trigger: "Recordatorio",
+      addGoogle: "Google Calendar",
+      downloadIcs: "Descargar .ics (Apple / Outlook)",
+      eventTitle: (lotName: string) => `Muestreo HPG — ${lotName}`,
+      eventDescription: (params: {
+        lotName: string;
+        estName: string;
+        cycleDate: string;
+        lotUrl: string;
+      }) =>
+        `Recordatorio de muestreo HPG para el lote ${params.lotName} (${params.estName}).\n` +
+        `Se cumplen 30 días el ${params.cycleDate}.\n\n` +
+        `Cargá las muestras en Safebreeder:\n${params.lotUrl}`,
+    },
   },
 
   treatment: {

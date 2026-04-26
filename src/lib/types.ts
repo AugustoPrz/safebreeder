@@ -46,6 +46,8 @@ export interface HpgRow {
 export interface HpgRecord {
   rows: HpgRow[];
   notes: string;
+  /** ISO date string (YYYY-MM-DD) when the sampling actually happened. */
+  sampleDate?: string;
 }
 
 export type EctoLevel = "none" | "mild" | "moderate" | "severe";

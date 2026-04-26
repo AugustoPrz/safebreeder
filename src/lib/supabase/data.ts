@@ -67,6 +67,7 @@ export async function fetchAllForUser(userId: string): Promise<DB> {
     hpg[row.lot_id][row.month_key] = {
       rows: row.rows ?? [],
       notes: row.notes ?? "",
+      sampleDate: row.sample_date ?? undefined,
     };
   }
 
@@ -222,6 +223,7 @@ export async function upsertHpg(
     month_key: monthKey,
     rows: record.rows,
     notes: record.notes,
+    sample_date: record.sampleDate ?? null,
   });
   if (error) throw error;
 }

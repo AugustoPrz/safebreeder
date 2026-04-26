@@ -45,6 +45,11 @@ interface StoreState {
   ) => void;
   deleteHpgRow: (lotId: string, monthKey: MonthKey, index: number) => void;
   setHpgNotes: (lotId: string, monthKey: MonthKey, notes: string) => void;
+  setHpgSampleDate: (
+    lotId: string,
+    monthKey: MonthKey,
+    isoDate: string | null,
+  ) => void;
 
   setTreatment: (lotId: string, monthKey: MonthKey, t: Treatment) => void;
   updateTreatment: (
@@ -294,6 +299,27 @@ export const useStore = create<StoreState>()((set, get) => ({
       notes: "",
     };
     const updated: HpgRecord = { ...existing, notes };
+    set((s) => ({
+      db: {
+        ...s.db,
+        hpg: {
+          ...s.db.hpg,
+          [lotId]: { ...(s.db.hpg[lotId] ?? {}), [monthKey]: updated },
+        },
+      },
+    }));
+    if (get().userId) swallow(remote.upsertHpg(lotId, monthKey, updated));
+  },
+
+  setHpgSampleDate: (lotId, monthKey, isoDate) => {
+    const existing = get().db.hpg[lotId]?.[monthKey] ?? {
+      rows: [],
+      notes: "",
+    };
+    const updated: HpgRecord = {
+      ...existing,
+      sampleDate: isoDate ?? undefined,
+    };
     set((s) => ({
       db: {
         ...s.db,

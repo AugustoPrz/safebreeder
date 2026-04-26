@@ -47,6 +47,7 @@ export interface HpgRow {
   month_key: string;
   rows: HpgRecord["rows"];
   notes: string;
+  sample_date: string | null;
   updated_at: string;
 }
 
