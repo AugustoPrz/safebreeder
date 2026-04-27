@@ -158,6 +158,7 @@ export const t = {
     subtitle: "Plan de vacunación del mes",
     date: "Fecha",
     type: "Vacuna",
+    doseNumber: "N°",
     brand: "Nombre comercial",
     dose: "Dosis",
     addAnother: "Agregar vacuna",
@@ -167,6 +168,12 @@ export const t = {
       queratoconjuntivitis: "Queratoconjuntivitis",
       clostridial: "Clostridial",
       leptospirosis: "Leptospirosis",
+    },
+    doseNumbers: {
+      "1": "1ra dosis",
+      "2": "2da dosis",
+      "3": "3ra dosis",
+      refuerzo: "Refuerzo",
     },
   },
 
@@ -206,7 +213,7 @@ export const t = {
   },
 
   report: {
-    title: "Informe parasitológico",
+    title: "Informe sanitario",
     download: "Descargar PDF",
     generatedOn: "Generado el",
     establishment: "Establecimiento",

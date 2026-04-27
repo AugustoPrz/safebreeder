@@ -30,7 +30,7 @@ export default function ReportPage() {
   const weights = db.weights[lotId]?.[month];
   const vaccines = db.vaccines[lotId]?.[month];
   const vaccineRows = (vaccines?.rows ?? []).filter(
-    (r) => r.date || r.type || r.brand || r.dose,
+    (r) => r.date || r.type || r.doseNumber || r.brand || r.dose,
   );
   const prevKey = previousMonthKey(month);
   const prevWeights = prevKey ? db.weights[lotId]?.[prevKey] : undefined;
@@ -107,6 +107,9 @@ export default function ReportPage() {
                         {t.vaccines.type}
                       </th>
                       <th className="text-left font-medium py-1.5 pr-3">
+                        {t.vaccines.doseNumber}
+                      </th>
+                      <th className="text-left font-medium py-1.5 pr-3">
                         {t.vaccines.brand}
                       </th>
                       <th className="text-left font-medium py-1.5">
@@ -123,6 +126,11 @@ export default function ReportPage() {
                         <td className="py-1.5 pr-3">{r.date || "—"}</td>
                         <td className="py-1.5 pr-3">
                           {r.type !== "" ? t.vaccines.types[r.type] : "—"}
+                        </td>
+                        <td className="py-1.5 pr-3">
+                          {r.doseNumber
+                            ? t.vaccines.doseNumbers[r.doseNumber]
+                            : "—"}
                         </td>
                         <td className="py-1.5 pr-3">{r.brand || "—"}</td>
                         <td className="py-1.5">{r.dose || "—"}</td>

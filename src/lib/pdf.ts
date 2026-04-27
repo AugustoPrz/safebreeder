@@ -28,7 +28,7 @@ export function generateLotReport(
   const weights = db.weights[lotId]?.[monthKey];
   const vaccines = db.vaccines[lotId]?.[monthKey];
   const vaccineRows = (vaccines?.rows ?? []).filter(
-    (r) => r.date || r.type || r.brand || r.dose,
+    (r) => r.date || r.type || r.doseNumber || r.brand || r.dose,
   );
   const prevKey = previousMonthKey(monthKey);
   const prevWeights = prevKey ? db.weights[lotId]?.[prevKey] : undefined;
@@ -128,6 +128,7 @@ export function generateLotReport(
         [
           t.vaccines.date,
           t.vaccines.type,
+          t.vaccines.doseNumber,
           t.vaccines.brand,
           t.vaccines.dose,
         ],
@@ -135,6 +136,7 @@ export function generateLotReport(
       body: vaccineRows.map((r) => [
         r.date || "—",
         r.type !== "" ? t.vaccines.types[r.type] : "—",
+        r.doseNumber ? t.vaccines.doseNumbers[r.doseNumber] : "—",
         r.brand || "—",
         r.dose || "—",
       ]),

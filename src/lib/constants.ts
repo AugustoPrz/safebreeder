@@ -1,4 +1,4 @@
-import type { LotCategory, VaccineType } from "./types";
+import type { LotCategory, VaccineDoseNumber, VaccineType } from "./types";
 
 export const VACCINE_TYPES: VaccineType[] = [
   "complejoRespiratorio",
@@ -6,6 +6,13 @@ export const VACCINE_TYPES: VaccineType[] = [
   "queratoconjuntivitis",
   "clostridial",
   "leptospirosis",
+];
+
+export const VACCINE_DOSE_NUMBERS: VaccineDoseNumber[] = [
+  "1",
+  "2",
+  "3",
+  "refuerzo",
 ];
 
 export const LOT_CATEGORIES: LotCategory[] = [

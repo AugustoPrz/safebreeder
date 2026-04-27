@@ -3,7 +3,7 @@
 import { Card, CardBody } from "@/components/ui/Card";
 import { Field, Input, Select } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { VACCINE_TYPES } from "@/lib/constants";
+import { VACCINE_DOSE_NUMBERS, VACCINE_TYPES } from "@/lib/constants";
 import { useStore } from "@/lib/store";
 import { t } from "@/lib/i18n";
 import type { VaccineRecord, VaccineRow } from "@/lib/types";
@@ -13,7 +13,13 @@ interface Props {
   monthKey: string;
 }
 
-const emptyRow: VaccineRow = { date: "", type: "", brand: "", dose: "" };
+const emptyRow: VaccineRow = {
+  date: "",
+  type: "",
+  doseNumber: "",
+  brand: "",
+  dose: "",
+};
 
 export function VaccineForm({ lotId, monthKey }: Props) {
   const record =
@@ -49,7 +55,7 @@ export function VaccineForm({ lotId, monthKey }: Props) {
           return (
             <div
               key={idx}
-              className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1fr_auto] gap-3 items-end ${
+              className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1.4fr_auto_1fr_1fr_auto] gap-3 items-end ${
                 idx > 0
                   ? "pt-4 border-t border-border"
                   : ""
@@ -73,6 +79,24 @@ export function VaccineForm({ lotId, monthKey }: Props) {
                   {VACCINE_TYPES.map((v) => (
                     <option key={v} value={v}>
                       {t.vaccines.types[v]}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label={t.vaccines.doseNumber}>
+                <Select
+                  value={row.doseNumber ?? ""}
+                  onChange={(e) =>
+                    updateRow(idx, {
+                      doseNumber: e.target.value as VaccineRow["doseNumber"],
+                    })
+                  }
+                  className="lg:w-32"
+                >
+                  <option value="">—</option>
+                  {VACCINE_DOSE_NUMBERS.map((d) => (
+                    <option key={d} value={d}>
+                      {t.vaccines.doseNumbers[d]}
                     </option>
                   ))}
                 </Select>

@@ -84,9 +84,12 @@ export type VaccineType =
   | "clostridial"
   | "leptospirosis";
 
+export type VaccineDoseNumber = "1" | "2" | "3" | "refuerzo";
+
 export interface VaccineRow {
   date: string;
   type: VaccineType | "";
+  doseNumber: VaccineDoseNumber | "";
   brand: string;
   dose: string;
 }
