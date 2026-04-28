@@ -118,9 +118,8 @@ export function MonthPicker({ value, onChange, dataByMonth }: Props) {
                 parsed.year === viewYear && parsed.month === idx;
               const parts: string[] = [];
               if (data?.hpg) parts.push("HPG");
-              if (data?.treatment) parts.push("Tratamiento");
+              if (data?.treatment || data?.vaccines) parts.push("Tratamientos");
               if (data?.weights) parts.push("Pesadas");
-              if (data?.vaccines) parts.push("Vacunas");
               const title = has
                 ? parts.join(" · ")
                 : "Sin datos";
