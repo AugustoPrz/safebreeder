@@ -187,7 +187,7 @@ export const t = {
     caravana: "Caravana",
     origen: "Origen",
     sexo: "Sexo",
-    peso: "Peso (entrada/inicio)",
+    peso: "Peso inicial (kg)",
     tamano: "Tamaño",
     raza: "Raza",
     observaciones: "Observaciones",
