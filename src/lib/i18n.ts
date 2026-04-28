@@ -194,6 +194,8 @@ export const t = {
     addRow: "Agregar animal",
     deleteRow: "Eliminar animal",
     observationsPlaceholder: "Ej: Caravana Amarilla a los machos",
+    download: "Descargar CSV",
+    downloadHint: "Compatible con Excel y Google Sheets",
     sexes: {
       macho: "Macho",
       hembra: "Hembra",

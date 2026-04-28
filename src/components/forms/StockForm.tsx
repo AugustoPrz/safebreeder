@@ -9,6 +9,7 @@ import { useStore } from "@/lib/store";
 import { useLot } from "@/hooks/useDb";
 import { t } from "@/lib/i18n";
 import type { StockAnimal } from "@/lib/types";
+import { downloadStockCsv } from "@/lib/stockCsv";
 
 interface Props {
   lotId: string;
@@ -64,11 +65,39 @@ export function StockForm({ lotId }: Props) {
     setStock(lotId, { rows: next });
   };
 
+  const handleDownload = () => {
+    downloadStockCsv(displayRows, lot?.name ?? "stock");
+  };
+
   return (
     <Card>
-      <div className="px-5 pt-4 pb-3 border-b border-border">
-        <h2 className="font-semibold">{t.stock.title}</h2>
-        <p className="text-xs text-text-muted">{t.stock.subtitle}</p>
+      <div className="px-5 pt-4 pb-3 border-b border-border flex items-start justify-between gap-3">
+        <div>
+          <h2 className="font-semibold">{t.stock.title}</h2>
+          <p className="text-xs text-text-muted">{t.stock.subtitle}</p>
+        </div>
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={handleDownload}
+          type="button"
+          title={t.stock.downloadHint}
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="w-4 h-4 mr-1"
+          >
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          {t.stock.download}
+        </Button>
       </div>
 
       {/* Desktop / wide screens */}
