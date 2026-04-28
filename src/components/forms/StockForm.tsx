@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/Button";
-import { Card, CardBody } from "@/components/ui/Card";
+import { Card } from "@/components/ui/Card";
 import { Field, Input, Select } from "@/components/ui/Input";
 import { STOCK_BREEDS, STOCK_SEXES, STOCK_SIZES } from "@/lib/constants";
 import { useStore } from "@/lib/store";
@@ -37,9 +37,10 @@ export function StockForm({ lotId }: Props) {
   }, [record, lot?.headCount]);
 
   const rows = record?.rows ?? [];
-  const displayRows = rows.length > 0
-    ? rows
-    : Array.from({ length: seedCount }, () => ({ ...emptyAnimal }));
+  const displayRows =
+    rows.length > 0
+      ? rows
+      : Array.from({ length: seedCount }, () => ({ ...emptyAnimal }));
 
   // Persist the seed exactly once so add/delete/update behave consistently.
   useEffect(() => {
@@ -69,20 +70,185 @@ export function StockForm({ lotId }: Props) {
         <h2 className="font-semibold">{t.stock.title}</h2>
         <p className="text-xs text-text-muted">{t.stock.subtitle}</p>
       </div>
-      <CardBody className="space-y-4">
-        {displayRows.map((row, idx) => {
-          const canDelete = displayRows.length > 1;
-          return (
-            <div
-              key={idx}
-              className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto_1fr_auto_1.2fr_1.6fr_auto] gap-3 items-end ${
-                idx > 0 ? "pt-4 border-t border-border" : ""
-              }`}
-            >
+
+      {/* Desktop / wide screens */}
+      <div className="hidden md:block overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="bg-surface-2/60 text-text-muted text-xs uppercase tracking-wide">
+            <tr>
+              <th className="px-4 py-2.5 text-left w-10">#</th>
+              <th className="px-2 py-2.5 text-left">{t.stock.caravana}</th>
+              <th className="px-2 py-2.5 text-left">{t.stock.origen}</th>
+              <th className="px-2 py-2.5 text-left">{t.stock.sexo}</th>
+              <th className="px-2 py-2.5 text-left">{t.stock.peso}</th>
+              <th className="px-2 py-2.5 text-left">{t.stock.tamano}</th>
+              <th className="px-2 py-2.5 text-left">{t.stock.raza}</th>
+              <th className="px-2 py-2.5 text-left">{t.stock.observaciones}</th>
+              <th className="px-2 py-2.5 w-10"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {displayRows.map((row, idx) => (
+              <tr
+                key={idx}
+                className="border-t border-border hover:bg-surface-2/30 align-middle"
+              >
+                <td className="px-4 py-2 text-text-muted">{idx + 1}</td>
+                <td className="px-2 py-1.5">
+                  <Input
+                    className="h-9"
+                    value={row.caravana}
+                    onChange={(e) =>
+                      updateRow(idx, { caravana: e.target.value })
+                    }
+                  />
+                </td>
+                <td className="px-2 py-1.5">
+                  <Input
+                    className="h-9"
+                    value={row.origen}
+                    onChange={(e) =>
+                      updateRow(idx, { origen: e.target.value })
+                    }
+                  />
+                </td>
+                <td className="px-2 py-1.5">
+                  <Select
+                    className="h-9"
+                    value={row.sexo}
+                    onChange={(e) =>
+                      updateRow(idx, {
+                        sexo: e.target.value as StockAnimal["sexo"],
+                      })
+                    }
+                  >
+                    <option value="">—</option>
+                    {STOCK_SEXES.map((s) => (
+                      <option key={s} value={s}>
+                        {t.stock.sexes[s]}
+                      </option>
+                    ))}
+                  </Select>
+                </td>
+                <td className="px-2 py-1.5">
+                  <Input
+                    className="h-9"
+                    inputMode="decimal"
+                    value={row.peso}
+                    onChange={(e) => updateRow(idx, { peso: e.target.value })}
+                    placeholder="kg"
+                  />
+                </td>
+                <td className="px-2 py-1.5">
+                  <Select
+                    className="h-9"
+                    value={row.tamano}
+                    onChange={(e) =>
+                      updateRow(idx, {
+                        tamano: e.target.value as StockAnimal["tamano"],
+                      })
+                    }
+                  >
+                    <option value="">—</option>
+                    {STOCK_SIZES.map((s) => (
+                      <option key={s} value={s}>
+                        {t.stock.sizes[s]}
+                      </option>
+                    ))}
+                  </Select>
+                </td>
+                <td className="px-2 py-1.5">
+                  <Select
+                    className="h-9"
+                    value={row.raza}
+                    onChange={(e) =>
+                      updateRow(idx, {
+                        raza: e.target.value as StockAnimal["raza"],
+                      })
+                    }
+                  >
+                    <option value="">—</option>
+                    {STOCK_BREEDS.map((b) => (
+                      <option key={b} value={b}>
+                        {t.stock.breeds[b]}
+                      </option>
+                    ))}
+                  </Select>
+                </td>
+                <td className="px-2 py-1.5">
+                  <Input
+                    className="h-9"
+                    value={row.observaciones}
+                    onChange={(e) =>
+                      updateRow(idx, { observaciones: e.target.value })
+                    }
+                    placeholder={t.stock.observationsPlaceholder}
+                  />
+                </td>
+                <td className="px-2 py-1.5 text-center">
+                  <button
+                    type="button"
+                    onClick={() => deleteRow(idx)}
+                    disabled={displayRows.length <= 1}
+                    aria-label={t.stock.deleteRow}
+                    className="text-text-muted hover:text-clay inline-flex disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      className="w-4 h-4"
+                    >
+                      <path d="M3 6h18" />
+                      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                    </svg>
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Mobile */}
+      <div className="md:hidden divide-y divide-border">
+        {displayRows.map((row, idx) => (
+          <div key={idx} className="p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-text-muted">
+                #{idx + 1}
+              </span>
+              <button
+                type="button"
+                onClick={() => deleteRow(idx)}
+                disabled={displayRows.length <= 1}
+                aria-label={t.stock.deleteRow}
+                className="text-text-muted hover:text-clay disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  className="w-4 h-4"
+                >
+                  <path d="M3 6h18" />
+                  <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                </svg>
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
               <Field label={t.stock.caravana}>
                 <Input
                   value={row.caravana}
-                  onChange={(e) => updateRow(idx, { caravana: e.target.value })}
+                  onChange={(e) =>
+                    updateRow(idx, { caravana: e.target.value })
+                  }
                 />
               </Field>
               <Field label={t.stock.origen}>
@@ -99,7 +265,6 @@ export function StockForm({ lotId }: Props) {
                       sexo: e.target.value as StockAnimal["sexo"],
                     })
                   }
-                  className="lg:w-32"
                 >
                   <option value="">—</option>
                   {STOCK_SEXES.map((s) => (
@@ -111,10 +276,10 @@ export function StockForm({ lotId }: Props) {
               </Field>
               <Field label={t.stock.peso}>
                 <Input
+                  inputMode="decimal"
                   value={row.peso}
                   onChange={(e) => updateRow(idx, { peso: e.target.value })}
                   placeholder="kg"
-                  inputMode="decimal"
                 />
               </Field>
               <Field label={t.stock.tamano}>
@@ -125,7 +290,6 @@ export function StockForm({ lotId }: Props) {
                       tamano: e.target.value as StockAnimal["tamano"],
                     })
                   }
-                  className="lg:w-32"
                 >
                   <option value="">—</option>
                   {STOCK_SIZES.map((s) => (
@@ -152,47 +316,25 @@ export function StockForm({ lotId }: Props) {
                   ))}
                 </Select>
               </Field>
-              <Field label={t.stock.observaciones}>
-                <Input
-                  value={row.observaciones}
-                  onChange={(e) =>
-                    updateRow(idx, { observaciones: e.target.value })
-                  }
-                  placeholder={t.stock.observationsPlaceholder}
-                />
-              </Field>
-              <button
-                type="button"
-                onClick={() => deleteRow(idx)}
-                disabled={!canDelete}
-                aria-label={t.stock.deleteRow}
-                className="h-11 w-11 rounded-lg bg-surface-2 hover:bg-clay-soft hover:text-clay text-text-muted inline-flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed shrink-0 transition-colors"
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="w-4 h-4"
-                >
-                  <polyline points="3 6 5 6 21 6" />
-                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                  <path d="M10 11v6M14 11v6" />
-                  <path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
-                </svg>
-              </button>
             </div>
-          );
-        })}
+            <Field label={t.stock.observaciones}>
+              <Input
+                value={row.observaciones}
+                onChange={(e) =>
+                  updateRow(idx, { observaciones: e.target.value })
+                }
+                placeholder={t.stock.observationsPlaceholder}
+              />
+            </Field>
+          </div>
+        ))}
+      </div>
 
-        <div className="pt-2 flex justify-end">
-          <Button variant="secondary" onClick={addRow} type="button">
-            + {t.stock.addRow}
-          </Button>
-        </div>
-      </CardBody>
+      <div className="px-5 py-3 border-t border-border flex justify-end bg-surface-2/30">
+        <Button variant="secondary" size="sm" onClick={addRow} type="button">
+          + {t.stock.addRow}
+        </Button>
+      </div>
     </Card>
   );
 }
