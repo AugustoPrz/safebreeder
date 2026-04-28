@@ -7,9 +7,10 @@
 do $$
 declare
   src_lot_id  uuid := '28a75198-dd1a-48c0-b85b-f18a5794217c';
+  dst_est_id  uuid := 'f9520b5e-416a-462b-a459-9358de831666';
   src_user_id uuid;
   dst_user_id uuid;
-  dst_est_id  uuid;
+  est_owner   uuid;
   new_lot_id  uuid := gen_random_uuid();
   src_lot     record;
 begin
@@ -22,18 +23,20 @@ begin
   if src_user_id is null then raise exception 'source user not found: ferrandojoaquin125@gmail.com'; end if;
   if dst_user_id is null then raise exception 'dest user not found: augusto@paperstreetmedia.com'; end if;
 
-  -- Resolve destination establishment "La Alegría" (also matches "La Alegria")
-  select id into dst_est_id
-    from public.establishments
-   where user_id = dst_user_id
-     and (name = 'La Alegría' or name ilike 'La Alegr%')
-   order by case when name = 'La Alegría' then 0 else 1 end
-   limit 1;
-  if dst_est_id is null then raise exception 'dest establishment "La Alegría" not found for augusto'; end if;
+  -- Verify the destination establishment exists and belongs to augusto
+  select user_id into est_owner from public.establishments where id = dst_est_id;
+  if est_owner is null then raise exception 'destination establishment % not found', dst_est_id; end if;
+  if est_owner <> dst_user_id then
+    raise exception 'establishment % does not belong to dest user (% vs %)', dst_est_id, est_owner, dst_user_id;
+  end if;
 
-  -- Fetch source lot (owned by src user)
-  select * into src_lot from public.lots where id = src_lot_id and user_id = src_user_id;
-  if src_lot is null then raise exception 'source lot % not found for src user', src_lot_id; end if;
+  -- Fetch source lot (owned by src user). If it doesn't match the src email,
+  -- copy it anyway from whatever user owns it but warn loudly.
+  select * into src_lot from public.lots where id = src_lot_id;
+  if src_lot is null then raise exception 'source lot % not found at all', src_lot_id; end if;
+  if src_lot.user_id <> src_user_id then
+    raise notice 'source lot belongs to user % (not %); copying anyway', src_lot.user_id, src_user_id;
+  end if;
 
   -- Insert the lot under the dest user / establishment
   insert into public.lots (id, user_id, establishment_id, name, category, head_count)
