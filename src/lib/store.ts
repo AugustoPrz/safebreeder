@@ -392,10 +392,27 @@ export const useStore = create<StoreState>()((set, get) => ({
   },
 
   setStock: (lotId, record) => {
+    const newCount = record.rows.length;
+    const prevLot = get().db.lots.find((l) => l.id === lotId);
+    const headCountChanged = prevLot && prevLot.headCount !== newCount;
+
     set((s) => ({
-      db: { ...s.db, stock: { ...s.db.stock, [lotId]: record } },
+      db: {
+        ...s.db,
+        stock: { ...s.db.stock, [lotId]: record },
+        lots: headCountChanged
+          ? s.db.lots.map((l) =>
+              l.id === lotId ? { ...l, headCount: newCount } : l,
+            )
+          : s.db.lots,
+      },
     }));
-    if (get().userId) swallow(remote.upsertStock(lotId, record));
+    if (get().userId) {
+      swallow(remote.upsertStock(lotId, record));
+      if (headCountChanged) {
+        swallow(remote.updateLot(lotId, { headCount: newCount }));
+      }
+    }
   },
 
   setWeightMonth: (lotId, monthKey, record) => {
