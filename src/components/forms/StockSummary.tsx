@@ -109,7 +109,27 @@ export function StockSummary({ rows }: Props) {
                           borderColor: "#e3e6dc",
                         }}
                       />
-                      <Legend wrapperStyle={{ fontSize: 11 }} />
+                      <Legend
+                        wrapperStyle={{ fontSize: 11 }}
+                        content={() => (
+                          <div className="flex justify-center gap-4 text-[11px] mt-1">
+                            <span className="flex items-center gap-1.5">
+                              <span
+                                className="w-2.5 h-2.5 inline-block rounded-sm"
+                                style={{ backgroundColor: COLOR_MACHO }}
+                              />
+                              Macho
+                            </span>
+                            <span className="flex items-center gap-1.5">
+                              <span
+                                className="w-2.5 h-2.5 inline-block rounded-sm"
+                                style={{ backgroundColor: COLOR_HEMBRA }}
+                              />
+                              Hembra
+                            </span>
+                          </div>
+                        )}
+                      />
                       <Bar
                         dataKey="Macho"
                         stackId="sex"
