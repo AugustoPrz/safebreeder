@@ -139,6 +139,10 @@ export const t = {
     bcs: "Estado corporal",
     ectoparasites: "Ectoparásitos",
     ectoType: "Tipo de ectoparásito",
+    ectoDrug: "Droga",
+    ectoRoute: "Vía de administración",
+    ectoTitle: "Ectoparásitos",
+    ectoSubtitle: "Detección y tratamiento",
     diarrhea: "Diarrea / signos clínicos",
     ectoLevels: {
       none: "No",

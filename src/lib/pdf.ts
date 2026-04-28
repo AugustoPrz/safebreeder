@@ -96,6 +96,8 @@ export function generateLotReport(
           t.treatment.ectoLevels[treatment.ectoparasites],
         ],
         [t.treatment.ectoType, treatment.ectoType || "—"],
+        [t.treatment.ectoDrug, treatment.ectoDrug || "—"],
+        [t.treatment.ectoRoute, treatment.ectoRoute || "—"],
         [
           t.treatment.diarrhea,
           t.treatment.diarrheaLevels[treatment.diarrhea],

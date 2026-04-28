@@ -46,6 +46,8 @@ export const ROUTES = [
   "Endovenosa",
 ];
 
+export const ECTO_ROUTES = ["Pour-on", "Spot-on", "Baño"];
+
 export const DOSING_CRITERIA = [
   "El más pesado del lote",
   "Peso individual",

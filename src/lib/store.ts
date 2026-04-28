@@ -111,6 +111,8 @@ function emptyTreatment(): Treatment {
     bcs: "",
     ectoparasites: "none",
     ectoType: "",
+    ectoDrug: "",
+    ectoRoute: "",
     diarrhea: "none",
     notes: "",
   };

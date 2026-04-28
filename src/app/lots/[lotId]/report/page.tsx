@@ -83,6 +83,8 @@ export default function ReportPage() {
                   value={t.treatment.ectoLevels[treatment.ectoparasites]}
                 />
                 <Row label={t.treatment.ectoType} value={treatment.ectoType} />
+                <Row label={t.treatment.ectoDrug} value={treatment.ectoDrug} />
+                <Row label={t.treatment.ectoRoute} value={treatment.ectoRoute} />
                 <Row
                   label={t.treatment.diarrhea}
                   value={t.treatment.diarrheaLevels[treatment.diarrhea]}

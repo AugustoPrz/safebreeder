@@ -63,6 +63,8 @@ export interface Treatment {
   bcs: string;
   ectoparasites: EctoLevel;
   ectoType: string;
+  ectoDrug?: string;
+  ectoRoute?: string;
   diarrhea: DiarrheaLevel;
   notes: string;
 }
