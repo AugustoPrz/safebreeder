@@ -17,7 +17,6 @@ const tabs = [
   { segment: "hpg", label: t.hpg.title },
   { segment: "treatment", label: t.treatment.title },
   { segment: "weights", label: t.weights.title },
-  { segment: "vaccines", label: t.vaccines.title },
 ];
 
 export default function LotLayout({ children }: { children: ReactNode }) {
@@ -47,9 +46,8 @@ export default function LotLayout({ children }: { children: ReactNode }) {
 
   const tabCounts: Record<string, number> = {
     hpg: counts.hpgMonths,
-    treatment: counts.treatments,
+    treatment: counts.treatments + counts.vaccineMonths,
     weights: counts.weightMonths,
-    vaccines: counts.vaccineMonths,
   };
 
   if (!hydrated) {

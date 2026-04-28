@@ -127,7 +127,7 @@ export const t = {
   },
 
   treatment: {
-    title: "Tratamiento",
+    title: "Tratamientos",
     subtitle: "Plan sanitario del mes",
     date: "Fecha del tratamiento",
     drug: "Droga",
