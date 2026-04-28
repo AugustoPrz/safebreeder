@@ -100,6 +100,30 @@ export interface VaccineRecord {
   rows: VaccineRow[];
 }
 
+export type StockSex = "macho" | "hembra";
+export type StockSize = "cabeza" | "cuerpo" | "cola";
+export type StockBreed =
+  | "angusNegro"
+  | "angusColorado"
+  | "caretaNegro"
+  | "caretaColorado"
+  | "hereford"
+  | "cruzaIndica";
+
+export interface StockAnimal {
+  caravana: string;
+  origen: string;
+  sexo: StockSex | "";
+  peso: string;
+  tamano: StockSize | "";
+  raza: StockBreed | "";
+  observaciones: string;
+}
+
+export interface StockRecord {
+  rows: StockAnimal[];
+}
+
 export type MonthKey = string;
 
 export interface DB {
@@ -109,6 +133,7 @@ export interface DB {
   treatments: Record<string, Record<MonthKey, Treatment>>;
   weights: Record<string, Record<MonthKey, WeightRecord>>;
   vaccines: Record<string, Record<MonthKey, VaccineRecord>>;
+  stock: Record<string, StockRecord>;
 }
 
 export const emptyDb: DB = {
@@ -118,4 +143,5 @@ export const emptyDb: DB = {
   treatments: {},
   weights: {},
   vaccines: {},
+  stock: {},
 };

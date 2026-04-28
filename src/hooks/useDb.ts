@@ -38,10 +38,12 @@ export function useLotCounts(lotId: string) {
   const treatments = useStore((s) => s.db.treatments[lotId]);
   const weights = useStore((s) => s.db.weights[lotId]);
   const vaccines = useStore((s) => s.db.vaccines[lotId]);
+  const stock = useStore((s) => s.db.stock[lotId]);
   return {
     hpgMonths: hpg ? Object.keys(hpg).length : 0,
     treatments: treatments ? Object.keys(treatments).length : 0,
     weightMonths: weights ? Object.keys(weights).length : 0,
     vaccineMonths: vaccines ? Object.keys(vaccines).length : 0,
+    stockCount: stock?.rows.length ?? 0,
   };
 }

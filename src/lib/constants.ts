@@ -1,4 +1,11 @@
-import type { LotCategory, VaccineDoseNumber, VaccineType } from "./types";
+import type {
+  LotCategory,
+  StockBreed,
+  StockSex,
+  StockSize,
+  VaccineDoseNumber,
+  VaccineType,
+} from "./types";
 
 export const VACCINE_TYPES: VaccineType[] = [
   "complejoRespiratorio",
@@ -65,3 +72,14 @@ export const BCS_OPTIONS = [
 
 export const HPG_THRESHOLD_LOW = 150;
 export const HPG_THRESHOLD_HIGH = 500;
+
+export const STOCK_SEXES: StockSex[] = ["macho", "hembra"];
+export const STOCK_SIZES: StockSize[] = ["cabeza", "cuerpo", "cola"];
+export const STOCK_BREEDS: StockBreed[] = [
+  "angusNegro",
+  "angusColorado",
+  "caretaNegro",
+  "caretaColorado",
+  "hereford",
+  "cruzaIndica",
+];

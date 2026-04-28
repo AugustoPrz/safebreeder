@@ -14,6 +14,7 @@ import { useHydrated } from "@/hooks/useHydrated";
 import { t } from "@/lib/i18n";
 
 const tabs = [
+  { segment: "stock", label: t.stock.title },
   { segment: "hpg", label: t.hpg.title },
   { segment: "treatment", label: t.treatment.title },
   { segment: "weights", label: t.weights.title },
@@ -45,6 +46,7 @@ export default function LotLayout({ children }: { children: ReactNode }) {
   for (const key of Object.keys(vaccineMonths ?? {})) seed(key).vaccines = true;
 
   const tabCounts: Record<string, number> = {
+    stock: counts.stockCount,
     hpg: counts.hpgMonths,
     treatment: counts.treatments + counts.vaccineMonths,
     weights: counts.weightMonths,

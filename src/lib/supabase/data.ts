@@ -7,6 +7,7 @@ import {
   type EstablishmentRow,
   type HpgRow as HpgTableRow,
   type LotRow,
+  type StockRow as StockTableRow,
   type TreatmentRow,
   type VaccineRow as VaccineTableRow,
   type WeightRow as WeightTableRow,
@@ -16,6 +17,7 @@ import type {
   Establishment,
   HpgRecord,
   Lot,
+  StockRecord,
   Treatment,
   VaccineRecord,
   WeightRecord,
@@ -49,17 +51,20 @@ export async function fetchAllForUser(userId: string): Promise<DB> {
     return { ...emptyDb, establishments, lots };
   }
 
-  const [hpgRes, wRes, tRes, vRes] = await Promise.all([
+  const [hpgRes, wRes, tRes, vRes, sRes] = await Promise.all([
     sb.from("hpg_records").select("*").in("lot_id", lotIds),
     sb.from("weight_records").select("*").in("lot_id", lotIds),
     sb.from("treatments").select("*").in("lot_id", lotIds),
     sb.from("vaccines").select("*").in("lot_id", lotIds),
+    sb.from("stock").select("*").in("lot_id", lotIds),
   ]);
 
   if (hpgRes.error) throw hpgRes.error;
   if (wRes.error) throw wRes.error;
   if (tRes.error) throw tRes.error;
   if (vRes.error) throw vRes.error;
+  // Stock table may not exist yet (migration 007 not run). Treat as empty.
+  const sData = sRes.error ? [] : ((sRes.data ?? []) as StockTableRow[]);
 
   const hpg: DB["hpg"] = {};
   for (const row of (hpgRes.data ?? []) as HpgTableRow[]) {
@@ -99,7 +104,12 @@ export async function fetchAllForUser(userId: string): Promise<DB> {
     }
   }
 
-  return { establishments, lots, hpg, weights, treatments, vaccines };
+  const stock: DB["stock"] = {};
+  for (const row of sData) {
+    stock[row.lot_id] = { rows: row.rows ?? [] };
+  }
+
+  return { establishments, lots, hpg, weights, treatments, vaccines, stock };
 }
 
 export async function insertEstablishment(
@@ -267,6 +277,15 @@ export async function upsertVaccine(
     lot_id: lotId,
     month_key: monthKey,
     data,
+  });
+  if (error) throw error;
+}
+
+export async function upsertStock(lotId: string, record: StockRecord) {
+  const sb = supabaseBrowser();
+  const { error } = await sb.from("stock").upsert({
+    lot_id: lotId,
+    rows: record.rows,
   });
   if (error) throw error;
 }

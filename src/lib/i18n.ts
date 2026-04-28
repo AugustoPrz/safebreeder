@@ -181,6 +181,38 @@ export const t = {
     },
   },
 
+  stock: {
+    title: "Stock",
+    subtitle: "Inventario de animales del lote",
+    caravana: "Caravana",
+    origen: "Origen",
+    sexo: "Sexo",
+    peso: "Peso (entrada/inicio)",
+    tamano: "Tamaño",
+    raza: "Raza",
+    observaciones: "Observaciones",
+    addRow: "Agregar animal",
+    deleteRow: "Eliminar animal",
+    observationsPlaceholder: "Ej: Caravana Amarilla a los machos",
+    sexes: {
+      macho: "Macho",
+      hembra: "Hembra",
+    },
+    sizes: {
+      cabeza: "Cabeza",
+      cuerpo: "Cuerpo",
+      cola: "Cola",
+    },
+    breeds: {
+      angusNegro: "Angus negro",
+      angusColorado: "Angus Colorado",
+      caretaNegro: "Careta negro",
+      caretaColorado: "Careta colorado",
+      hereford: "Hereford",
+      cruzaIndica: "Cruza Indica",
+    },
+  },
+
   weights: {
     title: "Pesadas",
     subtitle: "Seguimiento de peso y ganancia diaria",

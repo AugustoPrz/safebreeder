@@ -8,6 +8,7 @@ import type {
   HpgRow,
   Lot,
   MonthKey,
+  StockRecord,
   Treatment,
   VaccineRecord,
   WeightRecord,
@@ -63,6 +64,8 @@ interface StoreState {
     monthKey: MonthKey,
     record: VaccineRecord,
   ) => void;
+
+  setStock: (lotId: string, record: StockRecord) => void;
 
   setWeightMonth: (
     lotId: string,
@@ -177,6 +180,7 @@ export const useStore = create<StoreState>()((set, get) => ({
           treatments: filterRec(s.db.treatments),
           weights: filterRec(s.db.weights),
           vaccines: filterRec(s.db.vaccines),
+          stock: filterRec(s.db.stock),
         },
       };
     });
@@ -209,6 +213,7 @@ export const useStore = create<StoreState>()((set, get) => ({
       const { [id]: _t, ...treatments } = s.db.treatments;
       const { [id]: _w, ...weights } = s.db.weights;
       const { [id]: _v, ...vaccines } = s.db.vaccines;
+      const { [id]: _s, ...stock } = s.db.stock;
       return {
         db: {
           ...s.db,
@@ -217,6 +222,7 @@ export const useStore = create<StoreState>()((set, get) => ({
           treatments,
           weights,
           vaccines,
+          stock,
         },
       };
     });
@@ -383,6 +389,13 @@ export const useStore = create<StoreState>()((set, get) => ({
       },
     }));
     if (get().userId) swallow(remote.upsertVaccine(lotId, monthKey, record));
+  },
+
+  setStock: (lotId, record) => {
+    set((s) => ({
+      db: { ...s.db, stock: { ...s.db.stock, [lotId]: record } },
+    }));
+    if (get().userId) swallow(remote.upsertStock(lotId, record));
   },
 
   setWeightMonth: (lotId, monthKey, record) => {

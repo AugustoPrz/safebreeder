@@ -139,8 +139,8 @@ export default function EstablishmentDetailPage() {
                       href={(() => {
                         const last = latestMonth(lot.id);
                         return last
-                          ? `/lots/${lot.id}/hpg?m=${last}`
-                          : `/lots/${lot.id}/hpg`;
+                          ? `/lots/${lot.id}/stock?m=${last}`
+                          : `/lots/${lot.id}/stock`;
                       })()}
                       className="font-semibold hover:text-primary transition-colors"
                     >
@@ -196,7 +196,7 @@ export default function EstablishmentDetailPage() {
                 <LotCountsRow lotId={lot.id} />
                 <div className="flex gap-2 mt-3">
                   <Link
-                    href={`/lots/${lot.id}/hpg`}
+                    href={`/lots/${lot.id}/stock`}
                     className="flex-1 text-center h-10 rounded-lg bg-primary text-white text-sm font-medium inline-flex items-center justify-center hover:bg-primary-hover transition-colors"
                   >
                     {t.lot.openData}
