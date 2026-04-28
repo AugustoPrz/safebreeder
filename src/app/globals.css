@@ -113,6 +113,12 @@ button {
 
 /* Map: tint Carto Positron tiles toward our cream/sage palette so the map
    sits comfortably next to the brand. Subtle hue shift + slight desaturation. */
+.sb-map-shell {
+  /* Force a stacking context so Leaflet's internal z-indexes (200-700)
+     don't escape and overlap modals/popovers above it. */
+  isolation: isolate;
+  z-index: 0;
+}
 .sb-map-shell .leaflet-tile-pane {
   filter: saturate(1.4) sepia(0.12) hue-rotate(5deg) brightness(0.98) contrast(1.06);
 }
