@@ -10,6 +10,14 @@ import { MonthlyEvolutionLine } from "@/components/charts/MonthlyEvolutionLine";
 import { AdgBar } from "@/components/charts/AdgBar";
 import { WeightByLotBar } from "@/components/charts/WeightByLotBar";
 import { TreatmentsByDrugBar } from "@/components/charts/TreatmentsByDrugBar";
+import {
+  EntryExitWeightByLot,
+  type EntryExitDatum,
+} from "@/components/charts/EntryExitWeightByLot";
+import {
+  TreatmentsLog,
+  type TreatmentLogEntry,
+} from "@/components/forms/TreatmentsLog";
 import { useStore } from "@/lib/store";
 import {
   averageHpg,
@@ -18,6 +26,8 @@ import {
   formatMonthKey,
   formatNumber,
   hpgDistribution,
+  sumLatestWeights,
+  sumStockEntryWeights,
   summarizeWeights,
 } from "@/lib/calc";
 import { t } from "@/lib/i18n";
@@ -29,6 +39,8 @@ export default function DashboardPage() {
   const hpgByLot = useStore((s) => s.db.hpg);
   const weightsByLot = useStore((s) => s.db.weights);
   const treatmentsByLot = useStore((s) => s.db.treatments);
+  const vaccinesByLot = useStore((s) => s.db.vaccines);
+  const stockByLot = useStore((s) => s.db.stock);
 
   const [filter, setFilter] = useState<string>("");
   const downloadPdf = () => {
@@ -174,6 +186,116 @@ export default function DashboardPage() {
       (a, b) => b.value - a.value,
     );
   }, [lots, treatmentsByLot]);
+
+  // ── Producción de la recría ─────────────────────────────────────────────
+  // Per-lot entrada (sum of stock peso) vs salida (sum of latest month weights),
+  // plus the gain (total and per-animal).
+  const productionByLot = useMemo<EntryExitDatum[]>(() => {
+    return lots
+      .map((lot) => {
+        const stockRows = stockByLot[lot.id]?.rows ?? [];
+        const entry = sumStockEntryWeights(stockRows);
+        const latest = sumLatestWeights(weightsByLot[lot.id]);
+        if (entry.totalKg === 0 && (!latest || latest.totalKg === 0)) {
+          return null;
+        }
+        const entrada = Math.round(entry.totalKg);
+        const salida = latest ? Math.round(latest.totalKg) : 0;
+        let gainTotal: number | null = null;
+        let gainPerAnimal: number | null = null;
+        if (entry.totalKg > 0 && latest && latest.totalKg > 0) {
+          gainTotal = salida - entrada;
+          const animalCount = Math.max(entry.weighedCount, latest.count);
+          if (animalCount > 0) {
+            gainPerAnimal = (latest.totalKg - entry.totalKg) / animalCount;
+          }
+        }
+        return {
+          name: lot.name,
+          entrada,
+          salida,
+          gainTotal,
+          gainPerAnimal,
+        };
+      })
+      .filter((x): x is EntryExitDatum => x !== null);
+  }, [lots, stockByLot, weightsByLot]);
+
+  const productionTotals = useMemo(() => {
+    let entrada = 0;
+    let salida = 0;
+    for (const d of productionByLot) {
+      if (d.gainTotal !== null) {
+        // Only sum lots with both ends so the delta is meaningful.
+        entrada += d.entrada;
+        salida += d.salida;
+      }
+    }
+    return {
+      entrada,
+      salida,
+      producido: salida - entrada,
+      hasData: productionByLot.some((d) => d.gainTotal !== null),
+    };
+  }, [productionByLot]);
+
+  // ── Resumen de tratamientos (cronológico) ───────────────────────────────
+  const treatmentsLog = useMemo<TreatmentLogEntry[]>(() => {
+    const entries: TreatmentLogEntry[] = [];
+    for (const lot of lots) {
+      // Antiparasitarios + ectoparasitarios (mismo Treatment, distintos productos)
+      const treatmentMonths = treatmentsByLot[lot.id];
+      if (treatmentMonths) {
+        for (const rec of Object.values(treatmentMonths)) {
+          const date = rec.date ?? "";
+          const drug = rec.drug?.trim();
+          const ectoDrug = rec.ectoDrug?.trim();
+          if (drug) {
+            entries.push({
+              lotName: lot.name,
+              date,
+              product: drug,
+              kind: "antiparasitario",
+            });
+          }
+          if (ectoDrug) {
+            entries.push({
+              lotName: lot.name,
+              date,
+              product: ectoDrug,
+              kind: "ecto",
+            });
+          }
+        }
+      }
+      // Vacunas (cada VaccineRow es una aplicación)
+      const vaccineMonths = vaccinesByLot[lot.id];
+      if (vaccineMonths) {
+        for (const rec of Object.values(vaccineMonths)) {
+          for (const row of rec.rows ?? []) {
+            const brand = row.brand?.trim();
+            const typeLabel = row.type ? t.vaccines.types[row.type] : "";
+            const product = brand || typeLabel;
+            if (!product) continue;
+            entries.push({
+              lotName: lot.name,
+              date: row.date ?? "",
+              product,
+              kind: "vacuna",
+            });
+          }
+        }
+      }
+    }
+    // Sort by date desc, empty dates at the bottom
+    entries.sort((a, b) => {
+      if (!a.date && !b.date) return 0;
+      if (!a.date) return 1;
+      if (!b.date) return -1;
+      return b.date.localeCompare(a.date);
+    });
+    return entries;
+  }, [lots, treatmentsByLot, vaccinesByLot]);
 
   const [tableYear, setTableYear] = useState<number | null>(null);
 
@@ -328,6 +450,45 @@ export default function DashboardPage() {
             </ChartCard>
           </div>
 
+          {/* Producción del rodeo */}
+          {productionTotals.hasData ? (
+            <Card>
+              <div className="px-5 pt-4 pb-3 border-b border-border">
+                <h2 className="font-semibold">{t.dashboard.productionTitle}</h2>
+                <p className="text-xs text-text-muted">
+                  Sumatoria sobre lotes con stock cargado y al menos un mes de pesadas
+                </p>
+              </div>
+              <div className="p-5 grid grid-cols-3 gap-3">
+                <Kpi
+                  label={t.dashboard.kpiEntradaTotal}
+                  value={`${formatInt(productionTotals.entrada)} kg`}
+                />
+                <Kpi
+                  label={t.dashboard.kpiSalidaTotal}
+                  value={`${formatInt(productionTotals.salida)} kg`}
+                />
+                <Kpi
+                  label={t.dashboard.kpiProducido}
+                  value={`${formatInt(productionTotals.producido)} kg`}
+                  variant={productionTotals.producido >= 0 ? "low" : "high"}
+                />
+              </div>
+            </Card>
+          ) : null}
+
+          <ChartCard
+            title={t.dashboard.chartProduction}
+            subtitle={t.dashboard.chartProductionSubtitle}
+            height={Math.max(280, productionByLot.length * 56 + 80)}
+          >
+            {productionByLot.length === 0 ? (
+              <EmptyMini text="Cargá Stock y Pesadas para ver la producción" />
+            ) : (
+              <EntryExitWeightByLot data={productionByLot} />
+            )}
+          </ChartCard>
+
           <ChartCard
             title={t.dashboard.chartTreatments}
             height={Math.max(140, treatmentsData.length * 38 + 48)}
@@ -338,6 +499,8 @@ export default function DashboardPage() {
               <TreatmentsByDrugBar data={treatmentsData} />
             )}
           </ChartCard>
+
+          <TreatmentsLog entries={treatmentsLog} />
 
           <Card>
             <div className="px-5 py-3 border-b border-border flex items-center justify-between">
@@ -584,10 +747,12 @@ function EmptyMini({ text }: { text: string }) {
 
 function ChartCard({
   title,
+  subtitle,
   children,
   height = 280,
 }: {
   title: string;
+  subtitle?: string;
   children: React.ReactNode;
   height?: number;
 }) {
@@ -595,6 +760,9 @@ function ChartCard({
     <Card>
       <div className="px-5 py-3 border-b border-border">
         <h3 className="font-semibold text-sm">{title}</h3>
+        {subtitle ? (
+          <p className="text-xs text-text-muted mt-0.5">{subtitle}</p>
+        ) : null}
       </div>
       <div className="p-5">
         <div style={{ width: "100%", height }}>{children}</div>

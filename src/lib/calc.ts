@@ -1,5 +1,11 @@
 import { HPG_THRESHOLD_HIGH, HPG_THRESHOLD_LOW } from "./constants";
-import type { HpgRow, WeightRow } from "./types";
+import type {
+  HpgRow,
+  StockAnimal,
+  WeightRecord,
+  WeightRow,
+  MonthKey,
+} from "./types";
 
 export type HpgLevel = "none" | "low" | "moderate" | "high";
 
@@ -120,4 +126,56 @@ export function formatMonthKey(key: string, monthNames: readonly string[]): stri
   const parsed = parseMonthKey(key);
   if (!parsed) return key;
   return `${monthNames[parsed.month]} ${parsed.year}`;
+}
+
+/** Parse a stock animal's `peso` string (kg). Empty / non-numeric → 0. */
+function parseStockPeso(s: string): number {
+  if (!s) return 0;
+  const n = Number(String(s).replace(",", "."));
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+/**
+ * Total entry weight (kg) for a lot's stock rows.
+ * Returns { totalKg, weighedCount } — `weighedCount` is the number of
+ * animals with a parseable, positive `peso`, useful for averaging.
+ */
+export function sumStockEntryWeights(rows: StockAnimal[]): {
+  totalKg: number;
+  weighedCount: number;
+} {
+  let totalKg = 0;
+  let weighedCount = 0;
+  for (const r of rows) {
+    const kg = parseStockPeso(r.peso);
+    if (kg > 0) {
+      totalKg += kg;
+      weighedCount++;
+    }
+  }
+  return { totalKg, weighedCount };
+}
+
+/**
+ * Sum of `weightKg` from the most recent month's rows in a lot's weight
+ * record. Returns null if there are no months or no numeric weights.
+ */
+export function sumLatestWeights(
+  weightsByMonth: Record<MonthKey, WeightRecord> | undefined,
+): { totalKg: number; count: number; monthKey: MonthKey } | null {
+  if (!weightsByMonth) return null;
+  const keys = Object.keys(weightsByMonth).sort();
+  if (keys.length === 0) return null;
+  const lastKey = keys[keys.length - 1];
+  const rows = weightsByMonth[lastKey].rows;
+  let totalKg = 0;
+  let count = 0;
+  for (const r of rows) {
+    if (typeof r.weightKg === "number" && Number.isFinite(r.weightKg)) {
+      totalKg += r.weightKg;
+      count++;
+    }
+  }
+  if (count === 0) return null;
+  return { totalKg, count, monthKey: lastKey };
 }
