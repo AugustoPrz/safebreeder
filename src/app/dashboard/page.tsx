@@ -128,6 +128,56 @@ export default function DashboardPage() {
     return { rows, lots };
   }, [lots, hpgByLot]);
 
+  // Monthly GDP evolution per lot — mirrors `evolution` (HPG) but for kg/day.
+  // For each month key with weights, compute GDP vs the lot's most recent
+  // prior month (per-tag if tagIds match, fall back to avg-weight delta).
+  const gdpEvolution = useMemo(() => {
+    const monthSet = new Set<string>();
+    for (const lot of lots) {
+      for (const key of Object.keys(weightsByLot[lot.id] ?? {})) {
+        monthSet.add(key);
+      }
+    }
+    const monthKeys = Array.from(monthSet).sort();
+    const rows = monthKeys.map((key) => {
+      const row: Record<string, number | string> = {
+        label: formatMonthKey(key, t.months),
+      };
+      for (const lot of lots) {
+        const lotMonths = weightsByLot[lot.id];
+        const current = lotMonths?.[key];
+        if (!current) continue;
+        const priorKeys = Object.keys(lotMonths)
+          .filter((k) => k < key)
+          .sort();
+        const prevKey = priorKeys[priorKeys.length - 1];
+        if (!prevKey) continue;
+        const prev = lotMonths[prevKey];
+        const perTag = summarizeWeights(current.rows, prev.rows);
+        let adg: number | null = perTag.avgAdg;
+        if (adg === null) {
+          const lastSum = summarizeWeights(current.rows);
+          const prevSum = summarizeWeights(prev.rows);
+          const days = monthsDiffDays(prevKey, key);
+          if (
+            lastSum.avgWeight !== null &&
+            prevSum.avgWeight !== null &&
+            days > 0
+          ) {
+            adg = (lastSum.avgWeight - prevSum.avgWeight) / days;
+          }
+        }
+        if (adg !== null) {
+          row[lot.id] = Number(adg.toFixed(2));
+        }
+      }
+      return row;
+    });
+    // Drop empty months (only the label, no lot data).
+    const filtered = rows.filter((r) => Object.keys(r).length > 1);
+    return { rows: filtered, lots };
+  }, [lots, weightsByLot]);
+
   const adgData = useMemo(() => {
     return lots
       .map((lot) => {
@@ -449,6 +499,17 @@ export default function DashboardPage() {
               )}
             </ChartCard>
           </div>
+
+          <ChartCard title={t.dashboard.chartGdpEvolution}>
+            {gdpEvolution.rows.length === 0 ? (
+              <EmptyMini text="Se necesitan al menos 2 pesadas mensuales" />
+            ) : (
+              <MonthlyEvolutionLine
+                rows={gdpEvolution.rows}
+                lots={gdpEvolution.lots}
+              />
+            )}
+          </ChartCard>
 
           {/* Producción del rodeo */}
           {productionTotals.hasData ? (

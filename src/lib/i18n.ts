@@ -242,6 +242,7 @@ export const t = {
     chartByLot: "HPG promedio por lote",
     chartDistribution: "Distribución parasitaria",
     chartEvolution: "Evolución mensual",
+    chartGdpEvolution: "Evolución mensual GDP por lote (kg/día)",
     chartAdg: "GDP por lote (kg/día)",
     chartWeight: "Peso promedio por lote (kg)",
     chartTreatments: "Tratamientos por droga",
