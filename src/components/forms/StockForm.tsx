@@ -136,7 +136,9 @@ export function StockForm({ lotId }: Props) {
               <tr
                 key={idx}
                 className={`border-t border-border hover:bg-surface-2/30 align-middle ${
-                  row.muerto ? "opacity-50 bg-clay-soft/20" : ""
+                  row.muerto
+                    ? "bg-clay-soft/20 [&>td:not(:last-child)]:opacity-60"
+                    : ""
                 }`}
               >
                 <td className="px-4 py-2 text-text-muted">
@@ -259,7 +261,7 @@ export function StockForm({ lotId }: Props) {
         {displayRows.map((row, idx) => (
           <div
             key={idx}
-            className={`p-4 space-y-3 ${row.muerto ? "opacity-50 bg-clay-soft/20" : ""}`}
+            className={`p-4 space-y-3 ${row.muerto ? "bg-clay-soft/20" : ""}`}
           >
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-text-muted flex items-center gap-1.5">
