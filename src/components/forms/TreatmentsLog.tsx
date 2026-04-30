@@ -55,7 +55,7 @@ export function TreatmentsLog({ entries }: Props) {
           {/* Desktop */}
           <div className="hidden md:block overflow-x-auto max-h-[420px]">
             <table className="w-full text-sm">
-              <thead className="bg-surface-2/60 text-text-muted text-xs uppercase tracking-wide sticky top-0">
+              <thead className="bg-surface-2 text-text-muted text-xs uppercase tracking-wide sticky top-0 z-10 shadow-[0_1px_0_0_var(--color-border)]">
                 <tr>
                   <th className="px-4 py-2.5 text-left w-32">
                     {t.dashboard.treatmentsLogDate}
