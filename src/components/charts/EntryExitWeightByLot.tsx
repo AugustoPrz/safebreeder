@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
 import {
   Bar,
   BarChart,
@@ -24,35 +23,16 @@ export interface EntryExitDatum {
   gainPerAnimal: number | null;
 }
 
-interface InternalDatum extends EntryExitDatum {
-  gainLabel: string | null;
-}
-
 interface Props {
   data: EntryExitDatum[];
 }
 
-function buildGainLabel(d: EntryExitDatum): string | null {
-  const total = d.gainTotal;
-  const perAnimal = d.gainPerAnimal;
-  const parts: string[] = [];
-  if (typeof total === "number") parts.push(`+${Math.round(total)} kg`);
-  if (typeof perAnimal === "number")
-    parts.push(`+${perAnimal.toFixed(1)} kg/an.`);
-  return parts.length ? parts.join(" · ") : null;
-}
-
 export function EntryExitWeightByLot({ data }: Props) {
-  const enriched: InternalDatum[] = useMemo(
-    () => data.map((d) => ({ ...d, gainLabel: buildGainLabel(d) })),
-    [data],
-  );
-
   return (
     <ResponsiveContainer width="100%" height="100%">
       <BarChart
-        data={enriched}
-        margin={{ top: 32, right: 16, left: 0, bottom: 8 }}
+        data={data}
+        margin={{ top: 44, right: 16, left: 0, bottom: 8 }}
         barCategoryGap="22%"
       >
         <CartesianGrid stroke="#e3e6dc" strokeDasharray="3 3" vertical={false} />
@@ -105,29 +85,53 @@ export function EntryExitWeightByLot({ data }: Props) {
           fill={COLOR_SALIDA}
           radius={[4, 4, 0, 0]}
         >
-          {/* Single-line label combining total + per-animal gains. We render
-              via `content` (raw <text>) so the SVG keeps it on one line — the
-              built-in formatter+position sometimes wrapped on narrow widths. */}
+          {/* Two stacked labels rendered as raw <text> so each stays on a
+              single line regardless of how narrow the bar gets. */}
           <LabelList
-            dataKey="gainLabel"
+            dataKey="gainTotal"
             content={(props) => {
               const { x, y, width, value } = props as {
                 x: number;
                 y: number;
                 width: number;
-                value: string | null | undefined;
+                value: number | null | undefined;
               };
-              if (!value) return null;
+              if (typeof value !== "number") return null;
+              return (
+                <text
+                  x={x + width / 2}
+                  y={y - 22}
+                  textAnchor="middle"
+                  fontSize={11}
+                  fontWeight={600}
+                  fill="#1f2518"
+                  style={{ whiteSpace: "nowrap" }}
+                >
+                  {`+${Math.round(value)} kg`}
+                </text>
+              );
+            }}
+          />
+          <LabelList
+            dataKey="gainPerAnimal"
+            content={(props) => {
+              const { x, y, width, value } = props as {
+                x: number;
+                y: number;
+                width: number;
+                value: number | null | undefined;
+              };
+              if (typeof value !== "number") return null;
               return (
                 <text
                   x={x + width / 2}
                   y={y - 8}
                   textAnchor="middle"
-                  fontSize={11}
-                  fontWeight={600}
-                  fill="#1f2518"
+                  fontSize={10}
+                  fill="#6b6f5d"
+                  style={{ whiteSpace: "nowrap" }}
                 >
-                  {value}
+                  {`+${value.toFixed(1)} kg/an.`}
                 </text>
               );
             }}
