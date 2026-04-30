@@ -27,6 +27,7 @@ import {
   formatMonthKey,
   formatNumber,
   hpgDistribution,
+  liveStockRows,
   sumLatestWeights,
   sumStockEntryWeights,
   summarizeWeights,
@@ -87,6 +88,8 @@ export default function DashboardPage() {
   }, [lots, hpgByLot]);
 
   // Aggregate Stock counts across the filtered lots — surface as KPIs.
+  // Live animals drive Cantidad / Machos / Hembras (current state of the
+  // rodeo). Muertos counts the dead-flagged rows on the unfiltered array.
   const stockCounts = useMemo(() => {
     let total = 0;
     let machos = 0;
@@ -96,9 +99,12 @@ export default function DashboardPage() {
     for (const lot of lots) {
       estIds.add(lot.establishmentId);
       const rows = stockByLot[lot.id]?.rows ?? [];
-      total += rows.length;
+      const live = liveStockRows(rows);
+      total += live.length;
       for (const r of rows) {
         if (r.muerto) muertos++;
+      }
+      for (const r of live) {
         if (r.sexo === "macho") machos++;
         else if (r.sexo === "hembra") hembras++;
       }
@@ -280,7 +286,7 @@ export default function DashboardPage() {
   const productionByLot = useMemo<EntryExitDatum[]>(() => {
     return lots
       .map((lot) => {
-        const stockRows = stockByLot[lot.id]?.rows ?? [];
+        const stockRows = liveStockRows(stockByLot[lot.id]?.rows ?? []);
         const entry = sumStockEntryWeights(stockRows);
         const latest = sumLatestWeights(weightsByLot[lot.id]);
         if (entry.totalKg === 0 && (!latest || latest.totalKg === 0)) {
@@ -314,7 +320,7 @@ export default function DashboardPage() {
   const productionAvgByLot = useMemo<EntryExitDatum[]>(() => {
     const out: EntryExitDatum[] = [];
     for (const lot of lots) {
-      const stockRows = stockByLot[lot.id]?.rows ?? [];
+      const stockRows = liveStockRows(stockByLot[lot.id]?.rows ?? []);
       const entry = sumStockEntryWeights(stockRows);
       const latest = sumLatestWeights(weightsByLot[lot.id]);
       const animalCount = Math.max(entry.weighedCount, latest?.count ?? 0);

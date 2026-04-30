@@ -14,6 +14,7 @@ import {
   YAxis,
 } from "recharts";
 import { Card, CardBody } from "@/components/ui/Card";
+import { liveStockRows } from "@/lib/calc";
 import { t } from "@/lib/i18n";
 import type { StockAnimal, StockSize } from "@/lib/types";
 
@@ -42,12 +43,16 @@ const COLOR_TAMANO: Record<StockSize, string> = {
 };
 
 export function StockSummary({ rows }: Props) {
-  const machos = rows.filter((r) => r.sexo === "macho").length;
-  const hembras = rows.filter((r) => r.sexo === "hembra").length;
+  // Current-state stats use live animals only; muertos counts on the
+  // full, unfiltered list. Distributions (peso buckets, origen) follow
+  // the same rule so dead animals don't pollute the active rodeo view.
+  const live = useMemo(() => liveStockRows(rows), [rows]);
+  const machos = live.filter((r) => r.sexo === "macho").length;
+  const hembras = live.filter((r) => r.sexo === "hembra").length;
   const muertos = rows.filter((r) => r.muerto).length;
 
-  const weightBuckets = useMemo(() => buildWeightBuckets(rows), [rows]);
-  const origenData = useMemo(() => buildOrigenData(rows), [rows]);
+  const weightBuckets = useMemo(() => buildWeightBuckets(live), [live]);
+  const origenData = useMemo(() => buildOrigenData(live), [live]);
 
   return (
     <div className="space-y-4">

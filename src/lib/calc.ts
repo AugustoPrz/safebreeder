@@ -128,6 +128,16 @@ export function formatMonthKey(key: string, monthNames: readonly string[]): stri
   return `${monthNames[parsed.month]} ${parsed.year}`;
 }
 
+/**
+ * Filter stock rows to "live" animals only (`muerto !== true`). Used by
+ * every "current state" stat across the app so dead animals don't pollute
+ * counts, distributions, or production deltas. Historical/tab data
+ * (Pesadas, HPG, GDP) keeps its own data unchanged.
+ */
+export function liveStockRows(rows: StockAnimal[]): StockAnimal[] {
+  return rows.filter((r) => !r.muerto);
+}
+
 /** Parse a stock animal's `peso` string (kg). Empty / non-numeric → 0. */
 function parseStockPeso(s: string): number {
   if (!s) return 0;
