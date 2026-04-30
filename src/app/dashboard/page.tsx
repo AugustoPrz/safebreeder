@@ -86,6 +86,24 @@ export default function DashboardPage() {
     };
   }, [lots, hpgByLot]);
 
+  // Aggregate Stock counts across the filtered lots — surface as KPIs.
+  const stockCounts = useMemo(() => {
+    let total = 0;
+    let machos = 0;
+    let hembras = 0;
+    let muertos = 0;
+    for (const lot of lots) {
+      const rows = stockByLot[lot.id]?.rows ?? [];
+      total += rows.length;
+      for (const r of rows) {
+        if (r.muerto) muertos++;
+        if (r.sexo === "macho") machos++;
+        else if (r.sexo === "hembra") hembras++;
+      }
+    }
+    return { total, machos, hembras, muertos };
+  }, [lots, stockByLot]);
+
   const hpgByLotData = useMemo(() => {
     return lots
       .map((lot) => {
@@ -504,6 +522,28 @@ export default function DashboardPage() {
 
       <div className="space-y-6 print-area">
 
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <Kpi
+          label={t.dashboard.kpiStockTotal}
+          value={formatInt(stockCounts.total)}
+        />
+        <Kpi
+          label={t.dashboard.kpiMachos}
+          value={formatInt(stockCounts.machos)}
+          variant="low"
+        />
+        <Kpi
+          label={t.dashboard.kpiHembras}
+          value={formatInt(stockCounts.hembras)}
+          variant="moderate"
+        />
+        <Kpi
+          label={t.dashboard.kpiDeadTotal}
+          value={formatInt(stockCounts.muertos)}
+          variant="high"
+        />
+      </div>
+
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <Kpi label={t.dashboard.kpiLots} value={formatInt(metrics.lots)} />
         <Kpi label={t.dashboard.kpiSamples} value={formatInt(metrics.samples)} />
@@ -629,40 +669,22 @@ export default function DashboardPage() {
             )}
           </ChartCard>
 
-          {/* Mortandad: KPI total + chart mensual */}
-          <div className="grid gap-4 lg:grid-cols-[1fr_2fr]">
-            <Card>
-              <div className="px-5 pt-4 pb-3 border-b border-border">
-                <h3 className="font-semibold text-sm">
-                  {t.dashboard.kpiDeadTotal}
-                </h3>
-                <p className="text-xs text-text-muted">
-                  Total marcados en los lotes filtrados
-                </p>
-              </div>
-              <div className="p-5">
-                <div className="text-4xl font-semibold text-clay-soft-text tabular-nums">
-                  {formatInt(mortality.total)}
-                </div>
-                {mortality.undated > 0 ? (
-                  <p className="text-xs text-text-muted mt-2">
-                    {t.dashboard.mortalityUndated(mortality.undated)}
-                  </p>
-                ) : null}
-              </div>
-            </Card>
-            <ChartCard
-              title={t.dashboard.chartMortality}
-              subtitle={t.dashboard.chartMortalitySubtitle}
-              height={240}
-            >
-              {mortality.monthly.length === 0 ? (
-                <EmptyMini text="Aún no hay muertes con fecha registrada" />
-              ) : (
-                <MortalityMonthlyLine data={mortality.monthly} />
-              )}
-            </ChartCard>
-          </div>
+          {/* Mortandad mensual — el total ya vive en el KPI de arriba */}
+          <ChartCard
+            title={t.dashboard.chartMortality}
+            subtitle={
+              mortality.undated > 0
+                ? `${t.dashboard.chartMortalitySubtitle} · ${t.dashboard.mortalityUndated(mortality.undated)}`
+                : t.dashboard.chartMortalitySubtitle
+            }
+            height={240}
+          >
+            {mortality.monthly.length === 0 ? (
+              <EmptyMini text="Aún no hay muertes con fecha registrada" />
+            ) : (
+              <MortalityMonthlyLine data={mortality.monthly} />
+            )}
+          </ChartCard>
 
           <ChartCard
             title={t.dashboard.chartTreatments}
