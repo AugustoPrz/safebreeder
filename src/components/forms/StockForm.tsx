@@ -448,11 +448,12 @@ function RowActionsMenu({
               strokeLinecap="round"
               strokeLinejoin="round"
               className="w-4 h-4 text-clay-soft-text"
+              aria-hidden="true"
             >
-              <circle cx="12" cy="12" r="10" />
-              <line x1="9" y1="9" x2="9.01" y2="9" />
-              <line x1="15" y1="9" x2="15.01" y2="9" />
-              <path d="M9 16h6" />
+              {/* Ghost */}
+              <path d="M9 10h.01" />
+              <path d="M15 10h.01" />
+              <path d="M12 2a8 8 0 0 0-8 8v12l3-3 2.5 2.5L12 19l2.5 2.5L17 19l3 3V10a8 8 0 0 0-8-8z" />
             </svg>
             {isDead ? t.stock.unmarkDead : t.stock.markDead}
           </button>
