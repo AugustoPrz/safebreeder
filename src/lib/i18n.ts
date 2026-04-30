@@ -248,6 +248,13 @@ export const t = {
     chartDistribution: "Distribución parasitaria",
     chartEvolution: "Evolución mensual",
     chartGdpEvolution: "Evolución mensual GDP por lote (kg/día)",
+    chartMortality: "Mortandad mensual",
+    chartMortalitySubtitle: "Animales marcados como muertos por mes",
+    kpiDeadTotal: "Animales muertos",
+    mortalityUndated: (n: number) =>
+      n === 1
+        ? "1 animal sin fecha de muerte"
+        : `${n} animales sin fecha de muerte`,
     chartAdg: "GDP por lote (kg/día)",
     chartWeight: "Peso promedio por lote (kg)",
     chartTreatments: "Tratamientos por droga",

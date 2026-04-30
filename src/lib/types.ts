@@ -120,6 +120,8 @@ export interface StockAnimal {
   observaciones: string;
   /** Marked as dead by the user. The row stays in the lot for audit. */
   muerto?: boolean;
+  /** ISO date (YYYY-MM-DD) when the animal was marked as dead. */
+  deathDate?: string;
 }
 
 export interface StockRecord {

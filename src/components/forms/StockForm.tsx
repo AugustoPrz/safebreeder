@@ -66,9 +66,17 @@ export function StockForm({ lotId }: Props) {
   };
 
   const toggleMuerto = (idx: number) => {
-    const next = displayRows.map((r, i) =>
-      i === idx ? { ...r, muerto: !r.muerto } : r,
-    );
+    const today = new Date().toISOString().slice(0, 10);
+    const next = displayRows.map((r, i) => {
+      if (i !== idx) return r;
+      const becomingDead = !r.muerto;
+      return {
+        ...r,
+        muerto: becomingDead,
+        // Set deathDate on transition into dead, clear on revive.
+        deathDate: becomingDead ? r.deathDate ?? today : undefined,
+      };
+    });
     setStock(lotId, { rows: next });
   };
 

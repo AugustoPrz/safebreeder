@@ -14,6 +14,7 @@ import {
   EntryExitWeightByLot,
   type EntryExitDatum,
 } from "@/components/charts/EntryExitWeightByLot";
+import { MortalityMonthlyLine } from "@/components/charts/MortalityMonthlyLine";
 import {
   TreatmentsLog,
   type TreatmentLogEntry,
@@ -320,6 +321,41 @@ export default function DashboardPage() {
     };
   }, [productionByLot]);
 
+  // ── Mortandad ──────────────────────────────────────────────────────────
+  // Total de animales marcados como muertos en los lotes filtrados, y serie
+  // mensual usando deathDate para el chart.
+  const mortality = useMemo(() => {
+    let total = 0;
+    let undated = 0;
+    const byMonth = new Map<string, number>();
+    for (const lot of lots) {
+      const stockRows = stockByLot[lot.id]?.rows ?? [];
+      for (const r of stockRows) {
+        if (!r.muerto) continue;
+        total++;
+        const date = r.deathDate;
+        if (!date) {
+          undated++;
+          continue;
+        }
+        const key = date.slice(0, 7); // YYYY-MM
+        if (!/^\d{4}-\d{2}$/.test(key)) {
+          undated++;
+          continue;
+        }
+        byMonth.set(key, (byMonth.get(key) ?? 0) + 1);
+      }
+    }
+    const monthly = Array.from(byMonth.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, count]) => ({
+        key,
+        label: formatMonthKey(key, t.months),
+        count,
+      }));
+    return { total, undated, monthly };
+  }, [lots, stockByLot]);
+
   // ── Resumen de tratamientos (cronológico) ───────────────────────────────
   const treatmentsLog = useMemo<TreatmentLogEntry[]>(() => {
     const entries: TreatmentLogEntry[] = [];
@@ -592,6 +628,41 @@ export default function DashboardPage() {
               <EntryExitWeightByLot data={productionAvgByLot} />
             )}
           </ChartCard>
+
+          {/* Mortandad: KPI total + chart mensual */}
+          <div className="grid gap-4 lg:grid-cols-[1fr_2fr]">
+            <Card>
+              <div className="px-5 pt-4 pb-3 border-b border-border">
+                <h3 className="font-semibold text-sm">
+                  {t.dashboard.kpiDeadTotal}
+                </h3>
+                <p className="text-xs text-text-muted">
+                  Total marcados en los lotes filtrados
+                </p>
+              </div>
+              <div className="p-5">
+                <div className="text-4xl font-semibold text-clay-soft-text tabular-nums">
+                  {formatInt(mortality.total)}
+                </div>
+                {mortality.undated > 0 ? (
+                  <p className="text-xs text-text-muted mt-2">
+                    {t.dashboard.mortalityUndated(mortality.undated)}
+                  </p>
+                ) : null}
+              </div>
+            </Card>
+            <ChartCard
+              title={t.dashboard.chartMortality}
+              subtitle={t.dashboard.chartMortalitySubtitle}
+              height={240}
+            >
+              {mortality.monthly.length === 0 ? (
+                <EmptyMini text="Aún no hay muertes con fecha registrada" />
+              ) : (
+                <MortalityMonthlyLine data={mortality.monthly} />
+              )}
+            </ChartCard>
+          </div>
 
           <ChartCard
             title={t.dashboard.chartTreatments}
