@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, Input, Select } from "@/components/ui/Input";
@@ -65,6 +65,13 @@ export function StockForm({ lotId }: Props) {
     setStock(lotId, { rows: next });
   };
 
+  const toggleMuerto = (idx: number) => {
+    const next = displayRows.map((r, i) =>
+      i === idx ? { ...r, muerto: !r.muerto } : r,
+    );
+    setStock(lotId, { rows: next });
+  };
+
   const handleDownload = () => {
     downloadStockCsv(displayRows, lot?.name ?? "stock");
   };
@@ -120,9 +127,20 @@ export function StockForm({ lotId }: Props) {
             {displayRows.map((row, idx) => (
               <tr
                 key={idx}
-                className="border-t border-border hover:bg-surface-2/30 align-middle"
+                className={`border-t border-border hover:bg-surface-2/30 align-middle ${
+                  row.muerto ? "opacity-50 bg-clay-soft/20" : ""
+                }`}
               >
-                <td className="px-4 py-2 text-text-muted">{idx + 1}</td>
+                <td className="px-4 py-2 text-text-muted">
+                  <div className="flex items-center gap-1.5">
+                    <span>{idx + 1}</span>
+                    {row.muerto ? (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wide bg-clay-soft text-clay-soft-text">
+                        {t.stock.deadBadge}
+                      </span>
+                    ) : null}
+                  </div>
+                </td>
                 <td className="px-2 py-1.5">
                   <Input
                     className="h-9"
@@ -215,26 +233,12 @@ export function StockForm({ lotId }: Props) {
                   />
                 </td>
                 <td className="px-2 py-1.5 text-center">
-                  <button
-                    type="button"
-                    onClick={() => deleteRow(idx)}
-                    disabled={displayRows.length <= 1}
-                    aria-label={t.stock.deleteRow}
-                    className="text-text-muted hover:text-clay inline-flex disabled:opacity-30 disabled:cursor-not-allowed"
-                  >
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      className="w-4 h-4"
-                    >
-                      <path d="M3 6h18" />
-                      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
-                    </svg>
-                  </button>
+                  <RowActionsMenu
+                    isDead={!!row.muerto}
+                    canDelete={displayRows.length > 1}
+                    onToggleDead={() => toggleMuerto(idx)}
+                    onDelete={() => deleteRow(idx)}
+                  />
                 </td>
               </tr>
             ))}
@@ -245,31 +249,25 @@ export function StockForm({ lotId }: Props) {
       {/* Mobile */}
       <div className="md:hidden divide-y divide-border">
         {displayRows.map((row, idx) => (
-          <div key={idx} className="p-4 space-y-3">
+          <div
+            key={idx}
+            className={`p-4 space-y-3 ${row.muerto ? "opacity-50 bg-clay-soft/20" : ""}`}
+          >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-text-muted">
+              <span className="text-xs font-medium text-text-muted flex items-center gap-1.5">
                 #{idx + 1}
+                {row.muerto ? (
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wide bg-clay-soft text-clay-soft-text">
+                    {t.stock.deadBadge}
+                  </span>
+                ) : null}
               </span>
-              <button
-                type="button"
-                onClick={() => deleteRow(idx)}
-                disabled={displayRows.length <= 1}
-                aria-label={t.stock.deleteRow}
-                className="text-text-muted hover:text-clay disabled:opacity-30 disabled:cursor-not-allowed"
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  className="w-4 h-4"
-                >
-                  <path d="M3 6h18" />
-                  <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
-                </svg>
-              </button>
+              <RowActionsMenu
+                isDead={!!row.muerto}
+                canDelete={displayRows.length > 1}
+                onToggleDead={() => toggleMuerto(idx)}
+                onDelete={() => deleteRow(idx)}
+              />
             </div>
             <div className="grid grid-cols-2 gap-2">
               <Field label={t.stock.caravana}>
@@ -365,5 +363,125 @@ export function StockForm({ lotId }: Props) {
         </Button>
       </div>
     </Card>
+  );
+}
+
+interface RowActionsMenuProps {
+  isDead: boolean;
+  canDelete: boolean;
+  onToggleDead: () => void;
+  onDelete: () => void;
+}
+
+function RowActionsMenu({
+  isDead,
+  canDelete,
+  onToggleDead,
+  onDelete,
+}: RowActionsMenuProps) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDocClick = (e: MouseEvent) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
+        setOpen(false);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onDocClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDocClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={containerRef} className="relative inline-block">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-label={t.stock.rowMenuTrigger}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className="text-text-muted hover:text-clay inline-flex p-1 rounded hover:bg-surface-2"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          className="w-4 h-4"
+        >
+          <path d="M3 6h18" />
+          <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+        </svg>
+      </button>
+      {open ? (
+        <div
+          role="menu"
+          className="absolute right-0 top-full mt-1 z-20 min-w-[160px] bg-surface border border-border rounded-lg shadow-lg overflow-hidden"
+        >
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              onToggleDead();
+              setOpen(false);
+            }}
+            className="w-full text-left px-3 py-2 text-sm hover:bg-surface-2 flex items-center gap-2"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="w-4 h-4 text-clay-soft-text"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <line x1="9" y1="9" x2="9.01" y2="9" />
+              <line x1="15" y1="9" x2="15.01" y2="9" />
+              <path d="M9 16h6" />
+            </svg>
+            {isDead ? t.stock.unmarkDead : t.stock.markDead}
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              onDelete();
+              setOpen(false);
+            }}
+            disabled={!canDelete}
+            className="w-full text-left px-3 py-2 text-sm hover:bg-clay-soft/40 text-clay-soft-text flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed border-t border-border"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              className="w-4 h-4"
+            >
+              <path d="M3 6h18" />
+              <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+            </svg>
+            {t.stock.delete}
+          </button>
+        </div>
+      ) : null}
+    </div>
   );
 }

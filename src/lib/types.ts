@@ -118,6 +118,8 @@ export interface StockAnimal {
   tamano: StockSize | "";
   raza: StockBreed | "";
   observaciones: string;
+  /** Marked as dead by the user. The row stays in the lot for audit. */
+  muerto?: boolean;
 }
 
 export interface StockRecord {
