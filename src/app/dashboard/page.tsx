@@ -92,7 +92,9 @@ export default function DashboardPage() {
     let machos = 0;
     let hembras = 0;
     let muertos = 0;
+    const estIds = new Set<string>();
     for (const lot of lots) {
+      estIds.add(lot.establishmentId);
       const rows = stockByLot[lot.id]?.rows ?? [];
       total += rows.length;
       for (const r of rows) {
@@ -101,8 +103,24 @@ export default function DashboardPage() {
         else if (r.sexo === "hembra") hembras++;
       }
     }
-    return { total, machos, hembras, muertos };
-  }, [lots, stockByLot]);
+    // When a single establishment is filtered, the count is 1 if that est
+    // has any lot; if no lots at all, fall back to the total establishments
+    // visible to the user (so the KPI doesn't show 0 on first run).
+    const estCount = filter
+      ? establishments.findIndex((e) => e.id === filter) >= 0
+        ? 1
+        : 0
+      : estIds.size > 0
+        ? estIds.size
+        : establishments.length;
+    return {
+      total,
+      machos,
+      hembras,
+      muertos,
+      establishments: estCount,
+    };
+  }, [lots, stockByLot, filter, establishments]);
 
   const hpgByLotData = useMemo(() => {
     return lots
@@ -522,7 +540,12 @@ export default function DashboardPage() {
 
       <div className="space-y-6 print-area">
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <Kpi
+          label={t.dashboard.kpiEstablishments}
+          value={formatInt(stockCounts.establishments)}
+        />
+        <Kpi label={t.dashboard.kpiLots} value={formatInt(metrics.lots)} />
         <Kpi
           label={t.dashboard.kpiStockTotal}
           value={formatInt(stockCounts.total)}
@@ -544,8 +567,7 @@ export default function DashboardPage() {
         />
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        <Kpi label={t.dashboard.kpiLots} value={formatInt(metrics.lots)} />
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <Kpi label={t.dashboard.kpiSamples} value={formatInt(metrics.samples)} />
         <Kpi
           label={t.dashboard.kpiLow}
@@ -925,11 +947,16 @@ function Kpi({
           ? "text-clay"
           : "text-text";
   return (
-    <div className="bg-surface border border-border rounded-xl px-4 py-3">
-      <div className="text-[11px] uppercase tracking-wider text-text-muted font-medium">
+    <div className="bg-surface border border-border rounded-xl px-4 py-3 min-w-0">
+      <div
+        className="text-[11px] uppercase tracking-wider text-text-muted font-medium truncate"
+        title={label}
+      >
         {label}
       </div>
-      <div className={`text-2xl font-semibold mt-0.5 ${color}`}>{value}</div>
+      <div className={`text-2xl font-semibold mt-0.5 truncate ${color}`}>
+        {value}
+      </div>
     </div>
   );
 }
