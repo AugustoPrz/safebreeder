@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import {
   Bar,
   BarChart,
@@ -23,16 +24,35 @@ export interface EntryExitDatum {
   gainPerAnimal: number | null;
 }
 
+interface InternalDatum extends EntryExitDatum {
+  gainLabel: string | null;
+}
+
 interface Props {
   data: EntryExitDatum[];
 }
 
+function buildGainLabel(d: EntryExitDatum): string | null {
+  const total = d.gainTotal;
+  const perAnimal = d.gainPerAnimal;
+  const parts: string[] = [];
+  if (typeof total === "number") parts.push(`+${Math.round(total)} kg`);
+  if (typeof perAnimal === "number")
+    parts.push(`+${perAnimal.toFixed(1)} kg/an.`);
+  return parts.length ? parts.join(" · ") : null;
+}
+
 export function EntryExitWeightByLot({ data }: Props) {
+  const enriched: InternalDatum[] = useMemo(
+    () => data.map((d) => ({ ...d, gainLabel: buildGainLabel(d) })),
+    [data],
+  );
+
   return (
     <ResponsiveContainer width="100%" height="100%">
       <BarChart
-        data={data}
-        margin={{ top: 40, right: 12, left: 0, bottom: 8 }}
+        data={enriched}
+        margin={{ top: 32, right: 16, left: 0, bottom: 8 }}
         barCategoryGap="22%"
       >
         <CartesianGrid stroke="#e3e6dc" strokeDasharray="3 3" vertical={false} />
@@ -85,26 +105,32 @@ export function EntryExitWeightByLot({ data }: Props) {
           fill={COLOR_SALIDA}
           radius={[4, 4, 0, 0]}
         >
+          {/* Single-line label combining total + per-animal gains. We render
+              via `content` (raw <text>) so the SVG keeps it on one line — the
+              built-in formatter+position sometimes wrapped on narrow widths. */}
           <LabelList
-            dataKey="gainTotal"
-            position="top"
-            offset={6}
-            fontSize={11}
-            fontWeight={600}
-            fill="#1f2518"
-            formatter={(v) =>
-              typeof v === "number" ? `+${Math.round(v)} kg` : ""
-            }
-          />
-          <LabelList
-            dataKey="gainPerAnimal"
-            position="top"
-            offset={20}
-            fontSize={10}
-            fill="#6b6f5d"
-            formatter={(v) =>
-              typeof v === "number" ? `+${v.toFixed(1)} kg/an.` : ""
-            }
+            dataKey="gainLabel"
+            content={(props) => {
+              const { x, y, width, value } = props as {
+                x: number;
+                y: number;
+                width: number;
+                value: string | null | undefined;
+              };
+              if (!value) return null;
+              return (
+                <text
+                  x={x + width / 2}
+                  y={y - 8}
+                  textAnchor="middle"
+                  fontSize={11}
+                  fontWeight={600}
+                  fill="#1f2518"
+                >
+                  {value}
+                </text>
+              );
+            }}
           />
         </Bar>
       </BarChart>
