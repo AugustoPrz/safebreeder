@@ -249,6 +249,9 @@ export const t = {
     chartProduction: "Entrada vs salida por lote (kg)",
     chartProductionSubtitle:
       "Suma de pesos al ingreso y al cierre · ganancia total y por animal",
+    chartProductionAvg: "Entrada vs salida por lote — promedio por animal (kg)",
+    chartProductionAvgSubtitle:
+      "Peso promedio al ingreso y al cierre · ganancia promedio por animal",
     productionTitle: "Producción del rodeo",
     kpiEntradaTotal: "Kgs entrada",
     kpiSalidaTotal: "Kgs salida",

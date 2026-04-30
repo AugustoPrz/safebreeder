@@ -271,6 +271,37 @@ export default function DashboardPage() {
       .filter((x): x is EntryExitDatum => x !== null);
   }, [lots, stockByLot, weightsByLot]);
 
+  // Same data as productionByLot but normalized per animal in the lot.
+  // Used by the "Promedio por animal" chart so each lot's bars are directly
+  // comparable regardless of head count.
+  const productionAvgByLot = useMemo<EntryExitDatum[]>(() => {
+    const out: EntryExitDatum[] = [];
+    for (const lot of lots) {
+      const stockRows = stockByLot[lot.id]?.rows ?? [];
+      const entry = sumStockEntryWeights(stockRows);
+      const latest = sumLatestWeights(weightsByLot[lot.id]);
+      const animalCount = Math.max(entry.weighedCount, latest?.count ?? 0);
+      if (animalCount === 0) continue;
+      const avgEntrada =
+        entry.weighedCount > 0 ? entry.totalKg / entry.weighedCount : 0;
+      const avgSalida =
+        latest && latest.count > 0 ? latest.totalKg / latest.count : 0;
+      if (avgEntrada === 0 && avgSalida === 0) continue;
+      const hasBoth = entry.totalKg > 0 && !!latest && latest.totalKg > 0;
+      out.push({
+        name: lot.name,
+        entrada: Number(avgEntrada.toFixed(1)),
+        salida: Number(avgSalida.toFixed(1)),
+        gainTotal: hasBoth
+          ? Number((avgSalida - avgEntrada).toFixed(1))
+          : null,
+        // The bars are already per-animal so the second label is redundant.
+        gainPerAnimal: null,
+      });
+    }
+    return out;
+  }, [lots, stockByLot, weightsByLot]);
+
   const productionTotals = useMemo(() => {
     let entrada = 0;
     let salida = 0;
@@ -547,6 +578,18 @@ export default function DashboardPage() {
               <EmptyMini text="Cargá Stock y Pesadas para ver la producción" />
             ) : (
               <EntryExitWeightByLot data={productionByLot} />
+            )}
+          </ChartCard>
+
+          <ChartCard
+            title={t.dashboard.chartProductionAvg}
+            subtitle={t.dashboard.chartProductionAvgSubtitle}
+            height={Math.max(280, productionAvgByLot.length * 56 + 80)}
+          >
+            {productionAvgByLot.length === 0 ? (
+              <EmptyMini text="Cargá Stock y Pesadas para ver el promedio por animal" />
+            ) : (
+              <EntryExitWeightByLot data={productionAvgByLot} />
             )}
           </ChartCard>
 
