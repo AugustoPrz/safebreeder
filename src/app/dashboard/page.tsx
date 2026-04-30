@@ -45,14 +45,50 @@ export default function DashboardPage() {
   const stockByLot = useStore((s) => s.db.stock);
 
   const [filter, setFilter] = useState<string>("");
+  const [yearFilter, setYearFilter] = useState<string>(""); // "" = all years
   const downloadPdf = () => {
     window.print();
   };
+
+  // Year filter helpers — closure over yearFilter so memos depend on it
+  // implicitly. monthKey is "YYYY-MM"; iso is "YYYY-MM-DD".
+  const inYearMonth = (monthKey: string): boolean =>
+    yearFilter === "" || monthKey.startsWith(`${yearFilter}-`);
+  const inYearDate = (iso: string): boolean =>
+    yearFilter === "" || iso.startsWith(`${yearFilter}-`);
 
   const lots = useMemo(
     () => (filter ? allLots.filter((l) => l.establishmentId === filter) : allLots),
     [allLots, filter],
   );
+
+  // Years available across every time-keyed dataset → drives the picker.
+  const availableYears = useMemo(() => {
+    const years = new Set<number>();
+    const collectMonth = (key: string) => {
+      const m = /^(\d{4})-\d{2}$/.exec(key);
+      if (m) years.add(Number(m[1]));
+    };
+    const collectDate = (iso?: string) => {
+      if (!iso) return;
+      const m = /^(\d{4})-\d{2}/.exec(iso);
+      if (m) years.add(Number(m[1]));
+    };
+    for (const lot of allLots) {
+      for (const k of Object.keys(hpgByLot[lot.id] ?? {})) collectMonth(k);
+      for (const k of Object.keys(weightsByLot[lot.id] ?? {})) collectMonth(k);
+      for (const k of Object.keys(treatmentsByLot[lot.id] ?? {})) collectMonth(k);
+      const ts = treatmentsByLot[lot.id];
+      if (ts) for (const r of Object.values(ts)) collectDate(r.date);
+      const vs = vaccinesByLot[lot.id];
+      if (vs)
+        for (const rec of Object.values(vs))
+          for (const row of rec.rows ?? []) collectDate(row.date);
+      const sk = stockByLot[lot.id];
+      if (sk) for (const r of sk.rows) collectDate(r.deathDate);
+    }
+    return Array.from(years).sort((a, b) => b - a); // newest first
+  }, [allLots, hpgByLot, weightsByLot, treatmentsByLot, vaccinesByLot, stockByLot]);
 
   const metrics = useMemo(() => {
     let samples = 0;
@@ -62,7 +98,8 @@ export default function DashboardPage() {
     for (const lot of lots) {
       const months = hpgByLot[lot.id];
       if (!months) continue;
-      for (const rec of Object.values(months)) {
+      for (const [key, rec] of Object.entries(months)) {
+        if (!inYearMonth(key)) continue;
         for (const row of rec.rows) {
           if (typeof row.hpg === "number") {
             samples++;
@@ -85,7 +122,7 @@ export default function DashboardPage() {
       moderate,
       high,
     };
-  }, [lots, hpgByLot]);
+  }, [lots, hpgByLot, yearFilter]);
 
   // Aggregate Stock counts across the filtered lots — surface as KPIs.
   // Live animals drive Cantidad / Machos / Hembras (current state of the
@@ -133,26 +170,32 @@ export default function DashboardPage() {
       .map((lot) => {
         const months = hpgByLot[lot.id];
         if (!months) return null;
-        const all = Object.values(months).flatMap((m) => m.rows);
+        const all = Object.entries(months)
+          .filter(([key]) => inYearMonth(key))
+          .flatMap(([, m]) => m.rows);
         const avg = averageHpg(all);
         if (avg === null) return null;
         return { name: lot.name, value: Math.round(avg) };
       })
       .filter((x): x is { name: string; value: number } => x !== null)
       .sort((a, b) => b.value - a.value);
-  }, [lots, hpgByLot]);
+  }, [lots, hpgByLot, yearFilter]);
 
   const distribution = useMemo(() => {
     const all = lots.flatMap((lot) =>
-      Object.values(hpgByLot[lot.id] ?? {}).flatMap((r) => r.rows),
+      Object.entries(hpgByLot[lot.id] ?? {})
+        .filter(([key]) => inYearMonth(key))
+        .flatMap(([, r]) => r.rows),
     );
     return hpgDistribution(all);
-  }, [lots, hpgByLot]);
+  }, [lots, hpgByLot, yearFilter]);
 
   const evolution = useMemo(() => {
     const monthSet = new Set<string>();
     for (const lot of lots) {
-      for (const key of Object.keys(hpgByLot[lot.id] ?? {})) monthSet.add(key);
+      for (const key of Object.keys(hpgByLot[lot.id] ?? {})) {
+        if (inYearMonth(key)) monthSet.add(key);
+      }
     }
     const monthKeys = Array.from(monthSet).sort();
     const rows = monthKeys.map((key) => {
@@ -169,7 +212,7 @@ export default function DashboardPage() {
       return row;
     });
     return { rows, lots };
-  }, [lots, hpgByLot]);
+  }, [lots, hpgByLot, yearFilter]);
 
   // Monthly GDP evolution per lot — mirrors `evolution` (HPG) but for kg/day.
   // For each month key with weights, compute GDP vs the lot's most recent
@@ -178,7 +221,7 @@ export default function DashboardPage() {
     const monthSet = new Set<string>();
     for (const lot of lots) {
       for (const key of Object.keys(weightsByLot[lot.id] ?? {})) {
-        monthSet.add(key);
+        if (inYearMonth(key)) monthSet.add(key);
       }
     }
     const monthKeys = Array.from(monthSet).sort();
@@ -219,14 +262,16 @@ export default function DashboardPage() {
     // Drop empty months (only the label, no lot data).
     const filtered = rows.filter((r) => Object.keys(r).length > 1);
     return { rows: filtered, lots };
-  }, [lots, weightsByLot]);
+  }, [lots, weightsByLot, yearFilter]);
 
   const adgData = useMemo(() => {
     return lots
       .map((lot) => {
         const months = weightsByLot[lot.id];
         if (!months) return null;
-        const keys = Object.keys(months).sort();
+        const keys = Object.keys(months)
+          .filter((k) => inYearMonth(k))
+          .sort();
         if (keys.length < 2) return null;
         const lastKey = keys[keys.length - 1];
         const prevKey = keys[keys.length - 2];
@@ -254,7 +299,9 @@ export default function DashboardPage() {
       .map((lot) => {
         const months = weightsByLot[lot.id];
         if (!months) return null;
-        const keys = Object.keys(months).sort();
+        const keys = Object.keys(months)
+          .filter((k) => inYearMonth(k))
+          .sort();
         if (keys.length === 0) return null;
         const lastKey = keys[keys.length - 1];
         const summary = summarizeWeights(months[lastKey].rows);
@@ -262,14 +309,17 @@ export default function DashboardPage() {
         return { name: lot.name, value: Math.round(summary.avgWeight) };
       })
       .filter((x): x is { name: string; value: number } => x !== null);
-  }, [lots, weightsByLot]);
+  }, [lots, weightsByLot, yearFilter]);
 
   const treatmentsData = useMemo(() => {
     const counts = new Map<string, number>();
     for (const lot of lots) {
       const months = treatmentsByLot[lot.id];
       if (!months) continue;
-      for (const rec of Object.values(months)) {
+      for (const [key, rec] of Object.entries(months)) {
+        // Use the date field if present, else the monthKey, to decide year.
+        const yearOk = rec.date ? inYearDate(rec.date) : inYearMonth(key);
+        if (!yearOk) continue;
         const drug = rec.drug?.trim();
         if (!drug) continue;
         counts.set(drug, (counts.get(drug) ?? 0) + 1);
@@ -278,7 +328,7 @@ export default function DashboardPage() {
     return Array.from(counts, ([name, value]) => ({ name, value })).sort(
       (a, b) => b.value - a.value,
     );
-  }, [lots, treatmentsByLot]);
+  }, [lots, treatmentsByLot, yearFilter]);
 
   // ── Producción de la recría ─────────────────────────────────────────────
   // Per-lot entrada (sum of stock peso) vs salida (sum of latest month weights),
@@ -374,8 +424,12 @@ export default function DashboardPage() {
       const stockRows = stockByLot[lot.id]?.rows ?? [];
       for (const r of stockRows) {
         if (!r.muerto) continue;
-        total++;
         const date = r.deathDate;
+        // When a year is selected, count only deaths whose year matches.
+        // Undated dead rows are excluded from a year-filtered view (we don't
+        // know if they belong to that year).
+        if (yearFilter !== "" && (!date || !inYearDate(date))) continue;
+        total++;
         if (!date) {
           undated++;
           continue;
@@ -396,17 +450,22 @@ export default function DashboardPage() {
         count,
       }));
     return { total, undated, monthly };
-  }, [lots, stockByLot]);
+  }, [lots, stockByLot, yearFilter]);
 
   // ── Resumen de tratamientos (cronológico) ───────────────────────────────
   const treatmentsLog = useMemo<TreatmentLogEntry[]>(() => {
     const entries: TreatmentLogEntry[] = [];
+    // Year filter: drop entries whose year (from date or fallback monthKey)
+    // doesn't match the selected year. "Todos los años" disables the gate.
     for (const lot of lots) {
       // Antiparasitarios + ectoparasitarios (mismo Treatment, distintos productos)
       const treatmentMonths = treatmentsByLot[lot.id];
       if (treatmentMonths) {
-        for (const rec of Object.values(treatmentMonths)) {
+        for (const [key, rec] of Object.entries(treatmentMonths)) {
           const date = rec.date ?? "";
+          // Fall back to monthKey year if no date is set.
+          if (yearFilter !== "" && !(date ? inYearDate(date) : inYearMonth(key)))
+            continue;
           const drug = rec.drug?.trim();
           const ectoDrug = rec.ectoDrug?.trim();
           if (drug) {
@@ -430,15 +489,21 @@ export default function DashboardPage() {
       // Vacunas (cada VaccineRow es una aplicación)
       const vaccineMonths = vaccinesByLot[lot.id];
       if (vaccineMonths) {
-        for (const rec of Object.values(vaccineMonths)) {
+        for (const [key, rec] of Object.entries(vaccineMonths)) {
           for (const row of rec.rows ?? []) {
+            const date = row.date ?? "";
+            if (
+              yearFilter !== "" &&
+              !(date ? inYearDate(date) : inYearMonth(key))
+            )
+              continue;
             const brand = row.brand?.trim();
             const typeLabel = row.type ? t.vaccines.types[row.type] : "";
             const product = brand || typeLabel;
             if (!product) continue;
             entries.push({
               lotName: lot.name,
-              date: row.date ?? "",
+              date,
               product,
               kind: "vacuna",
             });
@@ -454,7 +519,7 @@ export default function DashboardPage() {
       return b.date.localeCompare(a.date);
     });
     return entries;
-  }, [lots, treatmentsByLot, vaccinesByLot]);
+  }, [lots, treatmentsByLot, vaccinesByLot, yearFilter]);
 
   const [tableYear, setTableYear] = useState<number | null>(null);
 
@@ -516,6 +581,21 @@ export default function DashboardPage() {
                 {establishments.map((e) => (
                   <option key={e.id} value={e.id}>
                     {e.name}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+          <div className="flex-1 sm:w-40">
+            <Field label={t.dashboard.yearFilter}>
+              <Select
+                value={yearFilter}
+                onChange={(e) => setYearFilter(e.target.value)}
+              >
+                <option value="">{t.dashboard.allYears}</option>
+                {availableYears.map((y) => (
+                  <option key={y} value={String(y)}>
+                    {y}
                   </option>
                 ))}
               </Select>

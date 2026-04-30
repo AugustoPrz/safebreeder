@@ -239,6 +239,8 @@ export const t = {
     subtitle: "Panorama general de tus rodeos",
     filter: "Filtrar por establecimiento",
     allEstablishments: "Todos los establecimientos",
+    yearFilter: "Filtrar por año",
+    allYears: "Todos los años",
     kpiLots: "Lotes",
     kpiSamples: "Muestras",
     kpiEstablishments: "Establecimientos",
