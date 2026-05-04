@@ -7,6 +7,7 @@ import { Field, Input, Select } from "@/components/ui/Input";
 import { STOCK_BREEDS, STOCK_SEXES, STOCK_SIZES } from "@/lib/constants";
 import { useStore } from "@/lib/store";
 import { useLot } from "@/hooks/useDb";
+import { useMonthKey } from "@/hooks/useMonthKey";
 import { t } from "@/lib/i18n";
 import type { StockAnimal } from "@/lib/types";
 import { downloadStockCsv } from "@/lib/stockCsv";
@@ -27,6 +28,7 @@ const emptyAnimal: StockAnimal = {
 
 export function StockForm({ lotId }: Props) {
   const lot = useLot(lotId);
+  const [monthKey] = useMonthKey();
   const record = useStore((s) => s.db.stock[lotId]);
   const setStock = useStore((s) => s.setStock);
 
@@ -66,15 +68,20 @@ export function StockForm({ lotId }: Props) {
   };
 
   const toggleMuerto = (idx: number) => {
-    const today = new Date().toISOString().slice(0, 10);
+    // Use the currently selected month in the lot as the death month so the
+    // mortality chart bucket matches the period the user is editing. The
+    // mortality chart only uses the YYYY-MM portion, so day 01 is fine.
+    const monthDay = `${monthKey}-01`;
     const next = displayRows.map((r, i) => {
       if (i !== idx) return r;
       const becomingDead = !r.muerto;
       return {
         ...r,
         muerto: becomingDead,
-        // Set deathDate on transition into dead, clear on revive.
-        deathDate: becomingDead ? r.deathDate ?? today : undefined,
+        // Set deathDate on transition into dead, clear on revive. Preserve
+        // an already-set deathDate so re-marking via the menu doesn't
+        // silently reset it.
+        deathDate: becomingDead ? r.deathDate ?? monthDay : undefined,
       };
     });
     setStock(lotId, { rows: next });
