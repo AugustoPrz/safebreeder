@@ -52,6 +52,8 @@ export const t = {
     name: "Nombre del lote",
     category: "Categoría",
     headCount: "Cantidad de animales",
+    headCountHint:
+      "La cantidad de animales se actualiza automáticamente desde la pestaña Stock al cargar cada animal.",
     empty: "Este establecimiento todavía no tiene lotes.",
     hpgMonths: (n: number) => `${n} mes${n === 1 ? "" : "es"} HPG`,
     weightMonths: (n: number) => `${n} pesada${n === 1 ? "" : "s"}`,

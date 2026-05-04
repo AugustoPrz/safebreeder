@@ -22,19 +22,19 @@ export function LotForm({ establishmentId, onDone, onCancel, lot }: Props) {
   const [category, setCategory] = useState<LotCategory>(
     lot?.category ?? "recriaMachos",
   );
-  const [headCount, setHeadCount] = useState(
-    lot?.headCount != null ? String(lot.headCount) : "",
-  );
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
-    const count = Number(headCount);
+    // headCount is now driven exclusively by the Stock tab — when the user
+    // adds or removes animals there, setStock syncs the lot's headCount.
+    // We preserve any existing value on edit and leave it undefined for new
+    // lots so the Stock tab seeds with one empty row by default.
     const payload = {
       establishmentId,
       name: name.trim(),
       category,
-      headCount: headCount && !Number.isNaN(count) ? count : undefined,
+      headCount: lot?.headCount,
     };
     if (lot) {
       updateLot(lot.id, payload);
@@ -67,15 +67,9 @@ export function LotForm({ establishmentId, onDone, onCancel, lot }: Props) {
           ))}
         </Select>
       </Field>
-      <Field label={t.lot.headCount}>
-        <Input
-          type="number"
-          inputMode="numeric"
-          min={0}
-          value={headCount}
-          onChange={(e) => setHeadCount(e.target.value)}
-        />
-      </Field>
+      <p className="text-xs text-text-muted">
+        {t.lot.headCountHint}
+      </p>
       <div className="flex justify-end gap-2 pt-2">
         <Button type="button" variant="ghost" onClick={onCancel}>
           {t.common.cancel}
