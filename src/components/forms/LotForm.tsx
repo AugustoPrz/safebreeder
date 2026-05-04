@@ -67,9 +67,6 @@ export function LotForm({ establishmentId, onDone, onCancel, lot }: Props) {
           ))}
         </Select>
       </Field>
-      <p className="text-xs text-text-muted">
-        {t.lot.headCountHint}
-      </p>
       <div className="flex justify-end gap-2 pt-2">
         <Button type="button" variant="ghost" onClick={onCancel}>
           {t.common.cancel}
