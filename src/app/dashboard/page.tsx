@@ -754,18 +754,6 @@ export default function DashboardPage() {
           ) : null}
 
           <ChartCard
-            title={t.dashboard.chartProduction}
-            subtitle={t.dashboard.chartProductionSubtitle}
-            height={Math.max(280, productionByLot.length * 56 + 80)}
-          >
-            {productionByLot.length === 0 ? (
-              <EmptyMini text="Cargá Stock y Pesadas para ver la producción" />
-            ) : (
-              <EntryExitWeightByLot data={productionByLot} />
-            )}
-          </ChartCard>
-
-          <ChartCard
             title={t.dashboard.chartProductionAvg}
             subtitle={t.dashboard.chartProductionAvgSubtitle}
             height={Math.max(280, productionAvgByLot.length * 56 + 80)}
