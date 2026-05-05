@@ -122,6 +122,10 @@ export interface StockAnimal {
   muerto?: boolean;
   /** ISO date (YYYY-MM-DD) when the animal was marked as dead. */
   deathDate?: string;
+  /** Marked as sold by the user. Mutually exclusive with `muerto`. */
+  vendido?: boolean;
+  /** ISO date (YYYY-MM-DD) when the animal was marked as sold. */
+  saleDate?: string;
 }
 
 export interface StockRecord {

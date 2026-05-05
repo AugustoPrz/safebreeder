@@ -27,6 +27,7 @@ import {
   formatMonthKey,
   formatNumber,
   hpgDistribution,
+  lastWeightForTag,
   liveStockRows,
   sumLatestWeights,
   sumStockEntryWeights,
@@ -132,6 +133,7 @@ export default function DashboardPage() {
     let machos = 0;
     let hembras = 0;
     let muertos = 0;
+    let vendidos = 0;
     const estIds = new Set<string>();
     for (const lot of lots) {
       estIds.add(lot.establishmentId);
@@ -140,6 +142,7 @@ export default function DashboardPage() {
       total += live.length;
       for (const r of rows) {
         if (r.muerto) muertos++;
+        if (r.vendido) vendidos++;
       }
       for (const r of live) {
         if (r.sexo === "macho") machos++;
@@ -161,6 +164,7 @@ export default function DashboardPage() {
       machos,
       hembras,
       muertos,
+      vendidos,
       establishments: estCount,
     };
   }, [lots, stockByLot, filter, establishments]);
@@ -452,6 +456,42 @@ export default function DashboardPage() {
     return { total, undated, monthly };
   }, [lots, stockByLot, yearFilter]);
 
+  // ── Ventas ─────────────────────────────────────────────────────────────
+  // Total de animales marcados como vendidos, peso promedio basado en la
+  // pesada más reciente del animal en el tab Pesadas (matcheando caravana)
+  // y la fecha de la última venta. Year filter aplica por saleDate.
+  const salesSummary = useMemo(() => {
+    let total = 0;
+    let weightSum = 0;
+    let weightCount = 0;
+    let unmatched = 0;
+    let lastDate = "";
+    for (const lot of lots) {
+      const stockRows = stockByLot[lot.id]?.rows ?? [];
+      const lotWeights = weightsByLot[lot.id];
+      for (const r of stockRows) {
+        if (!r.vendido) continue;
+        const date = r.saleDate;
+        if (yearFilter !== "" && (!date || !inYearDate(date))) continue;
+        total++;
+        if (date && (!lastDate || date > lastDate)) lastDate = date;
+        const w = lastWeightForTag(lotWeights, r.caravana);
+        if (w !== null) {
+          weightSum += w;
+          weightCount++;
+        } else {
+          unmatched++;
+        }
+      }
+    }
+    return {
+      total,
+      avgWeight: weightCount > 0 ? weightSum / weightCount : null,
+      lastDate,
+      unmatched,
+    };
+  }, [lots, stockByLot, weightsByLot, yearFilter]);
+
   // ── Resumen de tratamientos (cronológico) ───────────────────────────────
   const treatmentsLog = useMemo<TreatmentLogEntry[]>(() => {
     const entries: TreatmentLogEntry[] = [];
@@ -636,20 +676,16 @@ export default function DashboardPage() {
           label={t.dashboard.kpiStockTotal}
           value={formatInt(stockCounts.total)}
         />
-        <Kpi
-          label={t.dashboard.kpiMachos}
-          value={formatInt(stockCounts.machos)}
-          variant="low"
-        />
-        <Kpi
-          label={t.dashboard.kpiHembras}
-          value={formatInt(stockCounts.hembras)}
-          variant="moderate"
-        />
+        <SexKpi machos={stockCounts.machos} hembras={stockCounts.hembras} />
         <Kpi
           label={t.dashboard.kpiDeadTotal}
           value={formatInt(stockCounts.muertos)}
           variant="high"
+        />
+        <Kpi
+          label={t.dashboard.kpiSoldTotal}
+          value={formatInt(stockCounts.vendidos)}
+          variant="moderate"
         />
       </div>
 
@@ -781,6 +817,50 @@ export default function DashboardPage() {
               <MortalityMonthlyLine data={mortality.monthly} />
             )}
           </ChartCard>
+
+          {/* Resumen de ventas — total + peso promedio + última fecha */}
+          {salesSummary.total > 0 ? (
+            <Card>
+              <div className="px-5 pt-4 pb-3 border-b border-border">
+                <h3 className="font-semibold text-sm">
+                  {t.dashboard.salesSummaryTitle}
+                </h3>
+                <p className="text-xs text-text-muted">
+                  {t.dashboard.salesSummarySubtitle}
+                </p>
+              </div>
+              <div className="p-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <Kpi
+                  label={t.dashboard.kpiSoldTotal}
+                  value={formatInt(salesSummary.total)}
+                  variant="moderate"
+                />
+                <Kpi
+                  label={t.dashboard.salesAvgWeight}
+                  value={
+                    salesSummary.avgWeight !== null
+                      ? `${formatNumber(salesSummary.avgWeight, 1)} kg`
+                      : "—"
+                  }
+                />
+                <Kpi
+                  label={t.dashboard.salesLastDate}
+                  value={
+                    salesSummary.lastDate
+                      ? formatIsoDate(salesSummary.lastDate)
+                      : "—"
+                  }
+                />
+              </div>
+              {salesSummary.unmatched > 0 ? (
+                <div className="px-5 pb-4 -mt-2">
+                  <p className="text-xs text-text-muted">
+                    {t.dashboard.salesUnmatched(salesSummary.unmatched)}
+                  </p>
+                </div>
+              ) : null}
+            </Card>
+          ) : null}
 
           <ChartCard
             title={t.dashboard.chartTreatments}
@@ -1033,6 +1113,45 @@ function Kpi({
       </div>
     </div>
   );
+}
+
+/**
+ * Combined Macho / Hembra KPI: two figures inside one card, parallel to
+ * the StockSummary version on /stock so the dashboard top row reads the
+ * same. Uses the primary green / sun yellow tones to match.
+ */
+function SexKpi({ machos, hembras }: { machos: number; hembras: number }) {
+  return (
+    <div className="bg-surface border border-border rounded-xl px-4 py-3 min-w-0">
+      <div
+        className="text-[11px] uppercase tracking-wider text-text-muted font-medium truncate"
+        title="Machos / Hembras"
+      >
+        Machos / Hembras
+      </div>
+      <div className="mt-0.5 flex items-baseline gap-2">
+        <div className="flex items-baseline gap-1">
+          <span className="text-2xl font-semibold text-primary tabular-nums">
+            {machos}
+          </span>
+          <span className="text-[11px] text-text-muted">M</span>
+        </div>
+        <span className="text-text-muted">·</span>
+        <div className="flex items-baseline gap-1">
+          <span className="text-2xl font-semibold text-sun-soft-text tabular-nums">
+            {hembras}
+          </span>
+          <span className="text-[11px] text-text-muted">H</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Format an ISO YYYY-MM-DD date as DD/MM/YYYY. Falls back to the input. */
+function formatIsoDate(iso: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : iso;
 }
 
 function EmptyMini({ text }: { text: string }) {

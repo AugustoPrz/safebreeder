@@ -197,6 +197,9 @@ export const t = {
     markDead: "Animal muerto",
     unmarkDead: "Marcar como vivo",
     deadBadge: "Muerto",
+    markSold: "Animal vendido",
+    unmarkSold: "Desmarcar venta",
+    soldBadge: "Vendido",
     delete: "Eliminar",
     observationsPlaceholder: "Ej: Caravana Amarilla a los machos",
     download: "Descargar CSV",
@@ -257,6 +260,16 @@ export const t = {
     chartMortality: "Mortandad mensual",
     chartMortalitySubtitle: "Animales marcados como muertos por mes",
     kpiDeadTotal: "Animales muertos",
+    kpiSoldTotal: "Animales vendidos",
+    salesSummaryTitle: "Resumen de ventas",
+    salesSummarySubtitle:
+      "Total vendido, peso promedio y fecha de la última venta",
+    salesAvgWeight: "Peso promedio",
+    salesLastDate: "Última venta",
+    salesUnmatched: (n: number) =>
+      n === 1
+        ? "1 animal vendido sin pesada matcheada"
+        : `${n} animales vendidos sin pesada matcheada`,
     mortalityUndated: (n: number) =>
       n === 1
         ? "1 animal sin fecha de muerte"

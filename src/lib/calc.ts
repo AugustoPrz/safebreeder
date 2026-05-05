@@ -129,13 +129,36 @@ export function formatMonthKey(key: string, monthNames: readonly string[]): stri
 }
 
 /**
- * Filter stock rows to "live" animals only (`muerto !== true`). Used by
- * every "current state" stat across the app so dead animals don't pollute
- * counts, distributions, or production deltas. Historical/tab data
- * (Pesadas, HPG, GDP) keeps its own data unchanged.
+ * Filter stock rows to "active" animals — those still in the rodeo today.
+ * Excludes both dead (`muerto`) and sold (`vendido`) since neither is part
+ * of the current state. Used by every "current state" stat across the app
+ * so they don't pollute counts, distributions, or production deltas.
+ * Historical/tab data (Pesadas, HPG, GDP) keeps its own data unchanged.
  */
 export function liveStockRows(rows: StockAnimal[]): StockAnimal[] {
-  return rows.filter((r) => !r.muerto);
+  return rows.filter((r) => !r.muerto && !r.vendido);
+}
+
+/**
+ * Most recent `weightKg` recorded for a caravana across all months in a
+ * lot's weight record. Returns null if no match. Used to compute the
+ * average sale weight from Pesadas data when an animal is marked as sold.
+ */
+export function lastWeightForTag(
+  weightsByMonth: Record<MonthKey, WeightRecord> | undefined,
+  caravana: string,
+): number | null {
+  if (!weightsByMonth) return null;
+  const tag = caravana.trim();
+  if (!tag) return null;
+  const keys = Object.keys(weightsByMonth).sort().reverse();
+  for (const key of keys) {
+    const row = weightsByMonth[key].rows.find(
+      (r) => r.tagId.trim() === tag && typeof r.weightKg === "number",
+    );
+    if (row && typeof row.weightKg === "number") return row.weightKg;
+  }
+  return null;
 }
 
 /** Parse a stock animal's `peso` string (kg). Empty / non-numeric → 0. */

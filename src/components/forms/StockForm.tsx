@@ -78,10 +78,28 @@ export function StockForm({ lotId }: Props) {
       return {
         ...r,
         muerto: becomingDead,
-        // Set deathDate on transition into dead, clear on revive. Preserve
-        // an already-set deathDate so re-marking via the menu doesn't
-        // silently reset it.
+        // Preserve an existing deathDate so re-marking doesn't reset it.
         deathDate: becomingDead ? r.deathDate ?? monthDay : undefined,
+        // Marking as dead clears any sale state (mutually exclusive).
+        vendido: becomingDead ? false : r.vendido,
+        saleDate: becomingDead ? undefined : r.saleDate,
+      };
+    });
+    setStock(lotId, { rows: next });
+  };
+
+  const toggleVendido = (idx: number) => {
+    const monthDay = `${monthKey}-01`;
+    const next = displayRows.map((r, i) => {
+      if (i !== idx) return r;
+      const becomingSold = !r.vendido;
+      return {
+        ...r,
+        vendido: becomingSold,
+        saleDate: becomingSold ? r.saleDate ?? monthDay : undefined,
+        // Marking as sold clears any death state (mutually exclusive).
+        muerto: becomingSold ? false : r.muerto,
+        deathDate: becomingSold ? undefined : r.deathDate,
       };
     });
     setStock(lotId, { rows: next });
@@ -145,7 +163,9 @@ export function StockForm({ lotId }: Props) {
                 className={`border-t border-border hover:bg-surface-2/30 align-middle ${
                   row.muerto
                     ? "bg-clay-soft/20 [&>td:not(:last-child)]:opacity-60"
-                    : ""
+                    : row.vendido
+                      ? "bg-sun-soft/20 [&>td:not(:last-child)]:opacity-60"
+                      : ""
                 }`}
               >
                 <td className="px-4 py-2 text-text-muted">
@@ -154,6 +174,10 @@ export function StockForm({ lotId }: Props) {
                     {row.muerto ? (
                       <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wide bg-clay-soft text-clay-soft-text">
                         {t.stock.deadBadge}
+                      </span>
+                    ) : row.vendido ? (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wide bg-sun-soft text-sun-soft-text">
+                        {t.stock.soldBadge}
                       </span>
                     ) : null}
                   </div>
@@ -252,8 +276,10 @@ export function StockForm({ lotId }: Props) {
                 <td className="px-2 py-1.5 text-center">
                   <RowActionsMenu
                     isDead={!!row.muerto}
+                    isSold={!!row.vendido}
                     canDelete={displayRows.length > 1}
                     onToggleDead={() => toggleMuerto(idx)}
+                    onToggleSold={() => toggleVendido(idx)}
                     onDelete={() => deleteRow(idx)}
                   />
                 </td>
@@ -268,7 +294,13 @@ export function StockForm({ lotId }: Props) {
         {displayRows.map((row, idx) => (
           <div
             key={idx}
-            className={`p-4 space-y-3 ${row.muerto ? "bg-clay-soft/20" : ""}`}
+            className={`p-4 space-y-3 ${
+              row.muerto
+                ? "bg-clay-soft/20"
+                : row.vendido
+                  ? "bg-sun-soft/20"
+                  : ""
+            }`}
           >
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-text-muted flex items-center gap-1.5">
@@ -277,12 +309,18 @@ export function StockForm({ lotId }: Props) {
                   <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wide bg-clay-soft text-clay-soft-text">
                     {t.stock.deadBadge}
                   </span>
+                ) : row.vendido ? (
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wide bg-sun-soft text-sun-soft-text">
+                    {t.stock.soldBadge}
+                  </span>
                 ) : null}
               </span>
               <RowActionsMenu
                 isDead={!!row.muerto}
+                isSold={!!row.vendido}
                 canDelete={displayRows.length > 1}
                 onToggleDead={() => toggleMuerto(idx)}
+                onToggleSold={() => toggleVendido(idx)}
                 onDelete={() => deleteRow(idx)}
               />
             </div>
@@ -385,15 +423,19 @@ export function StockForm({ lotId }: Props) {
 
 interface RowActionsMenuProps {
   isDead: boolean;
+  isSold: boolean;
   canDelete: boolean;
   onToggleDead: () => void;
+  onToggleSold: () => void;
   onDelete: () => void;
 }
 
 function RowActionsMenu({
   isDead,
+  isSold,
   canDelete,
   onToggleDead,
+  onToggleSold,
   onDelete,
 }: RowActionsMenuProps) {
   const [open, setOpen] = useState(false);
@@ -473,6 +515,31 @@ function RowActionsMenu({
               <path d="M12 2a8 8 0 0 0-8 8v12l3-3 2.5 2.5L12 19l2.5 2.5L17 19l3 3V10a8 8 0 0 0-8-8z" />
             </svg>
             {isDead ? t.stock.unmarkDead : t.stock.markDead}
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              onToggleSold();
+              setOpen(false);
+            }}
+            className="w-full text-left px-3 py-2 text-sm hover:bg-surface-2 flex items-center gap-2 border-t border-border"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="w-4 h-4 text-sun-soft-text"
+              aria-hidden="true"
+            >
+              {/* Tag (sold / outgoing) */}
+              <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+              <line x1="7" y1="7" x2="7.01" y2="7" />
+            </svg>
+            {isSold ? t.stock.unmarkSold : t.stock.markSold}
           </button>
           <button
             type="button"

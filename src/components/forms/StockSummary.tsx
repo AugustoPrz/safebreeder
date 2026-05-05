@@ -50,6 +50,7 @@ export function StockSummary({ rows }: Props) {
   const machos = live.filter((r) => r.sexo === "macho").length;
   const hembras = live.filter((r) => r.sexo === "hembra").length;
   const muertos = rows.filter((r) => r.muerto).length;
+  const vendidos = rows.filter((r) => r.vendido).length;
 
   const weightBuckets = useMemo(() => buildWeightBuckets(live), [live]);
   const origenData = useMemo(() => buildOrigenData(live), [live]);
@@ -57,12 +58,17 @@ export function StockSummary({ rows }: Props) {
   return (
     <div className="space-y-4">
       {/* KPIs */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <SexKpi machos={machos} hembras={hembras} />
         <Kpi
           label="Animales muertos"
           value={muertos.toString()}
           tone="clay"
+        />
+        <Kpi
+          label="Animales vendidos"
+          value={vendidos.toString()}
+          tone="sun"
         />
       </div>
 
