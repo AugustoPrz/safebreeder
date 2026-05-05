@@ -58,8 +58,17 @@ export function StockSummary({ rows }: Props) {
   return (
     <div className="space-y-4">
       {/* KPIs */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        <SexKpi machos={machos} hembras={hembras} />
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <Kpi
+          label={t.stock.sexes.macho + "s"}
+          value={machos.toString()}
+          tone="primary"
+        />
+        <Kpi
+          label={t.stock.sexes.hembra + "s"}
+          value={hembras.toString()}
+          tone="sun"
+        />
         <Kpi
           label="Animales muertos"
           value={muertos.toString()}
@@ -378,32 +387,6 @@ function Kpi({
         {label}
       </div>
       <div className={`text-2xl font-semibold mt-0.5 ${color}`}>{value}</div>
-    </div>
-  );
-}
-
-/** Combined Macho / Hembra card: two figures side by side in one box. */
-function SexKpi({ machos, hembras }: { machos: number; hembras: number }) {
-  return (
-    <div className="bg-surface border border-border rounded-xl px-4 py-3">
-      <div className="text-[11px] uppercase tracking-wider text-text-muted font-medium">
-        {t.stock.sexes.macho}s / {t.stock.sexes.hembra}s
-      </div>
-      <div className="mt-0.5 flex items-baseline gap-3">
-        <div className="flex items-baseline gap-1">
-          <span className="text-2xl font-semibold text-primary tabular-nums">
-            {machos}
-          </span>
-          <span className="text-[11px] text-text-muted">M</span>
-        </div>
-        <span className="text-text-muted">·</span>
-        <div className="flex items-baseline gap-1">
-          <span className="text-2xl font-semibold text-sun-soft-text tabular-nums">
-            {hembras}
-          </span>
-          <span className="text-[11px] text-text-muted">H</span>
-        </div>
-      </div>
     </div>
   );
 }
