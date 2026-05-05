@@ -847,7 +847,10 @@ export default function DashboardPage() {
                   label={t.dashboard.salesLastDate}
                   value={
                     salesSummary.lastDate
-                      ? formatIsoDate(salesSummary.lastDate)
+                      ? formatMonthKey(
+                          salesSummary.lastDate.slice(0, 7),
+                          t.months,
+                        )
                       : "—"
                   }
                 />
@@ -1146,12 +1149,6 @@ function SexKpi({ machos, hembras }: { machos: number; hembras: number }) {
       </div>
     </div>
   );
-}
-
-/** Format an ISO YYYY-MM-DD date as DD/MM/YYYY. Falls back to the input. */
-function formatIsoDate(iso: string): string {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
-  return m ? `${m[3]}/${m[2]}/${m[1]}` : iso;
 }
 
 function EmptyMini({ text }: { text: string }) {
