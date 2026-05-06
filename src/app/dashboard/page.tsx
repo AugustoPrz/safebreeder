@@ -29,8 +29,7 @@ import {
   hpgDistribution,
   lastWeightForTag,
   liveStockRows,
-  sumLatestWeights,
-  sumStockEntryWeights,
+  lotProduction,
   summarizeWeights,
 } from "@/lib/calc";
 import { t } from "@/lib/i18n";
@@ -335,37 +334,29 @@ export default function DashboardPage() {
   }, [lots, treatmentsByLot, yearFilter]);
 
   // ── Producción de la recría ─────────────────────────────────────────────
-  // Per-lot entrada (sum of stock peso) vs salida (sum of latest month weights),
-  // plus the gain (total and per-animal).
+  // Per-lot entrada vs salida using a per-animal walk: each Stock animal's
+  // entry peso pairs with its most recent recorded weight in Pesadas.
+  // Dead animals are excluded entirely; sold animals stay in the calc but
+  // their last pre-sale weight naturally freezes their contribution.
   const productionByLot = useMemo<EntryExitDatum[]>(() => {
-    return lots
-      .map((lot) => {
-        const stockRows = liveStockRows(stockByLot[lot.id]?.rows ?? []);
-        const entry = sumStockEntryWeights(stockRows);
-        const latest = sumLatestWeights(weightsByLot[lot.id]);
-        if (entry.totalKg === 0 && (!latest || latest.totalKg === 0)) {
-          return null;
-        }
-        const entrada = Math.round(entry.totalKg);
-        const salida = latest ? Math.round(latest.totalKg) : 0;
-        let gainTotal: number | null = null;
-        let gainPerAnimal: number | null = null;
-        if (entry.totalKg > 0 && latest && latest.totalKg > 0) {
-          gainTotal = salida - entrada;
-          const animalCount = Math.max(entry.weighedCount, latest.count);
-          if (animalCount > 0) {
-            gainPerAnimal = (latest.totalKg - entry.totalKg) / animalCount;
-          }
-        }
-        return {
-          name: lot.name,
-          entrada,
-          salida,
-          gainTotal,
-          gainPerAnimal,
-        };
-      })
-      .filter((x): x is EntryExitDatum => x !== null);
+    const out: EntryExitDatum[] = [];
+    for (const lot of lots) {
+      const stockRows = stockByLot[lot.id]?.rows ?? [];
+      const { entrada, salida, matched } = lotProduction(
+        stockRows,
+        weightsByLot[lot.id],
+      );
+      if (matched === 0) continue;
+      const gainTotal = salida - entrada;
+      out.push({
+        name: lot.name,
+        entrada: Math.round(entrada),
+        salida: Math.round(salida),
+        gainTotal: Math.round(gainTotal),
+        gainPerAnimal: Number((gainTotal / matched).toFixed(1)),
+      });
+    }
+    return out;
   }, [lots, stockByLot, weightsByLot]);
 
   // Same data as productionByLot but normalized per animal in the lot.
@@ -374,25 +365,20 @@ export default function DashboardPage() {
   const productionAvgByLot = useMemo<EntryExitDatum[]>(() => {
     const out: EntryExitDatum[] = [];
     for (const lot of lots) {
-      const stockRows = liveStockRows(stockByLot[lot.id]?.rows ?? []);
-      const entry = sumStockEntryWeights(stockRows);
-      const latest = sumLatestWeights(weightsByLot[lot.id]);
-      const animalCount = Math.max(entry.weighedCount, latest?.count ?? 0);
-      if (animalCount === 0) continue;
-      const avgEntrada =
-        entry.weighedCount > 0 ? entry.totalKg / entry.weighedCount : 0;
-      const avgSalida =
-        latest && latest.count > 0 ? latest.totalKg / latest.count : 0;
-      if (avgEntrada === 0 && avgSalida === 0) continue;
-      const hasBoth = entry.totalKg > 0 && !!latest && latest.totalKg > 0;
+      const stockRows = stockByLot[lot.id]?.rows ?? [];
+      const { entrada, salida, matched } = lotProduction(
+        stockRows,
+        weightsByLot[lot.id],
+      );
+      if (matched === 0) continue;
+      const avgEntrada = entrada / matched;
+      const avgSalida = salida / matched;
       out.push({
         name: lot.name,
         entrada: Number(avgEntrada.toFixed(1)),
         salida: Number(avgSalida.toFixed(1)),
-        gainTotal: hasBoth
-          ? Number((avgSalida - avgEntrada).toFixed(1))
-          : null,
-        // The bars are already per-animal so the second label is redundant.
+        gainTotal: Number((avgSalida - avgEntrada).toFixed(1)),
+        // Bars are already per-animal so the second label is redundant.
         gainPerAnimal: null,
       });
     }

@@ -140,6 +140,37 @@ export function liveStockRows(rows: StockAnimal[]): StockAnimal[] {
 }
 
 /**
+ * Per-lot Producción aggregate: walks each Stock animal and pairs its
+ * entry weight (`peso`) with its most recent recorded weight in Pesadas
+ * (matching `caravana ↔ tagId`). Dead animals are excluded entirely;
+ * sold and live are both included. Only animals with **both** an entry
+ * peso and a recorded weight contribute, so the entrada/salida pair is
+ * always over the same set and `producido = salida − entrada` is exact.
+ *
+ * For sold animals, their `lastWeightForTag` returns the last pre-sale
+ * weighing — naturally freezing their contribution to producido.
+ */
+export function lotProduction(
+  rows: StockAnimal[],
+  weightsByMonth: Record<MonthKey, WeightRecord> | undefined,
+): { entrada: number; salida: number; matched: number } {
+  let entrada = 0;
+  let salida = 0;
+  let matched = 0;
+  for (const r of rows) {
+    if (r.muerto) continue;
+    const peso = parseStockPeso(r.peso);
+    if (peso <= 0) continue;
+    const last = lastWeightForTag(weightsByMonth, r.caravana);
+    if (last === null) continue;
+    entrada += peso;
+    salida += last;
+    matched++;
+  }
+  return { entrada, salida, matched };
+}
+
+/**
  * Most recent `weightKg` recorded for a caravana across all months in a
  * lot's weight record. Returns null if no match. Used to compute the
  * average sale weight from Pesadas data when an animal is marked as sold.
