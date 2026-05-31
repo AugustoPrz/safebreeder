@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { EstablishmentForm } from "@/components/forms/EstablishmentForm";
+import { LotForm } from "@/components/forms/LotForm";
 import { useEstablishments, useLotsByEstablishment } from "@/hooks/useDb";
 import { useStore } from "@/lib/store";
 import { t } from "@/lib/i18n";
@@ -17,7 +18,7 @@ interface Scan {
   scannedAt: number;
 }
 
-type Step = "est" | "newEst" | "lote" | "scan" | "confirm" | "done";
+type Step = "est" | "newEst" | "lote" | "newLote" | "scan" | "confirm" | "done";
 
 const emptyAnimal: StockAnimal = {
   caravana: "",
@@ -291,6 +292,53 @@ export function ScanFlow({ onClose, inModal = false }: Props) {
             })}
           </div>
         )}
+        <Button
+          variant="secondary"
+          className="w-full"
+          onClick={() => setStep("newLote")}
+        >
+          + {t.scan.newLot}
+        </Button>
+      </div>
+    );
+  }
+
+  if (step === "newLote") {
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setStep("lote")}
+            className="text-text-muted hover:text-text inline-flex items-center gap-1 text-sm"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="w-4 h-4"
+            >
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+            {est?.name}
+          </button>
+        </div>
+        <h2 className="font-semibold">{t.scan.newLotTitle}</h2>
+        <LotForm
+          establishmentId={estId}
+          onCancel={() => setStep("lote")}
+          onDone={(created) => {
+            if (created) {
+              setLotId(created.id);
+              setStep("scan");
+            } else {
+              setStep("lote");
+            }
+          }}
+        />
       </div>
     );
   }

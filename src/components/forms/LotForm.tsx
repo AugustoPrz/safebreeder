@@ -10,7 +10,8 @@ import type { Lot, LotCategory } from "@/lib/types";
 
 interface Props {
   establishmentId: string;
-  onDone: () => void;
+  /** Called after save. On create, receives the newly created lot. */
+  onDone: (created?: Lot) => void;
   onCancel: () => void;
   lot?: Lot;
 }
@@ -38,10 +39,11 @@ export function LotForm({ establishmentId, onDone, onCancel, lot }: Props) {
     };
     if (lot) {
       updateLot(lot.id, payload);
+      onDone();
     } else {
-      addLot(payload);
+      const created = addLot(payload);
+      onDone(created);
     }
-    onDone();
   };
 
   return (

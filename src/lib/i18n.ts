@@ -233,6 +233,8 @@ export const t = {
     stepLotTitle: "Elegí el lote",
     newEstablishment: "Nuevo establecimiento",
     newEstablishmentTitle: "Nuevo establecimiento",
+    newLot: "Nuevo lote",
+    newLotTitle: "Nuevo lote",
     lotAnimals: (n: number) => (n === 1 ? "1 animal" : `${n} animales`),
     noEstablishments:
       "Primero creá un establecimiento para poder cargar animales.",
