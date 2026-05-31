@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Card, CardBody } from "@/components/ui/Card";
-import { Field, Input, Select } from "@/components/ui/Input";
+import { Input } from "@/components/ui/Input";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useEstablishments, useLotsByEstablishment } from "@/hooks/useDb";
 import { useStore } from "@/lib/store";
@@ -18,7 +18,7 @@ interface Scan {
   scannedAt: number;
 }
 
-type Step = "lugar" | "scan" | "confirm" | "done";
+type Step = "est" | "lote" | "scan" | "confirm" | "done";
 
 const emptyAnimal: StockAnimal = {
   caravana: "",
@@ -87,7 +87,7 @@ export function ScanFlow({ onClose }: Props) {
   const setStock = useStore((s) => s.setStock);
   const stockByLot = useStore((s) => s.db.stock);
 
-  const [step, setStep] = useState<Step>("lugar");
+  const [step, setStep] = useState<Step>("est");
   const [estId, setEstId] = useState("");
   const [lotId, setLotId] = useState("");
   const [active, setActive] = useState(false);
@@ -154,7 +154,7 @@ export function ScanFlow({ onClose }: Props) {
     setPending("");
     setEstId("");
     setLotId("");
-    setStep("lugar");
+    setStep("est");
   };
 
   const goToStock = () => {
@@ -165,20 +165,93 @@ export function ScanFlow({ onClose }: Props) {
   const dupCount = scans.length - new Set(scans.map((s) => s.tagId)).size;
 
   // ── render ────────────────────────────────────────────────────────────────
-  if (step === "lugar") {
+  if (step === "est") {
+    if (establishments.length === 0) {
+      return (
+        <EmptyState
+          title={t.scan.noEstablishments}
+          action={
+            <Link href="/establishments">
+              <Button>{t.scan.goToEstablishments}</Button>
+            </Link>
+          }
+        />
+      );
+    }
     return (
-      <LugarStep
-        establishments={establishments}
-        lots={lots}
-        estId={estId}
-        lotId={lotId}
-        onEst={(id) => {
-          setEstId(id);
-          setLotId("");
-        }}
-        onLot={setLotId}
-        onStart={() => setStep("scan")}
-      />
+      <div className="space-y-3">
+        <h2 className="font-semibold">{t.scan.stepEstablishmentTitle}</h2>
+        <div className="flex flex-col gap-2">
+          {establishments.map((e) => {
+            const place = [e.district, e.province].filter(Boolean).join(", ");
+            return (
+              <PickCard
+                key={e.id}
+                title={e.name}
+                subtitle={place || undefined}
+                onClick={() => {
+                  setEstId(e.id);
+                  setLotId("");
+                  setStep("lote");
+                }}
+              />
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  if (step === "lote") {
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setStep("est")}
+            className="text-text-muted hover:text-text inline-flex items-center gap-1 text-sm"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="w-4 h-4"
+            >
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+            {est?.name}
+          </button>
+        </div>
+        <h2 className="font-semibold">{t.scan.stepLotTitle}</h2>
+        {lots.length === 0 ? (
+          <p className="text-sm text-text-muted">{t.scan.noLots}</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {lots.map((l) => {
+              const meta = [
+                t.lot.categories[l.category],
+                l.headCount ? t.scan.lotAnimals(l.headCount) : null,
+              ]
+                .filter(Boolean)
+                .join(" · ");
+              return (
+                <PickCard
+                  key={l.id}
+                  title={l.name}
+                  subtitle={meta || undefined}
+                  onClick={() => {
+                    setLotId(l.id);
+                    setStep("scan");
+                  }}
+                />
+              );
+            })}
+          </div>
+        )}
+      </div>
     );
   }
 
@@ -192,7 +265,7 @@ export function ScanFlow({ onClose }: Props) {
             <span className="text-text-muted mx-1.5">›</span>
             <span className="font-semibold">{lot?.name}</span>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => setStep("lugar")}>
+          <Button variant="ghost" size="sm" onClick={() => setStep("est")}>
             {t.scan.change}
           </Button>
         </div>
@@ -444,74 +517,41 @@ export function ScanFlow({ onClose }: Props) {
   );
 }
 
-function LugarStep({
-  establishments,
-  lots,
-  estId,
-  lotId,
-  onEst,
-  onLot,
-  onStart,
+function PickCard({
+  title,
+  subtitle,
+  onClick,
 }: {
-  establishments: { id: string; name: string }[];
-  lots: { id: string; name: string }[];
-  estId: string;
-  lotId: string;
-  onEst: (id: string) => void;
-  onLot: (id: string) => void;
-  onStart: () => void;
+  title: string;
+  subtitle?: string;
+  onClick: () => void;
 }) {
-  if (establishments.length === 0) {
-    return (
-      <EmptyState
-        title={t.scan.noEstablishments}
-        action={
-          <Link href="/establishments">
-            <Button>{t.scan.goToEstablishments}</Button>
-          </Link>
-        }
-      />
-    );
-  }
-
   return (
-    <div className="space-y-4">
-      <Field label={t.scan.pickEstablishment} required>
-        <Select value={estId} onChange={(e) => onEst(e.target.value)}>
-          <option value="">{t.scan.pickEstablishmentPlaceholder}</option>
-          {establishments.map((e) => (
-            <option key={e.id} value={e.id}>
-              {e.name}
-            </option>
-          ))}
-        </Select>
-      </Field>
-
-      <Field label={t.scan.pickLot} required>
-        <Select
-          value={lotId}
-          onChange={(e) => onLot(e.target.value)}
-          disabled={!estId}
-        >
-          <option value="">{t.scan.pickLotPlaceholder}</option>
-          {lots.map((l) => (
-            <option key={l.id} value={l.id}>
-              {l.name}
-            </option>
-          ))}
-        </Select>
-      </Field>
-
-      {estId && lots.length === 0 ? (
-        <p className="text-sm text-text-muted">{t.scan.noLots}</p>
-      ) : null}
-
-      <div className="flex justify-end pt-2">
-        <Button onClick={onStart} disabled={!estId || !lotId}>
-          {t.scan.startScanning}
-        </Button>
-      </div>
-    </div>
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full text-left bg-surface border border-border rounded-xl px-4 py-3 flex items-center justify-between gap-3 hover:border-primary hover:bg-surface-2/40 transition-colors"
+    >
+      <span className="min-w-0">
+        <span className="block font-medium truncate">{title}</span>
+        {subtitle ? (
+          <span className="block text-xs text-text-muted truncate">
+            {subtitle}
+          </span>
+        ) : null}
+      </span>
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="w-4 h-4 text-text-muted shrink-0"
+      >
+        <polyline points="9 18 15 12 9 6" />
+      </svg>
+    </button>
   );
 }
 

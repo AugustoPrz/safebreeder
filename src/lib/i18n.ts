@@ -228,13 +228,10 @@ export const t = {
     title: "Escanear caravanas",
     subtitle:
       "Cargá animales a un lote escaneando con tu bastón Bluetooth (HID).",
-    // Paso 1 — lugar
-    pickPlaceTitle: "¿Dónde vas a cargar?",
-    pickEstablishment: "Establecimiento",
-    pickLot: "Lote",
-    pickEstablishmentPlaceholder: "Elegí un establecimiento",
-    pickLotPlaceholder: "Elegí un lote",
-    startScanning: "Empezar a escanear",
+    // Paso 1 — establecimiento, Paso 2 — lote (listas de cards)
+    stepEstablishmentTitle: "Elegí el establecimiento",
+    stepLotTitle: "Elegí el lote",
+    lotAnimals: (n: number) => (n === 1 ? "1 animal" : `${n} animales`),
     noEstablishments:
       "Primero creá un establecimiento para poder cargar animales.",
     goToEstablishments: "Ir a Establecimientos",
