@@ -2,11 +2,10 @@
 
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
-import { EmptyState } from "@/components/ui/EmptyState";
+import { EstablishmentForm } from "@/components/forms/EstablishmentForm";
 import { useEstablishments, useLotsByEstablishment } from "@/hooks/useDb";
 import { useStore } from "@/lib/store";
 import { t } from "@/lib/i18n";
@@ -18,7 +17,7 @@ interface Scan {
   scannedAt: number;
 }
 
-type Step = "est" | "lote" | "scan" | "confirm" | "done";
+type Step = "est" | "newEst" | "lote" | "scan" | "confirm" | "done";
 
 const emptyAnimal: StockAnimal = {
   caravana: "",
@@ -167,39 +166,78 @@ export function ScanFlow({ onClose, inModal = false }: Props) {
   const dupCount = scans.length - new Set(scans.map((s) => s.tagId)).size;
 
   // ── render ────────────────────────────────────────────────────────────────
-  if (step === "est") {
-    if (establishments.length === 0) {
-      return (
-        <EmptyState
-          title={t.scan.noEstablishments}
-          action={
-            <Link href="/establishments">
-              <Button>{t.scan.goToEstablishments}</Button>
-            </Link>
-          }
+  if (step === "newEst") {
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setStep("est")}
+            className="text-text-muted hover:text-text inline-flex items-center gap-1 text-sm"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="w-4 h-4"
+            >
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+            {t.scan.stepEstablishmentTitle}
+          </button>
+        </div>
+        <h2 className="font-semibold">{t.scan.newEstablishmentTitle}</h2>
+        <EstablishmentForm
+          onCancel={() => setStep("est")}
+          onDone={(created) => {
+            if (created) {
+              setEstId(created.id);
+              setLotId("");
+              setStep("lote");
+            } else {
+              setStep("est");
+            }
+          }}
         />
-      );
-    }
+      </div>
+    );
+  }
+
+  if (step === "est") {
     return (
       <div className="space-y-3">
         <h2 className="font-semibold">{t.scan.stepEstablishmentTitle}</h2>
-        <div className="flex flex-col gap-2">
-          {establishments.map((e) => {
-            const place = [e.district, e.province].filter(Boolean).join(", ");
-            return (
-              <PickCard
-                key={e.id}
-                title={e.name}
-                subtitle={place || undefined}
-                onClick={() => {
-                  setEstId(e.id);
-                  setLotId("");
-                  setStep("lote");
-                }}
-              />
-            );
-          })}
-        </div>
+        {establishments.length === 0 ? (
+          <p className="text-sm text-text-muted">{t.scan.noEstablishments}</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {establishments.map((e) => {
+              const place = [e.district, e.province].filter(Boolean).join(", ");
+              return (
+                <PickCard
+                  key={e.id}
+                  title={e.name}
+                  subtitle={place || undefined}
+                  onClick={() => {
+                    setEstId(e.id);
+                    setLotId("");
+                    setStep("lote");
+                  }}
+                />
+              );
+            })}
+          </div>
+        )}
+        <Button
+          variant="secondary"
+          className="w-full"
+          onClick={() => setStep("newEst")}
+        >
+          + {t.scan.newEstablishment}
+        </Button>
       </div>
     );
   }

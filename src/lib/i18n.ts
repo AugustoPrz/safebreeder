@@ -231,6 +231,8 @@ export const t = {
     // Paso 1 — establecimiento, Paso 2 — lote (listas de cards)
     stepEstablishmentTitle: "Elegí el establecimiento",
     stepLotTitle: "Elegí el lote",
+    newEstablishment: "Nuevo establecimiento",
+    newEstablishmentTitle: "Nuevo establecimiento",
     lotAnimals: (n: number) => (n === 1 ? "1 animal" : `${n} animales`),
     noEstablishments:
       "Primero creá un establecimiento para poder cargar animales.",

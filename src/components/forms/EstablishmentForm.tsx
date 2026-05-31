@@ -11,7 +11,8 @@ import arGeo from "@/lib/ar-geo.json";
 const DEFAULT_PROVINCE_ID = "06";
 
 interface Props {
-  onDone: () => void;
+  /** Called after save. On create, receives the newly created establishment. */
+  onDone: (created?: Establishment) => void;
   onCancel: () => void;
   establishment?: Establishment;
 }
@@ -47,10 +48,11 @@ export function EstablishmentForm({ onDone, onCancel, establishment }: Props) {
     };
     if (establishment) {
       updateEstablishment(establishment.id, payload);
+      onDone();
     } else {
-      addEstablishment(payload);
+      const created = addEstablishment(payload);
+      onDone(created);
     }
-    onDone();
   };
 
   return (
