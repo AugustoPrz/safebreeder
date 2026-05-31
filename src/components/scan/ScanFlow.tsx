@@ -79,9 +79,11 @@ function newId(): string {
 interface Props {
   /** Called after navigating to the lot's Stock, so a host modal can close. */
   onClose?: () => void;
+  /** When rendered inside the Modal, the sticky footer goes edge-to-edge. */
+  inModal?: boolean;
 }
 
-export function ScanFlow({ onClose }: Props) {
+export function ScanFlow({ onClose, inModal = false }: Props) {
   const router = useRouter();
   const establishments = useEstablishments();
   const setStock = useStore((s) => s.setStock);
@@ -403,13 +405,23 @@ export function ScanFlow({ onClose }: Props) {
           )}
         </Card>
 
-        <div className="flex justify-end">
-          <Button onClick={() => setStep("confirm")} disabled={scans.length === 0}>
+        <ScannerHelp />
+
+        {/* Sticky full-width action bar pinned to the bottom of the modal */}
+        <div
+          className={`sticky bottom-0 z-10 -mb-5 py-3 bg-surface border-t border-border ${
+            inModal ? "-mx-5 px-5" : ""
+          }`}
+        >
+          <Button
+            className="w-full"
+            size="lg"
+            onClick={() => setStep("confirm")}
+            disabled={scans.length === 0}
+          >
             {t.scan.finalize}
           </Button>
         </div>
-
-        <ScannerHelp />
       </div>
     );
   }

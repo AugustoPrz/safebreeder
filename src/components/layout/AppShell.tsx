@@ -197,7 +197,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         title={t.scan.title}
         size="xl"
       >
-        <ScanFlow onClose={() => setScanOpen(false)} />
+        <ScanFlow inModal onClose={() => setScanOpen(false)} />
       </Modal>
     </div>
   );
