@@ -48,6 +48,7 @@ export default function DashboardPage() {
 
   const [filter, setFilter] = useState<string>("");
   const [yearFilter, setYearFilter] = useState<string>(""); // "" = all years
+  const [originFilter, setOriginFilter] = useState<string>(""); // "" = all origins
   const downloadPdf = () => {
     window.print();
   };
@@ -386,6 +387,22 @@ export default function DashboardPage() {
       .map((o) => ({ key: `o::${o}`, name: o }));
     return { rows: filtered, series };
   }, [lots, weightsByLot, origenByLot, yearFilter]);
+
+  // Origins available to the by-origin charts (union of both series). Drives
+  // the origin dropdown that lets the user isolate a single origin's line.
+  const availableOrigins = useMemo(() => {
+    const set = new Set<string>();
+    for (const s of weightByOriginEvolution.series) set.add(s.name);
+    for (const s of gdpByOriginEvolution.series) set.add(s.name);
+    return Array.from(set).sort();
+  }, [weightByOriginEvolution.series, gdpByOriginEvolution.series]);
+
+  // Fall back to "all" if the selected origin disappears after a filter change.
+  const effectiveOrigin = availableOrigins.includes(originFilter)
+    ? originFilter
+    : "";
+  const filterSeries = (series: { key: string; name: string }[]) =>
+    effectiveOrigin ? series.filter((s) => s.name === effectiveOrigin) : series;
 
   const adgData = useMemo(() => {
     return lots
@@ -875,13 +892,33 @@ export default function DashboardPage() {
             )}
           </ChartCard>
 
+          {availableOrigins.length > 0 ? (
+            <div className="flex items-end justify-end">
+              <div className="w-full sm:w-64">
+                <Field label={t.dashboard.originFilter}>
+                  <Select
+                    value={effectiveOrigin}
+                    onChange={(e) => setOriginFilter(e.target.value)}
+                  >
+                    <option value="">{t.dashboard.allOrigins}</option>
+                    {availableOrigins.map((o) => (
+                      <option key={o} value={o}>
+                        {o}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+              </div>
+            </div>
+          ) : null}
+
           <ChartCard title={t.dashboard.chartWeightByOriginEvolution}>
             {weightByOriginEvolution.series.length === 0 ? (
               <EmptyMini text="Sin pesadas cargadas" />
             ) : (
               <MonthlyEvolutionLine
                 rows={weightByOriginEvolution.rows}
-                series={weightByOriginEvolution.series}
+                series={filterSeries(weightByOriginEvolution.series)}
               />
             )}
           </ChartCard>
@@ -892,7 +929,7 @@ export default function DashboardPage() {
             ) : (
               <MonthlyEvolutionLine
                 rows={gdpByOriginEvolution.rows}
-                series={gdpByOriginEvolution.series}
+                series={filterSeries(gdpByOriginEvolution.series)}
               />
             )}
           </ChartCard>

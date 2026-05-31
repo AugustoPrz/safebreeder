@@ -323,6 +323,8 @@ export const t = {
       "Evolución mensual de peso promedio por origen (kg)",
     chartGdpByOriginEvolution: "Evolución mensual de GDP por origen (kg/día)",
     sinOrigen: "Sin origen",
+    originFilter: "Filtrar por origen",
+    allOrigins: "Todos los orígenes",
     chartMortality: "Mortandad mensual",
     chartMortalitySubtitle: "Animales marcados como muertos por mes",
     kpiDeadTotal: "Animales muertos",
