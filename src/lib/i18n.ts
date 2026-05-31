@@ -8,6 +8,7 @@ export const t = {
     dashboard: "Estadísticas",
     plans: "Planes",
     admin: "Admin",
+    scan: "Escanear",
   },
 
   common: {
@@ -221,6 +222,64 @@ export const t = {
       hereford: "Hereford",
       cruzaIndica: "Cruza Indica",
     },
+  },
+
+  scan: {
+    title: "Escanear caravanas",
+    subtitle:
+      "Cargá animales a un lote escaneando con tu bastón Bluetooth (HID).",
+    // Paso 1 — lugar
+    pickPlaceTitle: "¿Dónde vas a cargar?",
+    pickEstablishment: "Establecimiento",
+    pickLot: "Lote",
+    pickEstablishmentPlaceholder: "Elegí un establecimiento",
+    pickLotPlaceholder: "Elegí un lote",
+    startScanning: "Empezar a escanear",
+    noEstablishments:
+      "Primero creá un establecimiento para poder cargar animales.",
+    goToEstablishments: "Ir a Establecimientos",
+    noLots: "Este establecimiento todavía no tiene lotes. Creá uno primero.",
+    // Paso 2 — escaneo
+    change: "Cambiar",
+    scannerActive: "Modo escáner activo",
+    scannerInactive: "Modo escáner desactivado",
+    scannerActiveHint: "Esperando próximo escaneo del bastón…",
+    scannerInactiveHint: "Activá el modo y escaneá una caravana.",
+    activate: "Activar modo escáner",
+    stop: "Detener",
+    inputPlaceholderActive: "Escaneá una caravana con el bastón…",
+    inputPlaceholderInactive: "Activá el modo escáner para empezar",
+    mobileTip:
+      "Tip: en mobile el teclado on-screen no aparece — el bastón actúa como teclado Bluetooth. Si no escanea, verificá que esté pareado y en modo HID.",
+    statScanned: "Escaneados",
+    statUnique: "Únicos",
+    statDuplicates: "Duplicados",
+    readTags: "Caravanas leídas",
+    clear: "Limpiar",
+    confirmClear: (n: number) => `¿Borrar ${n} caravanas escaneadas?`,
+    emptyList: "Todavía no escaneaste ninguna caravana.",
+    duplicate: "duplicado",
+    finalize: "Finalizar",
+    // Paso 3 — confirmación
+    confirmTitle: "Confirmar carga",
+    confirmSummary: (n: number, lot: string, est: string) =>
+      `Se agregarán ${n} ${n === 1 ? "caravana nueva" : "caravanas nuevas"} a ${lot} · ${est}.`,
+    alreadyExist: (n: number) =>
+      n === 1
+        ? "1 caravana ya existía en el lote (se omite)."
+        : `${n} caravanas ya existían en el lote (se omiten).`,
+    nothingNew: "No hay caravanas nuevas para agregar.",
+    newTags: "Caravanas nuevas",
+    skippedTags: "Ya existentes (omitidas)",
+    backToScan: "Volver a escanear",
+    confirmLoad: "Confirmar carga",
+    // Paso 4 — done
+    doneTitle: (n: number) =>
+      `Se ${n === 1 ? "agregó 1 animal" : `agregaron ${n} animales`} al lote.`,
+    scanAnother: "Escanear otro lote",
+    viewStock: "Ver Stock del lote",
+    // Ayuda del bastón
+    helpSummary: "¿Cómo configurar el bastón?",
   },
 
   weights: {
