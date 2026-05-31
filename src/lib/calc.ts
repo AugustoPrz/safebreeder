@@ -55,6 +55,7 @@ export function hpgDistribution(rows: HpgRow[]) {
 export function calculateAdg(
   currentKg: number | null | undefined,
   previousKg: number | null | undefined,
+  days = 30,
 ): number | null {
   if (
     currentKg === null ||
@@ -64,12 +65,14 @@ export function calculateAdg(
   ) {
     return null;
   }
-  return (currentKg - previousKg) / 30;
+  if (!days || days <= 0) return null;
+  return (currentKg - previousKg) / days;
 }
 
 export function summarizeWeights(
   rows: WeightRow[],
   previousRows: WeightRow[] = [],
+  days = 30,
 ) {
   const prevMap = new Map(previousRows.map((r) => [r.tagId.trim(), r.weightKg]));
   const weights = rows
@@ -78,7 +81,7 @@ export function summarizeWeights(
   const adgs: number[] = [];
   for (const r of rows) {
     const prev = prevMap.get(r.tagId.trim());
-    const adg = calculateAdg(r.weightKg, prev ?? null);
+    const adg = calculateAdg(r.weightKg, prev ?? null, days);
     if (adg !== null) adgs.push(adg);
   }
   return {
@@ -90,6 +93,37 @@ export function summarizeWeights(
     avgAdg:
       adgs.length > 0 ? adgs.reduce((a, b) => a + b, 0) / adgs.length : null,
   };
+}
+
+/** Days between the 1st of two YYYY-MM month keys. Crosses year boundaries. */
+export function monthsDiffDays(fromKey: string, toKey: string): number {
+  const a = /^(\d{4})-(\d{2})$/.exec(fromKey);
+  const b = /^(\d{4})-(\d{2})$/.exec(toKey);
+  if (!a || !b) return 0;
+  const d1 = new Date(Number(a[1]), Number(a[2]) - 1, 1);
+  const d2 = new Date(Number(b[1]), Number(b[2]) - 1, 1);
+  return Math.round((d2.getTime() - d1.getTime()) / 86400000);
+}
+
+/**
+ * Most recent month key strictly before `monthKey` that has at least one
+ * numeric weight, or null. Lets GDP compare against the last actual weighing
+ * even when intermediate months were skipped.
+ */
+export function previousWeighedMonthKey(
+  weightsByMonth: Record<MonthKey, WeightRecord> | undefined,
+  monthKey: string,
+): string | null {
+  if (!weightsByMonth) return null;
+  const candidates = Object.keys(weightsByMonth)
+    .filter((k) => k < monthKey)
+    .filter((k) =>
+      (weightsByMonth[k]?.rows ?? []).some(
+        (r) => typeof r.weightKg === "number" && Number.isFinite(r.weightKg),
+      ),
+    )
+    .sort();
+  return candidates.length > 0 ? candidates[candidates.length - 1] : null;
 }
 
 export function formatNumber(value: number | null | undefined, digits = 1): string {

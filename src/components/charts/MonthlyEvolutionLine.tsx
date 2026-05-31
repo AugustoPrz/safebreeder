@@ -10,8 +10,6 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import type { Lot } from "@/lib/types";
-
 const PALETTE = [
   "#4d7c2a",
   "#c8a415",
@@ -23,10 +21,11 @@ const PALETTE = [
 
 interface Props {
   rows: Record<string, number | string>[];
-  lots: Lot[];
+  /** One line per series; `key` matches the data key in each row. */
+  series: { key: string; name: string }[];
 }
 
-export function MonthlyEvolutionLine({ rows, lots }: Props) {
+export function MonthlyEvolutionLine({ rows, series }: Props) {
   return (
     <ResponsiveContainer width="100%" height="100%">
       <LineChart data={rows} margin={{ top: 24, right: 12, left: 0, bottom: 8 }}>
@@ -41,19 +40,19 @@ export function MonthlyEvolutionLine({ rows, lots }: Props) {
           iconType="line"
           formatter={(v) => <span style={{ color: "#1f2518" }}>{v}</span>}
         />
-        {lots.map((lot, i) => (
+        {series.map((s, i) => (
           <Line
-            key={lot.id}
+            key={s.key}
             type="monotone"
-            dataKey={lot.id}
-            name={lot.name}
+            dataKey={s.key}
+            name={s.name}
             stroke={PALETTE[i % PALETTE.length]}
             strokeWidth={2}
             dot={{ r: 3 }}
             connectNulls
           >
             <LabelList
-              dataKey={lot.id}
+              dataKey={s.key}
               position="top"
               fill={PALETTE[i % PALETTE.length]}
               fontSize={10}

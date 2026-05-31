@@ -30,6 +30,8 @@ import {
   lastWeightForTag,
   liveStockRows,
   lotProduction,
+  monthsDiffDays,
+  previousWeighedMonthKey,
   summarizeWeights,
 } from "@/lib/calc";
 import { t } from "@/lib/i18n";
@@ -242,12 +244,12 @@ export default function DashboardPage() {
         const prevKey = priorKeys[priorKeys.length - 1];
         if (!prevKey) continue;
         const prev = lotMonths[prevKey];
-        const perTag = summarizeWeights(current.rows, prev.rows);
+        const days = monthsDiffDays(prevKey, key);
+        const perTag = summarizeWeights(current.rows, prev.rows, days);
         let adg: number | null = perTag.avgAdg;
         if (adg === null) {
           const lastSum = summarizeWeights(current.rows);
           const prevSum = summarizeWeights(prev.rows);
-          const days = monthsDiffDays(prevKey, key);
           if (
             lastSum.avgWeight !== null &&
             prevSum.avgWeight !== null &&
@@ -267,6 +269,124 @@ export default function DashboardPage() {
     return { rows: filtered, lots };
   }, [lots, weightsByLot, yearFilter]);
 
+  // Build caravana→origen map per lot from ALL stock rows. Origen is
+  // intrinsic to the animal, so dead/sold animals keep contributing their
+  // historical weighings. Empty origen → "Sin origen".
+  const origenByLot = useMemo(() => {
+    const map = new Map<string, Map<string, string>>();
+    for (const lot of lots) {
+      const m = new Map<string, string>();
+      for (const a of stockByLot[lot.id]?.rows ?? []) {
+        const tag = a.caravana.trim();
+        if (tag) m.set(tag, a.origen.trim() || t.dashboard.sinOrigen);
+      }
+      map.set(lot.id, m);
+    }
+    return map;
+  }, [lots, stockByLot]);
+
+  // Monthly average weight (kg) per origin.
+  const weightByOriginEvolution = useMemo(() => {
+    const monthSet = new Set<string>();
+    for (const lot of lots) {
+      for (const key of Object.keys(weightsByLot[lot.id] ?? {})) {
+        if (inYearMonth(key)) monthSet.add(key);
+      }
+    }
+    const monthKeys = Array.from(monthSet).sort();
+    const seriesKeys = new Set<string>();
+    const rows = monthKeys.map((key) => {
+      const row: Record<string, number | string> = {
+        label: formatMonthKey(key, t.months),
+      };
+      const acc = new Map<string, { sum: number; count: number }>();
+      for (const lot of lots) {
+        const rec = weightsByLot[lot.id]?.[key];
+        if (!rec) continue;
+        const omap = origenByLot.get(lot.id);
+        for (const r of rec.rows) {
+          if (typeof r.weightKg !== "number" || !Number.isFinite(r.weightKg))
+            continue;
+          const origen = omap?.get(r.tagId.trim()) ?? t.dashboard.sinOrigen;
+          const cur = acc.get(origen) ?? { sum: 0, count: 0 };
+          cur.sum += r.weightKg;
+          cur.count += 1;
+          acc.set(origen, cur);
+        }
+      }
+      for (const [origen, { sum, count }] of acc) {
+        if (count > 0) {
+          row[`o::${origen}`] = Math.round(sum / count);
+          seriesKeys.add(origen);
+        }
+      }
+      return row;
+    });
+    const filtered = rows.filter((r) => Object.keys(r).length > 1);
+    const series = Array.from(seriesKeys)
+      .sort()
+      .map((o) => ({ key: `o::${o}`, name: o }));
+    return { rows: filtered, series };
+  }, [lots, weightsByLot, origenByLot, yearFilter]);
+
+  // Monthly GDP (kg/day) per origin — per-tag gain over the real day gap to
+  // the most recent prior weighing.
+  const gdpByOriginEvolution = useMemo(() => {
+    const monthSet = new Set<string>();
+    for (const lot of lots) {
+      for (const key of Object.keys(weightsByLot[lot.id] ?? {})) {
+        if (inYearMonth(key)) monthSet.add(key);
+      }
+    }
+    const monthKeys = Array.from(monthSet).sort();
+    const seriesKeys = new Set<string>();
+    const rows = monthKeys.map((key) => {
+      const row: Record<string, number | string> = {
+        label: formatMonthKey(key, t.months),
+      };
+      const acc = new Map<string, { sum: number; count: number }>();
+      for (const lot of lots) {
+        const lotMonths = weightsByLot[lot.id];
+        const current = lotMonths?.[key];
+        if (!current) continue;
+        const prevKey = previousWeighedMonthKey(lotMonths, key);
+        if (!prevKey) continue;
+        const days = monthsDiffDays(prevKey, key);
+        if (days <= 0) continue;
+        const prevMap = new Map(
+          (lotMonths[prevKey].rows ?? []).map((r) => [
+            r.tagId.trim(),
+            r.weightKg,
+          ]),
+        );
+        const omap = origenByLot.get(lot.id);
+        for (const r of current.rows) {
+          if (typeof r.weightKg !== "number") continue;
+          const prevW = prevMap.get(r.tagId.trim());
+          if (typeof prevW !== "number") continue;
+          const adg = (r.weightKg - prevW) / days;
+          const origen = omap?.get(r.tagId.trim()) ?? t.dashboard.sinOrigen;
+          const cur = acc.get(origen) ?? { sum: 0, count: 0 };
+          cur.sum += adg;
+          cur.count += 1;
+          acc.set(origen, cur);
+        }
+      }
+      for (const [origen, { sum, count }] of acc) {
+        if (count > 0) {
+          row[`o::${origen}`] = Number((sum / count).toFixed(2));
+          seriesKeys.add(origen);
+        }
+      }
+      return row;
+    });
+    const filtered = rows.filter((r) => Object.keys(r).length > 1);
+    const series = Array.from(seriesKeys)
+      .sort()
+      .map((o) => ({ key: `o::${o}`, name: o }));
+    return { rows: filtered, series };
+  }, [lots, weightsByLot, origenByLot, yearFilter]);
+
   const adgData = useMemo(() => {
     return lots
       .map((lot) => {
@@ -280,11 +400,12 @@ export default function DashboardPage() {
         const prevKey = keys[keys.length - 2];
         const last = summarizeWeights(months[lastKey].rows);
         const prev = summarizeWeights(months[prevKey].rows);
+        const daysBetween = monthsDiffDays(prevKey, lastKey);
         const perTag = summarizeWeights(
           months[lastKey].rows,
           months[prevKey].rows,
+          daysBetween,
         );
-        const daysBetween = monthsDiffDays(prevKey, lastKey);
         const adg =
           perTag.avgAdg !== null
             ? perTag.avgAdg
@@ -295,7 +416,7 @@ export default function DashboardPage() {
         return { name: lot.name, value: Number(adg.toFixed(3)) };
       })
       .filter((x): x is { name: string; value: number } => x !== null);
-  }, [lots, weightsByLot]);
+  }, [lots, weightsByLot, yearFilter]);
 
   const weightData = useMemo(() => {
     return lots
@@ -717,7 +838,10 @@ export default function DashboardPage() {
           </div>
 
           <ChartCard title={t.dashboard.chartEvolution}>
-            <MonthlyEvolutionLine rows={evolution.rows} lots={evolution.lots} />
+            <MonthlyEvolutionLine
+              rows={evolution.rows}
+              series={evolution.lots.map((l) => ({ key: l.id, name: l.name }))}
+            />
           </ChartCard>
 
           <div className="grid gap-4 lg:grid-cols-2">
@@ -743,7 +867,32 @@ export default function DashboardPage() {
             ) : (
               <MonthlyEvolutionLine
                 rows={gdpEvolution.rows}
-                lots={gdpEvolution.lots}
+                series={gdpEvolution.lots.map((l) => ({
+                  key: l.id,
+                  name: l.name,
+                }))}
+              />
+            )}
+          </ChartCard>
+
+          <ChartCard title={t.dashboard.chartWeightByOriginEvolution}>
+            {weightByOriginEvolution.series.length === 0 ? (
+              <EmptyMini text="Sin pesadas cargadas" />
+            ) : (
+              <MonthlyEvolutionLine
+                rows={weightByOriginEvolution.rows}
+                series={weightByOriginEvolution.series}
+              />
+            )}
+          </ChartCard>
+
+          <ChartCard title={t.dashboard.chartGdpByOriginEvolution}>
+            {gdpByOriginEvolution.series.length === 0 ? (
+              <EmptyMini text="Se necesitan al menos 2 pesadas mensuales" />
+            ) : (
+              <MonthlyEvolutionLine
+                rows={gdpByOriginEvolution.rows}
+                series={gdpByOriginEvolution.series}
               />
             )}
           </ChartCard>
@@ -1171,15 +1320,6 @@ function ChartCard({
   );
 }
 
-function monthsDiffDays(fromKey: string, toKey: string): number {
-  const a = /^(\d{4})-(\d{2})$/.exec(fromKey);
-  const b = /^(\d{4})-(\d{2})$/.exec(toKey);
-  if (!a || !b) return 0;
-  const d1 = new Date(Number(a[1]), Number(a[2]) - 1, 1);
-  const d2 = new Date(Number(b[1]), Number(b[2]) - 1, 1);
-  return Math.round((d2.getTime() - d1.getTime()) / 86400000);
-}
-
 function hpgColor(value: number): string {
   const level = classifyHpg(value);
   if (level === "low") return "text-primary";
@@ -1269,12 +1409,12 @@ function buildGdpTableRows(
         continue;
       }
       const prev = lotMonths[prevKey];
-      const perTag = summarizeWeights(current.rows, prev.rows);
+      const days = monthsDiffDays(prevKey, m.key);
+      const perTag = summarizeWeights(current.rows, prev.rows, days);
       let adg: number | null = perTag.avgAdg;
       if (adg === null) {
         const lastSum = summarizeWeights(current.rows);
         const prevSum = summarizeWeights(prev.rows);
-        const days = monthsDiffDays(prevKey, m.key);
         if (
           lastSum.avgWeight !== null &&
           prevSum.avgWeight !== null &&

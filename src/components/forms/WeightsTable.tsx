@@ -6,8 +6,10 @@ import { Field, Input, Textarea } from "@/components/ui/Input";
 import {
   calculateAdg,
   formatInt,
+  formatMonthKey,
   formatNumber,
-  previousMonthKey,
+  monthsDiffDays,
+  previousWeighedMonthKey,
   summarizeWeights,
 } from "@/lib/calc";
 import { useStore } from "@/lib/store";
@@ -22,12 +24,15 @@ interface Props {
 const emptyRecord: WeightRecord = { rows: [], notes: "" };
 
 export function WeightsTable({ lotId, monthKey }: Props) {
-  const record =
-    useStore((s) => s.db.weights[lotId]?.[monthKey]) ?? emptyRecord;
-  const prevKey = previousMonthKey(monthKey);
+  const weightsByMonth = useStore((s) => s.db.weights[lotId]);
+  const record = weightsByMonth?.[monthKey] ?? emptyRecord;
+  // Compare against the most recent month that actually has weights, not just
+  // the immediately previous calendar month — so skipping months still yields
+  // a daily gain, computed over the real day gap.
+  const prevKey = previousWeighedMonthKey(weightsByMonth, monthKey);
   const previousRecord =
-    useStore((s) => (prevKey ? s.db.weights[lotId]?.[prevKey] : undefined)) ??
-    emptyRecord;
+    (prevKey ? weightsByMonth?.[prevKey] : undefined) ?? emptyRecord;
+  const gapDays = prevKey ? monthsDiffDays(prevKey, monthKey) : 0;
 
   const addRow = useStore((s) => s.addWeightRow);
   const updateRow = useStore((s) => s.updateWeightRow);
@@ -38,7 +43,7 @@ export function WeightsTable({ lotId, monthKey }: Props) {
     previousRecord.rows.map((r) => [r.tagId.trim(), r.weightKg]),
   );
 
-  const summary = summarizeWeights(record.rows, previousRecord.rows);
+  const summary = summarizeWeights(record.rows, previousRecord.rows, gapDays);
 
   const parseNum = (v: string): number | null =>
     v === "" ? null : Number.isNaN(Number(v)) ? null : Number(v);
@@ -49,7 +54,11 @@ export function WeightsTable({ lotId, monthKey }: Props) {
         <div className="px-5 pt-4 pb-3 border-b border-border flex items-center justify-between">
           <div>
             <h2 className="font-semibold">{t.weights.title}</h2>
-            <p className="text-xs text-text-muted">{t.weights.subtitle}</p>
+            <p className="text-xs text-text-muted">
+              {prevKey
+                ? t.weights.comparedWith(formatMonthKey(prevKey, t.months))
+                : t.weights.subtitle}
+            </p>
           </div>
         </div>
 
@@ -80,7 +89,7 @@ export function WeightsTable({ lotId, monthKey }: Props) {
               ) : (
                 record.rows.map((row, idx) => {
                   const prev = prevMap.get(row.tagId.trim()) ?? null;
-                  const adg = calculateAdg(row.weightKg, prev);
+                  const adg = calculateAdg(row.weightKg, prev, gapDays);
                   const gain =
                     row.weightKg !== null && prev !== null
                       ? row.weightKg - prev
@@ -174,7 +183,7 @@ export function WeightsTable({ lotId, monthKey }: Props) {
           ) : (
             record.rows.map((row, idx) => {
               const prev = prevMap.get(row.tagId.trim()) ?? null;
-              const adg = calculateAdg(row.weightKg, prev);
+              const adg = calculateAdg(row.weightKg, prev, gapDays);
               return (
                 <div key={idx} className="p-4 space-y-3">
                   <div className="flex items-center justify-between">

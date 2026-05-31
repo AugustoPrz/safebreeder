@@ -286,6 +286,8 @@ export const t = {
   weights: {
     title: "Pesadas",
     subtitle: "Seguimiento de peso y ganancia diaria",
+    comparedWith: (month: string) =>
+      `Ganancia diaria comparada con ${month}`,
     tagId: "Caravana",
     current: "Peso actual (kg)",
     previous: "Mes anterior",
@@ -317,6 +319,10 @@ export const t = {
     chartDistribution: "Distribución parasitaria",
     chartEvolution: "Evolución mensual",
     chartGdpEvolution: "Evolución mensual GDP por lote (kg/día)",
+    chartWeightByOriginEvolution:
+      "Evolución mensual de peso promedio por origen (kg)",
+    chartGdpByOriginEvolution: "Evolución mensual de GDP por origen (kg/día)",
+    sinOrigen: "Sin origen",
     chartMortality: "Mortandad mensual",
     chartMortalitySubtitle: "Animales marcados como muertos por mes",
     kpiDeadTotal: "Animales muertos",
