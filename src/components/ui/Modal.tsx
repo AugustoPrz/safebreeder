@@ -10,9 +10,23 @@ interface Props {
   title: string;
   children: ReactNode;
   footer?: ReactNode;
+  size?: "md" | "lg" | "xl";
 }
 
-export function Modal({ open, onClose, title, children, footer }: Props) {
+const SIZE_CLASS: Record<NonNullable<Props["size"]>, string> = {
+  md: "sm:max-w-lg",
+  lg: "sm:max-w-2xl",
+  xl: "sm:max-w-3xl",
+};
+
+export function Modal({
+  open,
+  onClose,
+  title,
+  children,
+  footer,
+  size = "md",
+}: Props) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -39,7 +53,9 @@ export function Modal({ open, onClose, title, children, footer }: Props) {
       aria-modal="true"
       aria-label={title}
     >
-      <div className="bg-surface w-full sm:max-w-lg sm:w-[90vw] rounded-t-2xl sm:rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.15)] border border-border max-h-[95vh] flex flex-col">
+      <div
+        className={`bg-surface w-full ${SIZE_CLASS[size]} sm:w-[90vw] rounded-t-2xl sm:rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.15)] border border-border max-h-[95vh] flex flex-col`}
+      >
         <div className="px-5 py-4 border-b border-border flex items-center justify-between">
           <h2 className="text-lg font-semibold">{title}</h2>
           <button

@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { t } from "@/lib/i18n";
 import { useStore } from "@/lib/store";
 import { useHydrated } from "@/hooks/useHydrated";
 import { useProfile } from "@/hooks/useProfile";
+import { Modal } from "@/components/ui/Modal";
+import { ScanFlow } from "@/components/scan/ScanFlow";
 import { StoreBootstrap } from "./StoreBootstrap";
 import { UserMenu } from "./UserMenu";
 
@@ -34,6 +36,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const establishments = useStore((s) => s.db.establishments);
   const { profile } = useProfile();
   const isAdmin = profile?.plan === "admin";
+  const [scanOpen, setScanOpen] = useState(false);
 
   if (BARE_ROUTES.includes(pathname)) {
     return (
@@ -62,17 +65,14 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
 
         <nav className="flex-1 p-3 flex flex-col gap-1 overflow-y-auto">
-          <Link
-            href="/scan"
-            className={`mb-1 px-3 h-11 rounded-lg inline-flex items-center gap-3 text-sm font-semibold transition-colors w-full ${
-              isActive("/scan")
-                ? "bg-sun text-white"
-                : "bg-sun text-white hover:bg-sun/90"
-            }`}
+          <button
+            type="button"
+            onClick={() => setScanOpen(true)}
+            className="mb-1 px-3 h-11 rounded-lg inline-flex items-center gap-3 text-sm font-semibold transition-colors w-full bg-sun text-white hover:bg-sun/90"
           >
             <ScanIcon className="w-5 h-5 shrink-0" />
             {t.nav.scan}
-          </Link>
+          </button>
           {navItems.map((item) => {
             const active = isActive(item.href);
             const Icon = item.icon;
@@ -167,19 +167,16 @@ export function AppShell({ children }: { children: ReactNode }) {
             {t.nav.establishments}
           </Link>
 
-          <Link
-            href="/scan"
+          <button
+            type="button"
+            onClick={() => setScanOpen(true)}
             className="flex flex-col items-center justify-center gap-1 text-xs font-semibold text-sun-soft-text"
           >
-            <span
-              className={`-mt-5 mb-0.5 inline-flex items-center justify-center h-12 w-12 rounded-full bg-sun text-white shadow-md ring-4 ring-surface ${
-                isActive("/scan") ? "ring-sun-soft" : ""
-              }`}
-            >
+            <span className="-mt-5 mb-0.5 inline-flex items-center justify-center h-12 w-12 rounded-full bg-sun text-white shadow-md ring-4 ring-surface">
               <ScanIcon className="w-6 h-6" />
             </span>
             {t.nav.scan}
-          </Link>
+          </button>
 
           <Link
             href="/dashboard"
@@ -192,6 +189,16 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Link>
         </div>
       </nav>
+
+      {/* Scan modal — opened from the sun button in either navbar */}
+      <Modal
+        open={scanOpen}
+        onClose={() => setScanOpen(false)}
+        title={t.scan.title}
+        size="xl"
+      >
+        <ScanFlow onClose={() => setScanOpen(false)} />
+      </Modal>
     </div>
   );
 }
