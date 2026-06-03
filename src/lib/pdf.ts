@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { DB } from "./types";
+import type { CapturedChart } from "./chartExport";
 import {
   averageHpg,
   classifyHpg,
@@ -282,4 +283,221 @@ function levelLabel(value: number | null): string {
   if (level === "moderate") return t.hpg.moderate;
   if (level === "high") return t.hpg.high;
   return t.hpg.none;
+}
+
+// ── Statistics report (dashboard PDF) ───────────────────────────────────────
+
+export interface StatsReportInput {
+  establishmentName: string | null;
+  year: string | null;
+  generatedAt: string;
+  kpis: { label: string; value: string }[];
+  charts: CapturedChart[];
+  gdpTable?: {
+    year: number;
+    monthLabels: string[];
+    rows: {
+      lotName: string;
+      category: string;
+      values: (number | null)[];
+      average: number | null;
+    }[];
+  };
+}
+
+function hexToRgb(hex: string): [number, number, number] {
+  const s = hex.trim();
+  const m6 = /^#?([0-9a-f]{6})$/i.exec(s);
+  if (m6) {
+    const n = parseInt(m6[1], 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+  const m3 = /^#?([0-9a-f]{3})$/i.exec(s);
+  if (m3) {
+    const c = m3[1];
+    return [
+      parseInt(c[0] + c[0], 16),
+      parseInt(c[1] + c[1], 16),
+      parseInt(c[2] + c[2], 16),
+    ];
+  }
+  return [31, 37, 24];
+}
+
+// Lay out (and optionally draw) a wrapping legend. Returns the y after it.
+// Assumes the caller has set the font to size 8 already.
+function layoutLegend(
+  doc: jsPDF,
+  legend: { label: string; color: string }[],
+  x: number,
+  y: number,
+  maxWidth: number,
+  draw: boolean,
+): number {
+  const swatch = 8;
+  const gapX = 12;
+  const lineH = 13;
+  let cx = x;
+  let cy = y;
+  for (const item of legend) {
+    const textW = doc.getTextWidth(item.label);
+    const itemW = swatch + 4 + textW;
+    if (cx > x && cx + itemW > x + maxWidth) {
+      cx = x;
+      cy += lineH;
+    }
+    if (draw) {
+      const [r, g, b] = hexToRgb(item.color);
+      doc.setFillColor(r, g, b);
+      doc.rect(cx, cy - swatch + 1, swatch, swatch, "F");
+      doc.setTextColor(31, 37, 24);
+      doc.text(item.label, cx + swatch + 4, cy + 6);
+    }
+    cx += itemW + gapX;
+  }
+  return cy + lineH;
+}
+
+export function generateStatsReport(input: StatsReportInput): jsPDF {
+  const doc = new jsPDF({ unit: "pt", format: "a4" });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 40;
+  const contentWidth = pageWidth - margin * 2;
+  let y = margin;
+
+  const ensure = (needed: number) => {
+    if (y + needed > pageHeight - margin) {
+      doc.addPage();
+      y = margin;
+    }
+  };
+
+  // Header band
+  doc.setFillColor(77, 124, 42);
+  doc.rect(0, 0, pageWidth, 60, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(18);
+  doc.text("Safebreeder", margin, 36);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.text(t.dashboard.title, pageWidth - margin, 36, { align: "right" });
+
+  y = 84;
+  doc.setTextColor(31, 37, 24);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(13);
+  doc.text(input.establishmentName || "Todos los establecimientos", margin, y);
+  y += 15;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(107, 111, 93);
+  doc.text(
+    [
+      input.year ? `Año ${input.year}` : "Todos los años",
+      input.generatedAt,
+    ].join("   ·   "),
+    margin,
+    y,
+  );
+  y += 22;
+
+  // KPIs grid (3 columns)
+  if (input.kpis.length) {
+    y = sectionTitle(doc, t.dashboard.title, y, margin);
+    const cols = 3;
+    const gap = 10;
+    const boxW = (contentWidth - gap * (cols - 1)) / cols;
+    const boxH = 40;
+    input.kpis.forEach((kpi, i) => {
+      const col = i % cols;
+      if (col === 0) ensure(boxH + gap);
+      const x = margin + col * (boxW + gap);
+      doc.setDrawColor(227, 230, 220);
+      doc.setFillColor(248, 249, 245);
+      doc.roundedRect(x, y, boxW, boxH, 4, 4, "FD");
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7.5);
+      doc.setTextColor(107, 111, 93);
+      doc.text(kpi.label.toUpperCase(), x + 8, y + 14, {
+        maxWidth: boxW - 16,
+      });
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(13);
+      doc.setTextColor(31, 37, 24);
+      doc.text(kpi.value, x + 8, y + 32);
+      if (col === cols - 1 || i === input.kpis.length - 1) y += boxH + gap;
+    });
+    y += 8;
+  }
+
+  // Charts (image + hand-drawn legend)
+  for (const chart of input.charts) {
+    const imgW = contentWidth;
+    const imgH = Math.min(
+      (chart.height / chart.width) * imgW,
+      pageHeight - margin * 2 - 80,
+    );
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    const legendH = chart.legend.length
+      ? layoutLegend(doc, chart.legend, margin, 0, contentWidth, false) + 6
+      : 0;
+    const blockH = 16 + imgH + 6 + legendH + 14;
+    ensure(blockH);
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(31, 37, 24);
+    doc.text(chart.title, margin, y + 10);
+    y += 16;
+    doc.addImage(chart.png, "PNG", margin, y, imgW, imgH, undefined, "FAST");
+    y += imgH + 8;
+    if (chart.legend.length) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      y = layoutLegend(doc, chart.legend, margin, y, contentWidth, true) + 6;
+    }
+    y += 12;
+  }
+
+  // GDP per-lot table
+  if (input.gdpTable && input.gdpTable.rows.length) {
+    ensure(70);
+    y = sectionTitle(
+      doc,
+      `${t.dashboard.chartGdpEvolution} — ${input.gdpTable.year}`,
+      y,
+      margin,
+    );
+    autoTable(doc, {
+      startY: y,
+      theme: "grid",
+      styles: { fontSize: 6.5, cellPadding: 2.5, textColor: [31, 37, 24] },
+      headStyles: {
+        fillColor: [77, 124, 42],
+        textColor: [255, 255, 255],
+        fontStyle: "bold",
+        fontSize: 6.5,
+      },
+      head: [
+        [
+          "Lote",
+          "Categoría",
+          ...input.gdpTable.monthLabels,
+          "Prom.",
+        ],
+      ],
+      body: input.gdpTable.rows.map((r) => [
+        r.lotName,
+        r.category,
+        ...r.values.map((v) => (v === null ? "—" : v.toFixed(2))),
+        r.average === null ? "—" : r.average.toFixed(2),
+      ]),
+      margin: { left: margin, right: margin },
+    });
+  }
+
+  return doc;
 }

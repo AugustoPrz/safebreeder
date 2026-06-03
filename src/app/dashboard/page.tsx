@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Card, CardBody } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Field, Select } from "@/components/ui/Input";
@@ -35,6 +35,8 @@ import {
   summarizeWeights,
 } from "@/lib/calc";
 import { t } from "@/lib/i18n";
+import { generateStatsReport } from "@/lib/pdf";
+import { captureCharts } from "@/lib/chartExport";
 import type { HpgRecord, Lot, WeightRecord } from "@/lib/types";
 
 export default function DashboardPage() {
@@ -49,9 +51,8 @@ export default function DashboardPage() {
   const [filter, setFilter] = useState<string>("");
   const [yearFilter, setYearFilter] = useState<string>(""); // "" = all years
   const [originFilter, setOriginFilter] = useState<string>(""); // "" = all origins
-  const downloadPdf = () => {
-    window.print();
-  };
+  const printRef = useRef<HTMLDivElement>(null);
+  const [pdfBusy, setPdfBusy] = useState(false);
 
   // Year filter helpers — closure over yearFilter so memos depend on it
   // implicitly. monthKey is "YYYY-MM"; iso is "YYYY-MM-DD".
@@ -717,6 +718,89 @@ export default function DashboardPage() {
     [lots, weightsByLot, activeYear],
   );
 
+  // Export the whole stats view to a PDF — without opening the print dialog.
+  // Charts are captured to PNG via native SVG serialization (chartExport),
+  // which keeps the curves intact; KPIs and the GDP table are drawn as
+  // first-class PDF content.
+  const downloadPdf = async () => {
+    if (pdfBusy) return;
+    setPdfBusy(true);
+    try {
+      const root = printRef.current;
+      const charts = root ? await captureCharts(root) : [];
+      const estName = filter
+        ? (establishments.find((e) => e.id === filter)?.name ?? null)
+        : null;
+      const kpis = [
+        {
+          label: t.dashboard.kpiEstablishments,
+          value: formatInt(stockCounts.establishments),
+        },
+        { label: t.dashboard.kpiLots, value: formatInt(metrics.lots) },
+        {
+          label: t.dashboard.kpiStockTotal,
+          value: formatInt(stockCounts.total),
+        },
+        {
+          label: "Machos / Hembras",
+          value: `${stockCounts.machos} M · ${stockCounts.hembras} H`,
+        },
+        {
+          label: t.dashboard.kpiDeadTotal,
+          value: formatInt(stockCounts.muertos),
+        },
+        {
+          label: t.dashboard.kpiSoldTotal,
+          value: formatInt(stockCounts.vendidos),
+        },
+        { label: t.dashboard.kpiSamples, value: formatInt(metrics.samples) },
+        {
+          label: t.dashboard.kpiLow,
+          value: `${formatNumber(metrics.lowPct, 0)}%`,
+        },
+        {
+          label: t.dashboard.kpiModerate,
+          value: `${formatNumber(metrics.modPct, 0)}%`,
+        },
+        {
+          label: t.dashboard.kpiHigh,
+          value: `${formatNumber(metrics.highPct, 0)}%`,
+        },
+      ];
+      const doc = generateStatsReport({
+        establishmentName: estName,
+        year: yearFilter || null,
+        generatedAt: new Date().toLocaleDateString("es-AR", {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        }),
+        kpis,
+        charts,
+        gdpTable: gdpTableRows.rows.length
+          ? {
+              year: activeYear,
+              monthLabels: gdpTableRows.months.map((m) => m.label),
+              rows: gdpTableRows.rows.map((r) => ({
+                lotName: r.lotName,
+                category: r.category,
+                values: gdpTableRows.months.map((m) => r.values[m.key] ?? null),
+                average: r.average,
+              })),
+            }
+          : undefined,
+      });
+      const slug = (estName ?? "estadisticas")
+        .normalize("NFD")
+        .replace(/[̀-ͯ]/g, "")
+        .replace(/[^a-zA-Z0-9]+/g, "-")
+        .toLowerCase();
+      doc.save(`safebreeder-${slug}-${yearFilter || "todos"}.pdf`);
+    } finally {
+      setPdfBusy(false);
+    }
+  };
+
   if (establishments.length === 0) {
     return (
       <Card>
@@ -768,27 +852,41 @@ export default function DashboardPage() {
           <button
             type="button"
             onClick={downloadPdf}
-            aria-label="Imprimir / Exportar PDF"
-            className="h-11 w-11 rounded-lg bg-surface-2 inline-flex items-center justify-center hover:bg-border shrink-0 no-print"
+            disabled={pdfBusy}
+            aria-label="Descargar PDF"
+            title="Descargar PDF"
+            className="h-11 w-11 rounded-lg bg-surface-2 inline-flex items-center justify-center hover:bg-border shrink-0 no-print disabled:opacity-50 disabled:cursor-wait"
           >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="w-5 h-5"
-            >
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
+            {pdfBusy ? (
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className="w-5 h-5 animate-spin"
+              >
+                <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+              </svg>
+            ) : (
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="w-5 h-5"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+            )}
           </button>
         </div>
       </div>
 
-      <div className="space-y-6 print-area">
+      <div className="space-y-6 print-area" ref={printRef}>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <Kpi
@@ -1343,17 +1441,19 @@ function ChartCard({
   height?: number;
 }) {
   return (
-    <Card>
-      <div className="px-5 py-3 border-b border-border">
-        <h3 className="font-semibold text-sm">{title}</h3>
-        {subtitle ? (
-          <p className="text-xs text-text-muted mt-0.5">{subtitle}</p>
-        ) : null}
-      </div>
-      <div className="p-5">
-        <div style={{ width: "100%", height }}>{children}</div>
-      </div>
-    </Card>
+    <div data-chart-card>
+      <Card>
+        <div className="px-5 py-3 border-b border-border">
+          <h3 className="font-semibold text-sm">{title}</h3>
+          {subtitle ? (
+            <p className="text-xs text-text-muted mt-0.5">{subtitle}</p>
+          ) : null}
+        </div>
+        <div className="p-5">
+          <div style={{ width: "100%", height }}>{children}</div>
+        </div>
+      </Card>
+    </div>
   );
 }
 
