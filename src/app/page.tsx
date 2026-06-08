@@ -16,7 +16,7 @@ function ArrowIcon() {
 
 function CheckIcon() {
   return (
-    <div className="w-[18px] h-[18px] rounded-full bg-[#1b3a2d] flex-shrink-0 flex items-center justify-center mt-0.5">
+    <div className="w-[18px] h-[18px] rounded-full bg-[#2b3a1e] flex-shrink-0 flex items-center justify-center mt-0.5">
       <svg viewBox="0 0 10 10" className="w-2.5 h-2.5 fill-none stroke-white" strokeWidth="2.5">
         <path d="M2 5l2.5 2.5L8 3" />
       </svg>
@@ -24,16 +24,12 @@ function CheckIcon() {
   );
 }
 
-function DotIcon() {
-  return <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />;
-}
-
 /* ─── screenshot placeholder panels ─────────────────── */
 function ScreenshotA() {
   /* Pesadas / registro productivo */
   return (
-    <div className="rounded-2xl overflow-hidden aspect-[4/3] bg-[#152d22] flex flex-col shadow-xl">
-      <div className="px-4 py-2.5 bg-[#0f2019] flex items-center gap-2 flex-shrink-0">
+    <div className="rounded-2xl overflow-hidden aspect-[4/3] bg-[#233219] flex flex-col shadow-xl">
+      <div className="px-4 py-2.5 bg-[#1a2712] flex items-center gap-2 flex-shrink-0">
         <div className="flex gap-1.5">
           <div className="w-2.5 h-2.5 rounded-full bg-white/15" />
           <div className="w-2.5 h-2.5 rounded-full bg-white/15" />
@@ -69,8 +65,8 @@ function ScreenshotA() {
 function ScreenshotB() {
   /* Sanidad / HPG */
   return (
-    <div className="rounded-2xl overflow-hidden aspect-[4/3] bg-[#152d22] flex flex-col shadow-xl">
-      <div className="px-4 py-2.5 bg-[#0f2019] flex items-center gap-2 flex-shrink-0">
+    <div className="rounded-2xl overflow-hidden aspect-[4/3] bg-[#233219] flex flex-col shadow-xl">
+      <div className="px-4 py-2.5 bg-[#1a2712] flex items-center gap-2 flex-shrink-0">
         <div className="flex gap-1.5">
           <div className="w-2.5 h-2.5 rounded-full bg-white/15" />
           <div className="w-2.5 h-2.5 rounded-full bg-white/15" />
@@ -82,7 +78,7 @@ function ScreenshotB() {
         <div className="text-[10px] font-semibold text-white/40 uppercase tracking-widest">Gestión sanitaria</div>
         <div className="bg-white/8 rounded-xl px-3 py-2.5 flex items-center justify-between">
           <span className="text-white/60 text-[11px]">HPG promedio</span>
-          <span className="text-[#7CC894] font-bold text-sm">120 HPG</span>
+          <span className="text-[#a5c956] font-bold text-sm">120 HPG</span>
         </div>
         <div className="bg-white/8 rounded-xl px-3 py-2.5 flex items-center justify-between">
           <span className="text-white/60 text-[11px]">Tratamientos activos</span>
@@ -90,7 +86,7 @@ function ScreenshotB() {
         </div>
         <div className="bg-white/8 rounded-xl px-3 py-2.5 flex items-center justify-between">
           <span className="text-white/60 text-[11px]">Cobertura sanitaria</span>
-          <span className="text-[#7CC894] font-bold text-sm">94%</span>
+          <span className="text-[#a5c956] font-bold text-sm">94%</span>
         </div>
         <div className="bg-[#c8a415]/10 border border-[#c8a415]/25 rounded-xl px-3 py-2 flex items-center gap-2 mt-0.5">
           <div className="w-1.5 h-1.5 rounded-full bg-[#c8a415] flex-shrink-0" />
@@ -104,8 +100,8 @@ function ScreenshotB() {
 function ScreenshotC() {
   /* Dashboard / indicadores */
   return (
-    <div className="rounded-2xl overflow-hidden aspect-[4/3] bg-[#152d22] flex flex-col shadow-xl">
-      <div className="px-4 py-2.5 bg-[#0f2019] flex items-center gap-2 flex-shrink-0">
+    <div className="rounded-2xl overflow-hidden aspect-[4/3] bg-[#233219] flex flex-col shadow-xl">
+      <div className="px-4 py-2.5 bg-[#1a2712] flex items-center gap-2 flex-shrink-0">
         <div className="flex gap-1.5">
           <div className="w-2.5 h-2.5 rounded-full bg-white/15" />
           <div className="w-2.5 h-2.5 rounded-full bg-white/15" />
@@ -137,7 +133,7 @@ function ScreenshotC() {
             <div
               key={i}
               style={{ height: `${h}%` }}
-              className={`flex-1 rounded-t-sm ${lote === "A" ? "bg-primary" : "bg-[#7CC894]/70"}`}
+              className={`flex-1 rounded-t-sm ${lote === "A" ? "bg-primary" : "bg-[#a5c956]/70"}`}
             />
           ))}
         </div>
@@ -162,7 +158,7 @@ function AppMockup() {
         </div>
       </div>
       {/* App nav */}
-      <div className="bg-[#1b3a2d] px-4 py-2 flex items-center justify-between">
+      <div className="bg-[#2b3a1e] px-4 py-2 flex items-center justify-between">
         <span className="font-black text-white text-[11px] uppercase tracking-widest">Safebreeder</span>
         <div className="flex gap-2">
           <span className="px-2 py-0.5 rounded-full bg-white/10 text-white/60 text-[9px]">Mis establecimientos</span>
@@ -183,7 +179,7 @@ function AppMockup() {
         {/* Tabs */}
         <div className="flex gap-1 mb-3 border-b border-border pb-2">
           {["Stock", "HPG", "Tratamientos", "Pesadas", "Indicadores"].map((t, i) => (
-            <span key={t} className={`px-2.5 py-1 rounded-full text-[9px] font-semibold cursor-default ${i === 0 ? "bg-[#1b3a2d] text-white" : "text-text-muted"}`}>{t}</span>
+            <span key={t} className={`px-2.5 py-1 rounded-full text-[9px] font-semibold cursor-default ${i === 0 ? "bg-[#2b3a1e] text-white" : "text-text-muted"}`}>{t}</span>
           ))}
         </div>
         {/* KPIs */}
@@ -353,7 +349,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── WHY (dark green) ──────────────────────────── */}
-      <section className="bg-[#1b3a2d] py-24 sm:py-32 relative overflow-hidden">
+      <section className="bg-[#2b3a1e] py-24 sm:py-32 relative overflow-hidden">
         <div className="absolute -right-48 -top-48 w-[600px] h-[600px] rounded-full border-[100px] border-white/[0.03]" />
         <div className="max-w-6xl mx-auto px-6 sm:px-10">
           <div className="grid lg:grid-cols-2 gap-16 lg:gap-24 items-center">
@@ -361,7 +357,7 @@ export default function LandingPage() {
               <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-white/40 block mb-3">Por qué nace Safebreeder</span>
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white leading-[1.08] mb-4">
                 El campo genera más datos que nunca.{" "}
-                <em className="not-italic text-[#7CC894]">Muy pocos los aprovechan.</em>
+                <em className="not-italic text-[#a5c956]">Muy pocos los aprovechan.</em>
               </h2>
               <p className="text-white/55 text-sm sm:text-base leading-relaxed">
                 El problema no es la falta de información — es su procesamiento y análisis.
@@ -399,7 +395,7 @@ export default function LandingPage() {
             <p className="text-text-muted text-sm sm:text-base leading-relaxed">Seguí de cerca la gestión de un rodeo de recría desde la plataforma.</p>
           </div>
           {/* Video placeholder */}
-          <div className="reveal rounded-2xl overflow-hidden aspect-video bg-[#1b3a2d] flex items-center justify-center shadow-2xl">
+          <div className="reveal rounded-2xl overflow-hidden aspect-video bg-[#2b3a1e] flex items-center justify-center shadow-2xl">
             <div className="text-center">
               <div className="w-16 h-16 rounded-full bg-white/15 flex items-center justify-center mx-auto mb-4 backdrop-blur-sm border border-white/20">
                 <svg viewBox="0 0 24 24" className="w-7 h-7 fill-white ml-0.5">
@@ -430,7 +426,7 @@ export default function LandingPage() {
             </div>
             <div className="reveal order-1 lg:order-2">
               <span className="text-[10px] font-semibold tracking-[0.12em] uppercase text-primary block mb-3">Registro productivo</span>
-              <h3 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#1b3a2d] leading-tight mb-4">
+              <h3 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#2b3a1e] leading-tight mb-4">
                 Registrá datos de tus lotes{" "}
                 <em className="not-italic text-primary">de forma simple y rápida</em>
               </h3>
@@ -452,7 +448,7 @@ export default function LandingPage() {
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center py-16 border-b border-border">
             <div className="reveal">
               <span className="text-[10px] font-semibold tracking-[0.12em] uppercase text-primary block mb-3">Gestión sanitaria</span>
-              <h3 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#1b3a2d] leading-tight mb-4">
+              <h3 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#2b3a1e] leading-tight mb-4">
                 Seguimiento sanitario{" "}
                 <em className="not-italic text-primary">completo e integrado</em>
               </h3>
@@ -480,7 +476,7 @@ export default function LandingPage() {
             </div>
             <div className="reveal order-1 lg:order-2">
               <span className="text-[10px] font-semibold tracking-[0.12em] uppercase text-primary block mb-3">Análisis y comparación</span>
-              <h3 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#1b3a2d] leading-tight mb-4">
+              <h3 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#2b3a1e] leading-tight mb-4">
                 Indicadores automáticos y{" "}
                 <em className="not-italic text-primary">comparación entre lotes</em>
               </h3>
@@ -501,13 +497,13 @@ export default function LandingPage() {
       </section>
 
       {/* ── AUDIENCE (dark green) ─────────────────────── */}
-      <section className="bg-[#1b3a2d] py-24 sm:py-32" id="usuarios">
+      <section className="bg-[#2b3a1e] py-24 sm:py-32" id="usuarios">
         <div className="max-w-6xl mx-auto px-6 sm:px-10">
           <div className="aud-header reveal text-center mb-12">
             <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-white/40 block mb-3">¿Para quién es Safebreeder?</span>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white leading-[1.08] mb-3">
               Diseñado para quienes<br className="hidden sm:block" />
-              <em className="not-italic text-[#7CC894]">trabajan con datos del campo</em>
+              <em className="not-italic text-[#a5c956]">trabajan con datos del campo</em>
             </h2>
             <p className="text-white/55 text-sm sm:text-base leading-relaxed max-w-xl mx-auto">
               Una plataforma adaptada a los distintos roles del ecosistema ganadero argentino.
@@ -550,65 +546,22 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── VISION / MISSION ──────────────────────────── */}
-      <section className="bg-surface py-24 sm:py-32" id="nosotros">
-        <div className="max-w-6xl mx-auto px-6 sm:px-10">
-          <div className="reveal mb-14">
-            <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-primary block mb-3">Nuestra empresa</span>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-text leading-[1.08]">
-              Creemos que el futuro de la ganadería<br className="hidden sm:block" />
-              es <em className="not-italic text-primary">gestionar mejor la información.</em>
-            </h2>
-          </div>
-          <div className="grid lg:grid-cols-2 gap-6">
-            {[
-              {
-                tag: "Nuestra visión",
-                title: "Más eficiencia. Mejores decisiones. Mayor rentabilidad.",
-                desc: "Queremos que cada productor pueda convertir la información de su campo en una ventaja competitiva real — sin importar el tamaño de su operación.",
-                items: ["Productores más eficientes en su gestión diaria", "Decisiones respaldadas por datos concretos", "Mayor rentabilidad en los sistemas de recría"],
-              },
-              {
-                tag: "Nuestra misión",
-                title: "Herramientas simples que generan resultados concretos.",
-                desc: "Desarrollar una plataforma práctica que permita convertir datos del campo en valor productivo, sin agregar complejidad al trabajo diario del productor.",
-                items: ["Simplicidad como principio de diseño", "Datos del campo convertidos en valor real", "Sin curvas de aprendizaje innecesarias"],
-              },
-            ].map(({ tag, title, desc, items }) => (
-              <div key={tag} className="reveal border border-border rounded-2xl p-7 sm:p-8 bg-bg">
-                <span className="text-[10px] font-semibold tracking-[0.1em] uppercase text-text-muted block mb-4">{tag}</span>
-                <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-[#1b3a2d] leading-tight mb-3">{title}</h3>
-                <p className="text-sm text-text-muted leading-relaxed mb-5">{desc}</p>
-                <ul className="flex flex-col gap-2.5">
-                  {items.map((item) => (
-                    <li key={item} className="flex items-center gap-3 text-sm text-text-muted">
-                      <DotIcon /> {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ── CTA ───────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-[#1b3a2d] min-h-[480px] flex items-center justify-center text-center py-24 sm:py-32">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0a1e12]/60 to-[#0a1e12]/85 z-0" />
-        <div className="relative z-10 max-w-2xl mx-auto px-6 sm:px-10 reveal">
-          <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-white/40 block mb-4">Empezá hoy</span>
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white leading-[1.04] mb-5">
+      <section className="bg-bg min-h-[480px] flex items-center justify-center text-center py-24 sm:py-32">
+        <div className="max-w-2xl mx-auto px-6 sm:px-10 reveal">
+          <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-text-muted block mb-4">Empezá hoy</span>
+          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-text leading-[1.04] mb-5">
             Menos planillas.<br />
-            <em className="not-italic text-[#7CC894]">Más decisiones.</em>
+            <em className="not-italic text-primary">Más decisiones.</em>
           </h2>
-          <p className="text-white/60 text-sm sm:text-base leading-relaxed mb-10">
+          <p className="text-text-muted text-sm sm:text-base leading-relaxed mb-10">
             Unite a los productores, veterinarios y asesores que ya están gestionando su recría con datos reales.
           </p>
           <div className="flex gap-3 justify-center flex-wrap">
             <Link href="/signup" className="inline-flex items-center gap-2 h-12 px-6 rounded-full bg-primary text-white text-sm font-semibold hover:bg-primary-hover transition-colors">
               Probar gratis <ArrowIcon />
             </Link>
-            <a href="#funciones" className="inline-flex items-center gap-2 h-12 px-6 rounded-full bg-white/10 border border-white/20 text-white text-sm font-semibold hover:bg-white/15 transition-colors">
+            <a href="#funciones" className="inline-flex items-center gap-2 h-12 px-6 rounded-full bg-surface border border-border text-text text-sm font-semibold hover:bg-surface-2 transition-colors">
               Ver todas las funciones
             </a>
           </div>
@@ -616,7 +569,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── FOOTER ────────────────────────────────────── */}
-      <footer className="bg-[#1b3a2d] border-t border-white/[0.08] pt-14 pb-8">
+      <footer className="bg-[#2b3a1e] border-t border-white/[0.08] pt-14 pb-8">
         <div className="max-w-6xl mx-auto px-6 sm:px-10">
           <div className="flex flex-col sm:flex-row justify-between items-start gap-10 pb-10 border-b border-white/[0.08] mb-6">
             <div>
