@@ -181,10 +181,26 @@ button {
     max-width: none !important;
     margin: 0 !important;
   }
+  /* Remove ALL shadows — box-shadow on a container causes WebKit/Safari to
+     composite that layer as a rasterised bitmap, which drags any SVG charts
+     inside it into pixel-land and makes them appear blocky in the PDF. */
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+  /* Keep 2-column chart grids. A4 width (~793 px) is below the lg: breakpoint
+     (1024 px), so Tailwind's lg:grid-cols-2 never fires in print — charts
+     collapse to one-per-row and take the full page width. Force 2 columns so
+     each chart stays at a readable, page-friendly size. */
+  .print-chart-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
   .print-area {
     break-inside: auto;
   }
-  .print-area > * {
+  /* Keep each chart card whole — never split across a page break */
+  .print-area > *,
+  [data-chart-card] {
     break-inside: avoid;
     page-break-inside: avoid;
   }

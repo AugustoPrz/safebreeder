@@ -5,7 +5,6 @@ import {
   BarChart,
   CartesianGrid,
   LabelList,
-  Legend,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -29,6 +28,10 @@ interface Props {
 
 export function EntryExitWeightByLot({ data }: Props) {
   return (
+    // Legend rendered as HTML outside the SVG — Recharts' <Legend> uses
+    // <foreignObject> which causes WebKit/Safari to rasterise the chart in print.
+    <div className="flex flex-col h-full">
+    <div className="flex-1 min-h-0">
     <ResponsiveContainer width="100%" height="100%">
       <BarChart
         data={data}
@@ -51,27 +54,6 @@ export function EntryExitWeightByLot({ data }: Props) {
           formatter={(value) =>
             typeof value === "number" ? `${Math.round(value)} kg` : "—"
           }
-        />
-        <Legend
-          wrapperStyle={{ fontSize: 11 }}
-          content={() => (
-            <div className="flex justify-center gap-4 text-[11px] mt-1">
-              <span className="flex items-center gap-1.5">
-                <span
-                  className="w-2.5 h-2.5 inline-block rounded-sm"
-                  style={{ backgroundColor: COLOR_ENTRADA }}
-                />
-                Entrada
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span
-                  className="w-2.5 h-2.5 inline-block rounded-sm"
-                  style={{ backgroundColor: COLOR_SALIDA }}
-                />
-                Salida
-              </span>
-            </div>
-          )}
         />
         <Bar
           dataKey="entrada"
@@ -139,5 +121,17 @@ export function EntryExitWeightByLot({ data }: Props) {
         </Bar>
       </BarChart>
     </ResponsiveContainer>
+    </div>
+    <div className="flex justify-center gap-4 text-[11px] pb-1 flex-shrink-0">
+      <span className="flex items-center gap-1.5 text-text-muted">
+        <span className="w-2.5 h-2.5 inline-block rounded-sm flex-shrink-0" style={{ backgroundColor: COLOR_ENTRADA }} />
+        Entrada
+      </span>
+      <span className="flex items-center gap-1.5 text-text-muted">
+        <span className="w-2.5 h-2.5 inline-block rounded-sm flex-shrink-0" style={{ backgroundColor: COLOR_SALIDA }} />
+        Salida
+      </span>
+    </div>
+    </div>
   );
 }

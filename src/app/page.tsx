@@ -258,7 +258,7 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="bg-bg">
+    <div className="bg-bg overflow-x-hidden">
       {/* ── HERO ───────────────────────────────────────── */}
       <div className="p-3 sm:p-4">
         <section className="relative overflow-hidden rounded-2xl sm:rounded-3xl min-h-[calc(100vh-24px)] sm:min-h-[calc(100vh-32px)] bg-[#2b3a1e]">
@@ -309,7 +309,7 @@ export default function LandingPage() {
           <div data-anim="up" className="mb-14">
             <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-primary block mb-3">La plataforma</span>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-text leading-[1.08]">
-              Gestioná tus establecimientos<br className="hidden sm:block" />
+              Gestioná tus establecimientos{" "}<br className="hidden sm:block" />
               con <em className="not-italic text-primary">datos reales del campo</em>
             </h2>
           </div>
@@ -400,7 +400,7 @@ export default function LandingPage() {
           <div data-anim="up" className="mb-8">
             <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-primary block mb-3">Safebreeder en acción</span>
             <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text leading-[1.08] mb-3">
-              Mirá cómo funciona<br className="hidden sm:block" />
+              Mirá cómo funciona{" "}<br className="hidden sm:block" />
               en el <em className="not-italic text-primary">campo real</em>
             </h2>
             <p className="text-text-muted text-sm sm:text-base leading-relaxed">Seguí de cerca la gestión de un rodeo de recría desde la plataforma.</p>
@@ -425,7 +425,7 @@ export default function LandingPage() {
           <div data-anim="up" className="mb-16">
             <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-primary block mb-3">Funciones principales</span>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-text leading-[1.08]">
-              Todo lo que necesitás<br className="hidden sm:block" />
+              Todo lo que necesitás{" "}<br className="hidden sm:block" />
               para gestionar tu recría
             </h2>
           </div>
@@ -513,7 +513,7 @@ export default function LandingPage() {
           <div data-anim="up" className="text-center mb-12">
             <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-white/40 block mb-3">¿Para quién es Safebreeder?</span>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white leading-[1.08] mb-3">
-              Diseñado para quienes<br className="hidden sm:block" />
+              Diseñado para quienes{" "}<br className="hidden sm:block" />
               <em className="not-italic text-[#a5c956]">trabajan con datos del campo</em>
             </h2>
             <p className="text-white/55 text-sm sm:text-base leading-relaxed max-w-xl mx-auto">

@@ -17,7 +17,7 @@ export interface CapturedChart {
 
 async function svgToPng(
   svg: SVGSVGElement,
-  scale = 2,
+  scale = 4,
 ): Promise<{ png: string; width: number; height: number } | null> {
   const rect = svg.getBoundingClientRect();
   const width = Math.ceil(rect.width);
@@ -26,8 +26,16 @@ async function svgToPng(
 
   const clone = svg.cloneNode(true) as SVGSVGElement;
   clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-  clone.setAttribute("width", String(width));
-  clone.setAttribute("height", String(height));
+  // Set SVG dimensions to the FULL scaled resolution so the browser rasterises
+  // the vector at high DPI instead of at CSS-pixel size. Without this, the SVG
+  // is drawn at 1× and then stretched up by the canvas transform, which
+  // produces the blocky/pixelated charts seen in the PDF.
+  clone.setAttribute("width", String(width * scale));
+  clone.setAttribute("height", String(height * scale));
+  // Ensure internal coordinates still map to the original CSS dimensions.
+  if (!clone.getAttribute("viewBox")) {
+    clone.setAttribute("viewBox", `0 0 ${width} ${height}`);
+  }
   // Pin a font so text doesn't fall back to the browser default serif once the
   // SVG is detached from the page stylesheet.
   const style = document.createElementNS(
@@ -42,8 +50,10 @@ async function svgToPng(
   const src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(xml)}`;
 
   const img = new Image();
-  img.width = width;
-  img.height = height;
+  // Intrinsic size must match the SVG's declared dimensions so drawImage
+  // copies pixels 1-to-1 without any extra browser rescaling.
+  img.width = width * scale;
+  img.height = height * scale;
   try {
     await new Promise<void>((resolve, reject) => {
       img.onload = () => resolve();
@@ -61,9 +71,10 @@ async function svgToPng(
   if (!ctx) return null;
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.setTransform(scale, 0, 0, scale, 0, 0);
-  ctx.drawImage(img, 0, 0, width, height);
+  // Draw at 1:1 — the SVG already rendered at full scale, no transform needed.
+  ctx.drawImage(img, 0, 0, width * scale, height * scale);
 
+  // Return CSS dimensions so pdf.ts can size the image correctly on the page.
   return { png: canvas.toDataURL("image/png"), width, height };
 }
 

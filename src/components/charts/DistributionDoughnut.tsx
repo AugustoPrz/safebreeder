@@ -1,6 +1,6 @@
 "use client";
 
-import { Cell, Legend, Pie, PieChart, ResponsiveContainer } from "recharts";
+import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
 import { t } from "@/lib/i18n";
 
 interface Props {
@@ -46,29 +46,46 @@ export function DistributionDoughnut({ low, moderate, high }: Props) {
     { name: t.hpg.high, value: high, color: "#b5461f" },
   ];
   return (
-    <ResponsiveContainer width="100%" height="100%">
-      <PieChart>
-        <Pie
-          data={data}
-          dataKey="value"
-          nameKey="name"
-          cx="50%"
-          cy="50%"
-          innerRadius={50}
-          outerRadius={85}
-          paddingAngle={2}
-          label={renderPercentLabel as never}
-          labelLine={false}
-        >
-          {data.map((d, i) => (
-            <Cell key={i} fill={d.color} stroke="none" />
-          ))}
-        </Pie>
-        <Legend
-          iconType="circle"
-          formatter={(v) => <span style={{ color: "#1f2518" }}>{v}</span>}
-        />
-      </PieChart>
-    </ResponsiveContainer>
+    // Legend is intentionally rendered as plain HTML OUTSIDE the SVG.
+    // Recharts' <Legend> uses <foreignObject> internally, and WebKit/Safari
+    // rasterises any SVG that contains <foreignObject> when printing —
+    // producing the blocky pixelated output seen in PDF exports.
+    <div className="flex flex-col h-full">
+      <div className="flex-1 min-h-0">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={data}
+              dataKey="value"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
+              innerRadius={50}
+              outerRadius={85}
+              paddingAngle={2}
+              isAnimationActive={false}
+              label={renderPercentLabel as never}
+              labelLine={false}
+            >
+              {data.map((d, i) => (
+                <Cell key={i} fill={d.color} stroke="none" />
+              ))}
+            </Pie>
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+      {/* HTML legend — keeps the SVG <foreignObject>-free so WebKit prints it as vectors */}
+      <div className="flex items-center justify-center gap-4 pb-1 flex-shrink-0">
+        {data.map((d) => (
+          <span key={d.name} className="flex items-center gap-1.5 text-xs text-text-muted">
+            <span
+              className="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0"
+              style={{ background: d.color }}
+            />
+            {d.name}
+          </span>
+        ))}
+      </div>
+    </div>
   );
 }
