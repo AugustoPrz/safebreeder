@@ -32,7 +32,7 @@ export default function NosotrosPage() {
       {/* ── NAV ─────────────────────────────────────── */}
       <header className="sticky top-0 z-40 bg-bg/80 backdrop-blur border-b border-border">
         <div className="max-w-6xl mx-auto px-6 sm:px-10 h-16 flex items-center justify-between">
-          <Link href="/" className="font-black text-base uppercase tracking-widest text-text">
+          <Link href="/" className="font-black text-base uppercase tracking-widest text-primary">
             Safebreeder
           </Link>
           <div className="flex items-center gap-4">

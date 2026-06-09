@@ -263,7 +263,7 @@ export default function LandingPage() {
               <a href="#plataforma" className="hover:text-white transition-colors">Plataforma</a>
               <a href="#funciones" className="hover:text-white transition-colors">Funciones</a>
               <a href="#usuarios" className="hover:text-white transition-colors">Usuarios</a>
-              <a href="#nosotros" className="hover:text-white transition-colors">Nosotros</a>
+              <a href="/nosotros" className="hover:text-white transition-colors">Nosotros</a>
             </nav>
             <div className="flex items-center gap-3 sm:gap-4">
               <Link href="/login" className="hidden sm:inline text-sm font-medium text-white/85 hover:text-white transition-colors">
