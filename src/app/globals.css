@@ -1,15 +1,19 @@
 @import "tailwindcss";
 
-/* ── Scroll reveal ───────────────────────────── */
-.reveal {
+/* ── Scroll reveal animations ────────────────── */
+[data-anim] {
   opacity: 0;
-  transform: translateY(22px);
-  transition: opacity 0.7s ease, transform 0.7s ease;
+  transition-property: opacity, transform;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  transition-duration: 0.7s;
 }
-.reveal.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
+[data-anim="up"]    { transform: translateY(32px); }
+[data-anim="down"]  { transform: translateY(-24px); }
+[data-anim="left"]  { transform: translateX(-40px); }
+[data-anim="right"] { transform: translateX(40px); }
+[data-anim="scale"] { transform: scale(0.92); }
+[data-anim="fade"]  { transform: none; }
+[data-anim].visible { opacity: 1; transform: none; }
 
 :root {
   --bg: #fafaf7;

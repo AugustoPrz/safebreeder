@@ -19,11 +19,22 @@ function DotIcon() {
 
 export default function NosotrosPage() {
   useEffect(() => {
+    const els = document.querySelectorAll<HTMLElement>("[data-anim]");
     const obs = new IntersectionObserver(
-      (entries) => entries.forEach((e) => { if (e.isIntersecting) e.target.classList.add("visible"); }),
+      (entries) =>
+        entries.forEach((e) => {
+          const el = e.target as HTMLElement;
+          if (e.isIntersecting) {
+            el.style.transitionDelay = el.dataset.delay ? `${el.dataset.delay}ms` : "0ms";
+            el.classList.add("visible");
+          } else {
+            el.style.transitionDelay = "0ms";
+            el.classList.remove("visible");
+          }
+        }),
       { threshold: 0.1 }
     );
-    document.querySelectorAll(".reveal").forEach((el) => obs.observe(el));
+    els.forEach((el) => obs.observe(el));
     return () => obs.disconnect();
   }, []);
 
@@ -48,7 +59,7 @@ export default function NosotrosPage() {
 
       {/* ── HERO BAND ───────────────────────────────── */}
       <section className="bg-[#2b3a1e] py-20 sm:py-28">
-        <div className="max-w-6xl mx-auto px-6 sm:px-10 reveal">
+        <div data-anim="up" className="max-w-6xl mx-auto px-6 sm:px-10">
           <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-white/40 block mb-3">Nuestra empresa</span>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white leading-[1.06] mb-5">
             Creemos que el futuro de la ganadería<br className="hidden sm:block" />
@@ -87,7 +98,7 @@ export default function NosotrosPage() {
                 ],
               },
             ].map(({ tag, title, desc, items }) => (
-              <div key={tag} className="reveal border border-border rounded-2xl p-7 sm:p-9 bg-surface">
+              <div key={tag} data-anim="up" data-delay={tag === "Nuestra visión" ? "0" : "150"} className="border border-border rounded-2xl p-7 sm:p-9 bg-surface">
                 <span className="text-[10px] font-semibold tracking-[0.1em] uppercase text-text-muted block mb-4">{tag}</span>
                 <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-[#2b3a1e] leading-tight mb-3">{title}</h2>
                 <p className="text-sm text-text-muted leading-relaxed mb-6">{desc}</p>
@@ -106,7 +117,7 @@ export default function NosotrosPage() {
 
       {/* ── CONTACTO ────────────────────────────────── */}
       <section id="contacto" className="bg-[#2b3a1e] py-20 sm:py-28">
-        <div className="max-w-6xl mx-auto px-6 sm:px-10 reveal">
+        <div data-anim="left" className="max-w-6xl mx-auto px-6 sm:px-10">
           <div className="max-w-xl">
             <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-white/40 block mb-3">Contacto</span>
             <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white leading-tight mb-4">

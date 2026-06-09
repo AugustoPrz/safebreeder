@@ -238,11 +238,22 @@ function AppMockup() {
 /* ─── page ───────────────────────────────────────────── */
 export default function LandingPage() {
   useEffect(() => {
+    const els = document.querySelectorAll<HTMLElement>("[data-anim]");
     const obs = new IntersectionObserver(
-      (entries) => entries.forEach((e) => { if (e.isIntersecting) e.target.classList.add("visible"); }),
+      (entries) =>
+        entries.forEach((e) => {
+          const el = e.target as HTMLElement;
+          if (e.isIntersecting) {
+            el.style.transitionDelay = el.dataset.delay ? `${el.dataset.delay}ms` : "0ms";
+            el.classList.add("visible");
+          } else {
+            el.style.transitionDelay = "0ms";
+            el.classList.remove("visible");
+          }
+        }),
       { threshold: 0.1 }
     );
-    document.querySelectorAll(".reveal").forEach((el) => obs.observe(el));
+    els.forEach((el) => obs.observe(el));
     return () => obs.disconnect();
   }, []);
 
@@ -295,7 +306,7 @@ export default function LandingPage() {
       {/* ── WHAT (la plataforma) ───────────────────────── */}
       <section className="bg-bg py-24 sm:py-32" id="plataforma">
         <div className="max-w-6xl mx-auto px-6 sm:px-10">
-          <div className="reveal mb-14">
+          <div data-anim="up" className="mb-14">
             <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-primary block mb-3">La plataforma</span>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-text leading-[1.08]">
               Gestioná tus establecimientos<br className="hidden sm:block" />
@@ -304,7 +315,7 @@ export default function LandingPage() {
           </div>
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             {/* Feature tabs */}
-            <div className="flex flex-col gap-px bg-border rounded-2xl overflow-hidden reveal">
+            <div data-anim="left" className="flex flex-col gap-px bg-border rounded-2xl overflow-hidden">
               {[
                 {
                   icon: <path d="M3 7h18M3 12h18M3 17h18" />,
@@ -341,7 +352,7 @@ export default function LandingPage() {
               ))}
             </div>
             {/* App mockup */}
-            <div className="reveal">
+            <div data-anim="right">
               <AppMockup />
             </div>
           </div>
@@ -353,7 +364,7 @@ export default function LandingPage() {
         <div className="absolute -right-48 -top-48 w-[600px] h-[600px] rounded-full border-[100px] border-white/[0.03]" />
         <div className="max-w-6xl mx-auto px-6 sm:px-10">
           <div className="grid lg:grid-cols-2 gap-16 lg:gap-24 items-center">
-            <div className="reveal">
+            <div data-anim="left">
               <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-white/40 block mb-3">Por qué nace Safebreeder</span>
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white leading-[1.08] mb-4">
                 El campo genera más datos que nunca{" "}
@@ -364,7 +375,7 @@ export default function LandingPage() {
                 Safebreeder nace para cerrar esa brecha y convertir datos del campo en decisiones concretas.
               </p>
             </div>
-            <div className="flex flex-col gap-px bg-white/[0.08] rounded-2xl overflow-hidden reveal">
+            <div data-anim="right" className="flex flex-col gap-px bg-white/[0.08] rounded-2xl overflow-hidden">
               {[
                 { num: "01", title: "Datos dispersos y sin procesar", desc: "Pesadas, sanidades y movimientos registrados en distintos lugares, sin conexión entre sí. La información existe pero no se puede usar." },
                 { num: "02", title: "Tiempo perdido en planillas manuales", desc: "Horas de trabajo procesando datos que deberían ser automáticos. Tiempo que podría destinarse a la gestión real del campo." },
@@ -386,7 +397,7 @@ export default function LandingPage() {
       {/* ── VIDEO PLACEHOLDER ─────────────────────────── */}
       <section className="bg-bg py-20 sm:py-28">
         <div className="max-w-5xl mx-auto px-6 sm:px-10">
-          <div className="reveal mb-8">
+          <div data-anim="up" className="mb-8">
             <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-primary block mb-3">Safebreeder en acción</span>
             <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text leading-[1.08] mb-3">
               Mirá cómo funciona<br className="hidden sm:block" />
@@ -395,7 +406,7 @@ export default function LandingPage() {
             <p className="text-text-muted text-sm sm:text-base leading-relaxed">Seguí de cerca la gestión de un rodeo de recría desde la plataforma.</p>
           </div>
           {/* Video placeholder */}
-          <div className="reveal rounded-2xl overflow-hidden aspect-video bg-[#2b3a1e] flex items-center justify-center shadow-2xl">
+          <div data-anim="scale" className="rounded-2xl overflow-hidden aspect-video bg-[#2b3a1e] flex items-center justify-center shadow-2xl">
             <div className="text-center">
               <div className="w-16 h-16 rounded-full bg-white/15 flex items-center justify-center mx-auto mb-4 backdrop-blur-sm border border-white/20">
                 <svg viewBox="0 0 24 24" className="w-7 h-7 fill-white ml-0.5">
@@ -411,7 +422,7 @@ export default function LandingPage() {
       {/* ── FEATURES ALTERNATING ──────────────────────── */}
       <section className="bg-surface py-20 sm:py-28" id="funciones">
         <div className="max-w-6xl mx-auto px-6 sm:px-10">
-          <div className="reveal mb-16">
+          <div data-anim="up" className="mb-16">
             <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-primary block mb-3">Funciones principales</span>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-text leading-[1.08]">
               Todo lo que necesitás<br className="hidden sm:block" />
@@ -421,10 +432,10 @@ export default function LandingPage() {
 
           {/* Feature 1 */}
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center pb-16 border-b border-border">
-            <div className="reveal order-2 lg:order-1">
+            <div data-anim="left" className="order-2 lg:order-1">
               <ScreenshotA />
             </div>
-            <div className="reveal order-1 lg:order-2">
+            <div data-anim="right" className="order-1 lg:order-2">
               <span className="text-[10px] font-semibold tracking-[0.12em] uppercase text-primary block mb-3">Registro productivo</span>
               <h3 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#2b3a1e] leading-tight mb-4">
                 Registrá datos de tus lotes{" "}
@@ -446,7 +457,7 @@ export default function LandingPage() {
 
           {/* Feature 2 */}
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center py-16 border-b border-border">
-            <div className="reveal">
+            <div data-anim="left">
               <span className="text-[10px] font-semibold tracking-[0.12em] uppercase text-primary block mb-3">Gestión sanitaria</span>
               <h3 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#2b3a1e] leading-tight mb-4">
                 Seguimiento sanitario{" "}
@@ -464,17 +475,17 @@ export default function LandingPage() {
                 ))}
               </ul>
             </div>
-            <div className="reveal">
+            <div data-anim="right">
               <ScreenshotB />
             </div>
           </div>
 
           {/* Feature 3 */}
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center pt-16">
-            <div className="reveal order-2 lg:order-1">
+            <div data-anim="left" className="order-2 lg:order-1">
               <ScreenshotC />
             </div>
-            <div className="reveal order-1 lg:order-2">
+            <div data-anim="right" className="order-1 lg:order-2">
               <span className="text-[10px] font-semibold tracking-[0.12em] uppercase text-primary block mb-3">Análisis y comparación</span>
               <h3 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#2b3a1e] leading-tight mb-4">
                 Indicadores automáticos y{" "}
@@ -499,7 +510,7 @@ export default function LandingPage() {
       {/* ── AUDIENCE (dark green) ─────────────────────── */}
       <section className="bg-[#2b3a1e] py-24 sm:py-32" id="usuarios">
         <div className="max-w-6xl mx-auto px-6 sm:px-10">
-          <div className="aud-header reveal text-center mb-12">
+          <div data-anim="up" className="text-center mb-12">
             <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-white/40 block mb-3">¿Para quién es Safebreeder?</span>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white leading-[1.08] mb-3">
               Diseñado para quienes<br className="hidden sm:block" />
@@ -509,7 +520,7 @@ export default function LandingPage() {
               Una plataforma adaptada a los distintos roles del ecosistema ganadero argentino.
             </p>
           </div>
-          <div className="reveal grid sm:grid-cols-2 lg:grid-cols-4 gap-px bg-white/10 border border-white/10 rounded-2xl overflow-hidden">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-px bg-white/10 border border-white/10 rounded-2xl overflow-hidden">
             {[
               {
                 icon: <path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2zM16 3H8L6 7h12l-2-4z" />,
@@ -531,8 +542,8 @@ export default function LandingPage() {
                 title: "Empresas agropecuarias",
                 desc: "Centralizá múltiples unidades productivas con visibilidad total del desempeño del sistema en un solo lugar.",
               },
-            ].map(({ icon, title, desc }) => (
-              <div key={title} className="bg-white/[0.04] hover:bg-white/[0.08] transition-colors p-6 sm:p-8">
+            ].map(({ icon, title, desc }, i) => (
+              <div key={title} data-anim="up" data-delay={String(i * 100)} className="bg-white/[0.04] hover:bg-white/[0.08] transition-colors p-6 sm:p-8">
                 <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center mb-4">
                   <svg viewBox="0 0 24 24" className="w-5 h-5 fill-none stroke-white/70" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                     {icon}
@@ -548,7 +559,7 @@ export default function LandingPage() {
 
       {/* ── CTA ───────────────────────────────────────── */}
       <section className="bg-bg min-h-[480px] flex items-center justify-center text-center py-24 sm:py-32">
-        <div className="max-w-2xl mx-auto px-6 sm:px-10 reveal">
+        <div data-anim="scale" className="max-w-2xl mx-auto px-6 sm:px-10">
           <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-text-muted block mb-4">Empezá hoy</span>
           <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-text leading-[1.04] mb-5">
             Menos planillas<br />
@@ -570,7 +581,7 @@ export default function LandingPage() {
 
       {/* ── FOOTER ────────────────────────────────────── */}
       <footer className="bg-[#2b3a1e] border-t border-white/[0.08] pt-14 pb-8">
-        <div className="max-w-6xl mx-auto px-6 sm:px-10">
+        <div data-anim="fade" className="max-w-6xl mx-auto px-6 sm:px-10">
           <div className="flex flex-col sm:flex-row justify-between items-start gap-10 pb-10 border-b border-white/[0.08] mb-6">
             <div>
               <span className="font-black text-lg uppercase tracking-widest text-white block mb-1">Safebreeder</span>
