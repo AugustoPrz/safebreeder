@@ -321,6 +321,13 @@ function hexToRgb(hex: string): [number, number, number] {
       parseInt(c[2] + c[2], 16),
     ];
   }
+  // Browsers serialise inline `background`/`background-color` as
+  // "rgb(r, g, b)" or "rgba(r, g, b, a)" — parse those too, otherwise legend
+  // swatches fall back to dark (appearing black).
+  const rgb = /^rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/i.exec(s);
+  if (rgb) {
+    return [Number(rgb[1]), Number(rgb[2]), Number(rgb[3])];
+  }
   return [31, 37, 24];
 }
 

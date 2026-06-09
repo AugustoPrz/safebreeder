@@ -99,16 +99,43 @@ export async function drawChart(
   w: number,
   h: number,
 ): Promise<void> {
+  // svg2pdf reads each text node's COMPUTED font. Our charts inherit "Inter"
+  // (a font jsPDF doesn't have) at weights like 600 — svg2pdf then asks jsPDF
+  // for `times`/`600normal`, which doesn't exist, so labels render in a muddy
+  // serif fallback that's illegible at print size. We render a CLONE with a
+  // forced Helvetica/normal style (a stylesheet rule beats presentation
+  // attributes like font-weight="600"), so every label maps cleanly to a real
+  // jsPDF font. The clone is attached off-screen so getComputedStyle resolves.
+  const clone = chart.svg.cloneNode(true) as SVGSVGElement;
+  const style = document.createElementNS(SVG_NS, "style");
+  style.textContent =
+    "text{font-family:Helvetica,Arial,sans-serif !important;font-weight:normal !important;}";
+  clone.insertBefore(style, clone.firstChild);
+
+  const holder = document.createElement("div");
+  holder.style.cssText =
+    "position:fixed;left:-99999px;top:0;width:" +
+    chart.width +
+    "px;height:" +
+    chart.height +
+    "px;pointer-events:none;opacity:0;";
+  holder.appendChild(clone);
+  document.body.appendChild(holder);
+
   try {
-    await svg2pdf(chart.svg, doc, { x, y, width: w, height: h });
+    await svg2pdf(clone, doc, { x, y, width: w, height: h });
   } catch (err) {
     if (process.env.NODE_ENV !== "production") {
       console.warn("svg2pdf failed, falling back to raster:", err);
     }
     const png = await svgToPng(chart.svg, 3);
     if (png) doc.addImage(png, "PNG", x, y, w, h, undefined, "FAST");
+  } finally {
+    holder.remove();
   }
 }
+
+const SVG_NS = "http://www.w3.org/2000/svg";
 
 // ── Raster fallback ─────────────────────────────────────────────────────────
 // Only used if svg2pdf throws for a particular chart.
