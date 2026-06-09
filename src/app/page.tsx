@@ -276,7 +276,7 @@ export default function LandingPage() {
           </header>
           <div className="relative z-10 px-6 sm:px-10 pt-16 sm:pt-28 pb-10 sm:pb-14 grid lg:grid-cols-2 gap-10 lg:gap-6 items-end min-h-[calc(100vh-180px)]">
             <h1 className="text-white text-5xl sm:text-6xl lg:text-7xl font-bold leading-[1.02] tracking-tight">
-              Gestioná tu rodeo como siempre quisiste.
+              Gestioná tu recría como siempre quisiste
             </h1>
             <div className="max-w-md lg:justify-self-end space-y-6">
               <p className="text-white/90 text-base sm:text-lg leading-relaxed">
