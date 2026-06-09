@@ -299,7 +299,7 @@ export default function LandingPage() {
             <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-primary block mb-3">La plataforma</span>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-text leading-[1.08]">
               Gestioná tus establecimientos<br className="hidden sm:block" />
-              con <em className="not-italic text-primary">datos reales del campo.</em>
+              con <em className="not-italic text-primary">datos reales del campo</em>
             </h2>
           </div>
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
@@ -356,7 +356,7 @@ export default function LandingPage() {
             <div className="reveal">
               <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-white/40 block mb-3">Por qué nace Safebreeder</span>
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white leading-[1.08] mb-4">
-                El campo genera más datos que nunca.{" "}
+                El campo genera más datos que nunca{" "}
                 <em className="not-italic text-[#a5c956]">Muy pocos los aprovechan.</em>
               </h2>
               <p className="text-white/55 text-sm sm:text-base leading-relaxed">
@@ -390,7 +390,7 @@ export default function LandingPage() {
             <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-primary block mb-3">Safebreeder en acción</span>
             <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-text leading-[1.08] mb-3">
               Mirá cómo funciona<br className="hidden sm:block" />
-              en el <em className="not-italic text-primary">campo real.</em>
+              en el <em className="not-italic text-primary">campo real</em>
             </h2>
             <p className="text-text-muted text-sm sm:text-base leading-relaxed">Seguí de cerca la gestión de un rodeo de recría desde la plataforma.</p>
           </div>
@@ -551,8 +551,8 @@ export default function LandingPage() {
         <div className="max-w-2xl mx-auto px-6 sm:px-10 reveal">
           <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-text-muted block mb-4">Empezá hoy</span>
           <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-text leading-[1.04] mb-5">
-            Menos planillas.<br />
-            <em className="not-italic text-primary">Más decisiones.</em>
+            Menos planillas<br />
+            <em className="not-italic text-primary">Más decisiones</em>
           </h2>
           <p className="text-text-muted text-sm sm:text-base leading-relaxed mb-10">
             Unite a los productores, veterinarios y asesores que ya están gestionando su recría con datos reales.
