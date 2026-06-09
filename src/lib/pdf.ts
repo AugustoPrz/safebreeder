@@ -1,7 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { DB } from "./types";
-import type { CapturedChart } from "./chartExport";
+import { type CapturedChart, drawChart } from "./chartExport";
 import {
   averageHpg,
   classifyHpg,
@@ -358,7 +358,9 @@ function layoutLegend(
   return cy + lineH;
 }
 
-export function generateStatsReport(input: StatsReportInput): jsPDF {
+export async function generateStatsReport(
+  input: StatsReportInput,
+): Promise<jsPDF> {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -452,7 +454,8 @@ export function generateStatsReport(input: StatsReportInput): jsPDF {
     doc.setTextColor(31, 37, 24);
     doc.text(chart.title, margin, y + 10);
     y += 16;
-    doc.addImage(chart.png, "PNG", margin, y, imgW, imgH, undefined, "FAST");
+    // Render the chart as native PDF vectors (resolution-independent).
+    await drawChart(doc, chart, margin, y, imgW, imgH);
     y += imgH + 8;
     if (chart.legend.length) {
       doc.setFont("helvetica", "normal");

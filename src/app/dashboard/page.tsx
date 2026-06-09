@@ -35,6 +35,8 @@ import {
   summarizeWeights,
 } from "@/lib/calc";
 import { t } from "@/lib/i18n";
+import { generateStatsReport } from "@/lib/pdf";
+import { collectCharts } from "@/lib/chartExport";
 import type { HpgRecord, Lot, WeightRecord } from "@/lib/types";
 
 export default function DashboardPage() {
@@ -50,6 +52,7 @@ export default function DashboardPage() {
   const [yearFilter, setYearFilter] = useState<string>(""); // "" = all years
   const [originFilter, setOriginFilter] = useState<string>(""); // "" = all origins
   const printRef = useRef<HTMLDivElement>(null);
+  const [pdfBusy, setPdfBusy] = useState(false);
 
   // Year filter helpers — closure over yearFilter so memos depend on it
   // implicitly. monthKey is "YYYY-MM"; iso is "YYYY-MM-DD".
@@ -715,9 +718,87 @@ export default function DashboardPage() {
     [lots, weightsByLot, activeYear],
   );
 
-  // Use the browser's native print-to-PDF: SVGs render as real vectors,
-  // colours and fonts are handled by the browser — no rasterisation artifacts.
-  const downloadPdf = () => window.print();
+  // Export the whole stats view to a PDF. Charts are rendered as native PDF
+  // vectors via svg2pdf (chartExport.drawChart) — resolution-independent and
+  // identical on every device, including iOS where print-to-PDF rasterises.
+  const downloadPdf = async () => {
+    if (pdfBusy) return;
+    setPdfBusy(true);
+    try {
+      const root = printRef.current;
+      const charts = root ? collectCharts(root) : [];
+      const estName = filter
+        ? (establishments.find((e) => e.id === filter)?.name ?? null)
+        : null;
+      const kpis = [
+        {
+          label: t.dashboard.kpiEstablishments,
+          value: formatInt(stockCounts.establishments),
+        },
+        { label: t.dashboard.kpiLots, value: formatInt(metrics.lots) },
+        {
+          label: t.dashboard.kpiStockTotal,
+          value: formatInt(stockCounts.total),
+        },
+        {
+          label: "Machos / Hembras",
+          value: `${stockCounts.machos} M · ${stockCounts.hembras} H`,
+        },
+        {
+          label: t.dashboard.kpiDeadTotal,
+          value: formatInt(stockCounts.muertos),
+        },
+        {
+          label: t.dashboard.kpiSoldTotal,
+          value: formatInt(stockCounts.vendidos),
+        },
+        { label: t.dashboard.kpiSamples, value: formatInt(metrics.samples) },
+        {
+          label: t.dashboard.kpiLow,
+          value: `${formatNumber(metrics.lowPct, 0)}%`,
+        },
+        {
+          label: t.dashboard.kpiModerate,
+          value: `${formatNumber(metrics.modPct, 0)}%`,
+        },
+        {
+          label: t.dashboard.kpiHigh,
+          value: `${formatNumber(metrics.highPct, 0)}%`,
+        },
+      ];
+      const doc = await generateStatsReport({
+        establishmentName: estName,
+        year: yearFilter || null,
+        generatedAt: new Date().toLocaleDateString("es-AR", {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        }),
+        kpis,
+        charts,
+        gdpTable: gdpTableRows.rows.length
+          ? {
+              year: activeYear,
+              monthLabels: gdpTableRows.months.map((m) => m.label),
+              rows: gdpTableRows.rows.map((r) => ({
+                lotName: r.lotName,
+                category: r.category,
+                values: gdpTableRows.months.map((m) => r.values[m.key] ?? null),
+                average: r.average,
+              })),
+            }
+          : undefined,
+      });
+      const slug = (estName ?? "estadisticas")
+        .normalize("NFD")
+        .replace(/[̀-ͯ]/g, "")
+        .replace(/[^a-zA-Z0-9]+/g, "-")
+        .toLowerCase();
+      doc.save(`safebreeder-${slug}-${yearFilter || "todos"}.pdf`);
+    } finally {
+      setPdfBusy(false);
+    }
+  };
 
   if (establishments.length === 0) {
     return (
@@ -770,10 +851,22 @@ export default function DashboardPage() {
           <button
             type="button"
             onClick={downloadPdf}
+            disabled={pdfBusy}
             aria-label="Descargar PDF"
             title="Descargar PDF"
-            className="h-11 w-11 rounded-lg bg-surface-2 inline-flex items-center justify-center hover:bg-border shrink-0 no-print"
+            className="h-11 w-11 rounded-lg bg-surface-2 inline-flex items-center justify-center hover:bg-border shrink-0 no-print disabled:opacity-50 disabled:cursor-wait"
           >
+            {pdfBusy ? (
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className="w-5 h-5 animate-spin"
+              >
+                <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+              </svg>
+            ) : (
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
@@ -787,6 +880,7 @@ export default function DashboardPage() {
                 <polyline points="7 10 12 15 17 10" />
                 <line x1="12" y1="15" x2="12" y2="3" />
               </svg>
+            )}
           </button>
         </div>
       </div>
