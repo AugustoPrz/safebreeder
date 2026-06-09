@@ -11,10 +11,10 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "SAFEBREEDER",
-  description: "Gestión sanitaria y productiva del ganado",
+  description: "Gestión inteligente para recría bovina",
   openGraph: {
     title: "SAFEBREEDER",
-    description: "Gestión sanitaria y productiva del ganado",
+    description: "Gestión inteligente para recría bovina",
     type: "website",
   },
 };
