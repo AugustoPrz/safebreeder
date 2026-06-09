@@ -584,7 +584,7 @@ export default function LandingPage() {
                 },
                 {
                   heading: "Empresa",
-                  links: [{ label: "Nuestra visión", href: "#nosotros" }, { label: "Nuestra misión", href: "#nosotros" }, { label: "Contacto", href: "mailto:contacto@safebreeder.com" }],
+                  links: [{ label: "Nuestra visión", href: "/nosotros" }, { label: "Nuestra misión", href: "/nosotros" }, { label: "Contacto", href: "/nosotros#contacto" }],
                 },
                 {
                   heading: "Acceso",

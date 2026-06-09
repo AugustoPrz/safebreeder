@@ -14,6 +14,7 @@ import { UserMenu } from "./UserMenu";
 
 const BARE_ROUTES = [
   "/",
+  "/nosotros",
   "/login",
   "/signup",
   "/forgot-password",
