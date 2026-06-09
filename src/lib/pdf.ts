@@ -293,6 +293,26 @@ export interface StatsReportInput {
   generatedAt: string;
   kpis: { label: string; value: string }[];
   charts: CapturedChart[];
+  productionSummary?: {
+    entrada: number;
+    salida: number;
+    producido: number;
+  } | null;
+  salesSummary?: {
+    total: number;
+    avgWeight: number | null;
+    lastDate: string;
+  } | null;
+  hpgTable?: {
+    year: number;
+    monthLabels: string[];
+    rows: {
+      lotName: string;
+      category: string;
+      values: (number | null)[];
+      average: number | null;
+    }[];
+  } | null;
   gdpTable?: {
     year: number;
     monthLabels: string[];
@@ -302,7 +322,13 @@ export interface StatsReportInput {
       values: (number | null)[];
       average: number | null;
     }[];
-  };
+  } | null;
+  treatmentsLog?: {
+    date: string;
+    lotName: string;
+    product: string;
+    kind: string;
+  }[];
 }
 
 function hexToRgb(hex: string): [number, number, number] {
@@ -472,7 +498,115 @@ export async function generateStatsReport(
     y += 12;
   }
 
-  // GDP per-lot table
+  // ── Helper: render a row of 3 KPI boxes ────────────────────────────────
+  const renderKpiRow = (
+    items: { label: string; value: string }[],
+  ) => {
+    const cols = items.length;
+    const gap = 10;
+    const boxW = (contentWidth - gap * (cols - 1)) / cols;
+    const boxH = 40;
+    ensure(boxH + gap + 4);
+    items.forEach((item, i) => {
+      const x = margin + i * (boxW + gap);
+      doc.setDrawColor(227, 230, 220);
+      doc.setFillColor(248, 249, 245);
+      doc.roundedRect(x, y, boxW, boxH, 4, 4, "FD");
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7.5);
+      doc.setTextColor(107, 111, 93);
+      doc.text(item.label.toUpperCase(), x + 8, y + 14, {
+        maxWidth: boxW - 16,
+      });
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(13);
+      doc.setTextColor(31, 37, 24);
+      doc.text(item.value, x + 8, y + 32);
+    });
+    y += boxH + gap;
+  };
+
+  // ── Producción del rodeo ─────────────────────────────────────────────────
+  if (input.productionSummary) {
+    ensure(80);
+    y = sectionTitle(doc, t.dashboard.productionTitle, y, margin);
+    renderKpiRow([
+      {
+        label: t.dashboard.kpiEntradaTotal,
+        value: `${formatInt(input.productionSummary.entrada)} kg`,
+      },
+      {
+        label: t.dashboard.kpiSalidaTotal,
+        value: `${formatInt(input.productionSummary.salida)} kg`,
+      },
+      {
+        label: t.dashboard.kpiProducido,
+        value: `${formatInt(input.productionSummary.producido)} kg`,
+      },
+    ]);
+    y += 8;
+  }
+
+  // ── Resumen de ventas ────────────────────────────────────────────────────
+  if (input.salesSummary) {
+    ensure(80);
+    y = sectionTitle(doc, t.dashboard.salesSummaryTitle, y, margin);
+    renderKpiRow([
+      {
+        label: t.dashboard.kpiSoldTotal,
+        value: formatInt(input.salesSummary.total),
+      },
+      {
+        label: t.dashboard.salesAvgWeight,
+        value:
+          input.salesSummary.avgWeight !== null
+            ? `${formatNumber(input.salesSummary.avgWeight, 1)} kg`
+            : "—",
+      },
+      {
+        label: t.dashboard.salesLastDate,
+        value: input.salesSummary.lastDate
+          ? formatMonthKey(input.salesSummary.lastDate.slice(0, 7), t.months)
+          : "—",
+      },
+    ]);
+    y += 8;
+  }
+
+  // ── HPG mensual por lote ─────────────────────────────────────────────────
+  if (input.hpgTable && input.hpgTable.rows.length) {
+    ensure(70);
+    y = sectionTitle(
+      doc,
+      `${t.dashboard.tableTitle} — ${input.hpgTable.year}`,
+      y,
+      margin,
+    );
+    autoTable(doc, {
+      startY: y,
+      theme: "grid",
+      styles: { fontSize: 6.5, cellPadding: 2.5, textColor: [31, 37, 24] },
+      headStyles: {
+        fillColor: [77, 124, 42],
+        textColor: [255, 255, 255],
+        fontStyle: "bold",
+        fontSize: 6.5,
+      },
+      head: [["Lote", "Categoría", ...input.hpgTable.monthLabels, "Prom."]],
+      body: input.hpgTable.rows.map((r) => [
+        r.lotName,
+        r.category,
+        ...r.values.map((v) => (v === null ? "—" : String(v))),
+        r.average === null ? "—" : String(r.average),
+      ]),
+      margin: { left: margin, right: margin },
+    });
+    y =
+      (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable
+        .finalY + 18;
+  }
+
+  // ── GDP mensual por lote ─────────────────────────────────────────────────
   if (input.gdpTable && input.gdpTable.rows.length) {
     ensure(70);
     y = sectionTitle(
@@ -505,6 +639,40 @@ export async function generateStatsReport(
         ...r.values.map((v) => (v === null ? "—" : v.toFixed(2))),
         r.average === null ? "—" : r.average.toFixed(2),
       ]),
+      margin: { left: margin, right: margin },
+    });
+    y =
+      (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable
+        .finalY + 18;
+  }
+
+  // ── Historial de tratamientos y vacunas ──────────────────────────────────
+  if (input.treatmentsLog && input.treatmentsLog.length) {
+    ensure(70);
+    y = sectionTitle(doc, "Historial de tratamientos y vacunas", y, margin);
+    const kindLabel: Record<string, string> = {
+      antiparasitario: "Antiparasitario",
+      ecto: "Ectoparasitario",
+      vacuna: "Vacuna",
+    };
+    autoTable(doc, {
+      startY: y,
+      theme: "grid",
+      styles: { fontSize: 7.5, cellPadding: 3, textColor: [31, 37, 24] },
+      headStyles: {
+        fillColor: [77, 124, 42],
+        textColor: [255, 255, 255],
+        fontStyle: "bold",
+        fontSize: 7.5,
+      },
+      head: [["Fecha", "Lote", "Producto", "Tipo"]],
+      body: input.treatmentsLog.map((e) => [
+        e.date || "—",
+        e.lotName,
+        e.product,
+        kindLabel[e.kind] ?? e.kind,
+      ]),
+      columnStyles: { 0: { cellWidth: 55 }, 3: { cellWidth: 70 } },
       margin: { left: margin, right: margin },
     });
   }

@@ -766,6 +766,11 @@ export default function DashboardPage() {
           value: `${formatNumber(metrics.highPct, 0)}%`,
         },
       ];
+      // HPG table: only include lots that have at least one month of data.
+      const hpgTableForPdf = tableRows.rows.filter((r) =>
+        Object.values(r.values).some((v) => v !== null),
+      );
+
       const doc = await generateStatsReport({
         establishmentName: estName,
         year: yearFilter || null,
@@ -776,6 +781,32 @@ export default function DashboardPage() {
         }),
         kpis,
         charts,
+        productionSummary: productionTotals.hasData
+          ? {
+              entrada: productionTotals.entrada,
+              salida: productionTotals.salida,
+              producido: productionTotals.producido,
+            }
+          : null,
+        salesSummary: salesSummary.total > 0
+          ? {
+              total: salesSummary.total,
+              avgWeight: salesSummary.avgWeight,
+              lastDate: salesSummary.lastDate,
+            }
+          : null,
+        hpgTable: hpgTableForPdf.length
+          ? {
+              year: activeYear,
+              monthLabels: tableRows.months.map((m) => m.label),
+              rows: hpgTableForPdf.map((r) => ({
+                lotName: r.lotName,
+                category: r.category,
+                values: tableRows.months.map((m) => r.values[m.key] ?? null),
+                average: r.average,
+              })),
+            }
+          : null,
         gdpTable: gdpTableRows.rows.length
           ? {
               year: activeYear,
@@ -787,7 +818,8 @@ export default function DashboardPage() {
                 average: r.average,
               })),
             }
-          : undefined,
+          : null,
+        treatmentsLog: treatmentsLog.length ? treatmentsLog : undefined,
       });
       const slug = (estName ?? "estadisticas")
         .normalize("NFD")
