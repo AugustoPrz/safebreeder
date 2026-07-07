@@ -10,14 +10,23 @@ import {
   YAxis,
 } from "recharts";
 
+// High-contrast palette; distinct hues so adjacent series read apart.
 const PALETTE = [
-  "#4d7c2a",
-  "#c8a415",
-  "#2f6690",
-  "#b5461f",
-  "#7a8450",
-  "#8a2f15",
+  "#4d7c2a", // green
+  "#c8a415", // gold
+  "#2f6690", // blue
+  "#b5461f", // clay
+  "#7a3fa0", // purple
+  "#0f766e", // teal
+  "#be123c", // crimson
+  "#5b6b8c", // slate
 ];
+// Once colours wrap, vary the dash pattern so repeated colours still differ.
+const DASHES = ["0", "6 3", "2 3"];
+const strokeStyle = (i: number) => ({
+  stroke: PALETTE[i % PALETTE.length],
+  strokeDasharray: DASHES[Math.floor(i / PALETTE.length) % DASHES.length],
+});
 
 interface Props {
   rows: Record<string, number | string>[];
@@ -42,26 +51,30 @@ export function MonthlyEvolutionLine({ rows, series }: Props) {
               stroke="#e3e6dc"
             />
             <YAxis tick={{ fontSize: 11, fill: "#6b6f5d" }} stroke="#e3e6dc" />
-            {series.map((s, i) => (
-              <Line
-                key={s.key}
-                type="monotone"
-                dataKey={s.key}
-                name={s.name}
-                stroke={PALETTE[i % PALETTE.length]}
-                strokeWidth={2}
-                dot={{ r: 3 }}
-                connectNulls
-              >
-                <LabelList
+            {series.map((s, i) => {
+              const { stroke, strokeDasharray } = strokeStyle(i);
+              return (
+                <Line
+                  key={s.key}
+                  type="monotone"
                   dataKey={s.key}
-                  position="top"
-                  fill={PALETTE[i % PALETTE.length]}
-                  fontSize={10}
-                  fontWeight={600}
-                />
-              </Line>
-            ))}
+                  name={s.name}
+                  stroke={stroke}
+                  strokeDasharray={strokeDasharray}
+                  strokeWidth={2}
+                  dot={{ r: 3 }}
+                  connectNulls
+                >
+                  <LabelList
+                    dataKey={s.key}
+                    position="top"
+                    fill={stroke}
+                    fontSize={10}
+                    fontWeight={600}
+                  />
+                </Line>
+              );
+            })}
           </LineChart>
         </ResponsiveContainer>
       </div>
@@ -74,7 +87,7 @@ export function MonthlyEvolutionLine({ rows, series }: Props) {
                 style={{
                   width: 20,
                   height: 2,
-                  background: PALETTE[i % PALETTE.length],
+                  background: strokeStyle(i).stroke,
                   borderRadius: 1,
                 }}
               />

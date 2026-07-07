@@ -69,18 +69,36 @@ export function calculateAdg(
   return (currentKg - previousKg) / days;
 }
 
+/**
+ * Normalise a caravana / tagId for matching between Stock and Pesadas.
+ * Trims and lower-cases so "  A12 " and "a12" match; deliberately does NOT
+ * strip leading zeros (those distinguish real tags like "007" vs "7").
+ */
+export function normalizeTag(s: string): string {
+  return s.trim().toLowerCase();
+}
+
 export function summarizeWeights(
   rows: WeightRow[],
   previousRows: WeightRow[] = [],
   days = 30,
 ) {
-  const prevMap = new Map(previousRows.map((r) => [r.tagId.trim(), r.weightKg]));
+  // Only identified rows participate in per-tag matching. Empty tagIds are
+  // unidentified samples — they must NOT match each other (that would pair
+  // arbitrary animals); they fall through to the general-average path instead.
+  const prevMap = new Map(
+    previousRows
+      .filter((r) => normalizeTag(r.tagId) !== "")
+      .map((r) => [normalizeTag(r.tagId), r.weightKg]),
+  );
   const weights = rows
     .map((r) => r.weightKg)
     .filter((v): v is number => typeof v === "number");
   const adgs: number[] = [];
   for (const r of rows) {
-    const prev = prevMap.get(r.tagId.trim());
+    const tag = normalizeTag(r.tagId);
+    if (tag === "") continue;
+    const prev = prevMap.get(tag);
     const adg = calculateAdg(r.weightKg, prev ?? null, days);
     if (adg !== null) adgs.push(adg);
   }
@@ -93,6 +111,51 @@ export function summarizeWeights(
     avgAdg:
       adgs.length > 0 ? adgs.reduce((a, b) => a + b, 0) / adgs.length : null,
   };
+}
+
+/**
+ * Daily gain (kg/day) between two months' weight rows.
+ * Tries per-tag matching first (via summarizeWeights); if no tags match
+ * across months (e.g. an unidentified sample was weighed), falls back to the
+ * difference of the two months' GENERAL average weights over the day gap.
+ * Returns null when neither can be computed (no prior weight, days <= 0).
+ */
+export function adgWithFallback(
+  current: WeightRow[],
+  previous: WeightRow[],
+  days: number,
+): number | null {
+  const perTag = summarizeWeights(current, previous, days).avgAdg;
+  if (perTag !== null) return perTag;
+  if (!days || days <= 0) return null;
+  const curAvg = summarizeWeights(current).avgWeight;
+  const prevAvg = summarizeWeights(previous).avgWeight;
+  if (curAvg === null || prevAvg === null) return null;
+  return (curAvg - prevAvg) / days;
+}
+
+/**
+ * Month keys (YYYY-MM) from the month AFTER `fromKeyExclusive` up to and
+ * including `toKeyInclusive`. Used to spread a daily-gain rate across every
+ * month of the interval when weighings skip months (e.g. May→Aug fills
+ * Jun, Jul, Aug). Empty if the range is invalid or non-positive.
+ */
+export function monthsInInterval(
+  fromKeyExclusive: string,
+  toKeyInclusive: string,
+): string[] {
+  const from = parseMonthKey(fromKeyExclusive);
+  const to = parseMonthKey(toKeyInclusive);
+  if (!from || !to) return [];
+  const out: string[] = [];
+  // from.month is 0-indexed, so +1 starts at the month AFTER `from`.
+  const cursor = new Date(from.year, from.month + 1, 1);
+  const end = new Date(to.year, to.month, 1);
+  while (cursor.getTime() <= end.getTime()) {
+    out.push(monthKey(cursor.getFullYear(), cursor.getMonth()));
+    cursor.setMonth(cursor.getMonth() + 1);
+  }
+  return out;
 }
 
 /** Days between the 1st of two YYYY-MM month keys. Crosses year boundaries. */
@@ -110,6 +173,20 @@ export function monthsDiffDays(fromKey: string, toKey: string): number {
  * numeric weight, or null. Lets GDP compare against the last actual weighing
  * even when intermediate months were skipped.
  */
+/** Sorted month keys (YYYY-MM) that have at least one numeric weight. */
+export function weighedMonthKeys(
+  weightsByMonth: Record<MonthKey, WeightRecord> | undefined,
+): string[] {
+  if (!weightsByMonth) return [];
+  return Object.keys(weightsByMonth)
+    .filter((k) =>
+      (weightsByMonth[k]?.rows ?? []).some(
+        (r) => typeof r.weightKg === "number" && Number.isFinite(r.weightKg),
+      ),
+    )
+    .sort();
+}
+
 export function previousWeighedMonthKey(
   weightsByMonth: Record<MonthKey, WeightRecord> | undefined,
   monthKey: string,
@@ -214,12 +291,12 @@ export function lastWeightForTag(
   caravana: string,
 ): number | null {
   if (!weightsByMonth) return null;
-  const tag = caravana.trim();
+  const tag = normalizeTag(caravana);
   if (!tag) return null;
   const keys = Object.keys(weightsByMonth).sort().reverse();
   for (const key of keys) {
     const row = weightsByMonth[key].rows.find(
-      (r) => r.tagId.trim() === tag && typeof r.weightKg === "number",
+      (r) => normalizeTag(r.tagId) === tag && typeof r.weightKg === "number",
     );
     if (row && typeof row.weightKg === "number") return row.weightKg;
   }
@@ -227,7 +304,7 @@ export function lastWeightForTag(
 }
 
 /** Parse a stock animal's `peso` string (kg). Empty / non-numeric → 0. */
-function parseStockPeso(s: string): number {
+export function parseStockPeso(s: string): number {
   if (!s) return 0;
   const n = Number(String(s).replace(",", "."));
   return Number.isFinite(n) && n > 0 ? n : 0;

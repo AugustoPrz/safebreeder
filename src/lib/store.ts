@@ -15,6 +15,7 @@ import type {
   WeightRow,
 } from "./types";
 import { emptyDb } from "./types";
+import { normalizeTag, parseStockPeso } from "./calc";
 import * as remote from "./supabase/data";
 
 interface StoreState {
@@ -118,6 +119,7 @@ function emptyTreatment(): Treatment {
     ectoRoute: "",
     diarrhea: "none",
     notes: "",
+    minerals: "",
   };
 }
 
@@ -392,14 +394,44 @@ export const useStore = create<StoreState>()((set, get) => ({
   },
 
   setStock: (lotId, record) => {
+    const userId = get().userId;
     const newCount = record.rows.length;
     const prevLot = get().db.lots.find((l) => l.id === lotId);
     const headCountChanged = prevLot && prevLot.headCount !== newCount;
+
+    // Auto-seed the Pesadas entry weighing from each animal's entry weight.
+    // For every live animal with a positive `peso` and a valid `ingresoDate`,
+    // ensure a weight row exists (create-if-missing) in that month, keyed by
+    // caravana — so the entry weight becomes the baseline for the first GDP
+    // and shows up in Pesadas automatically. Never overwrites an existing row.
+    const existingWeights = get().db.weights[lotId] ?? {};
+    const nextWeights: Record<MonthKey, WeightRecord> = { ...existingWeights };
+    const touchedMonths = new Set<MonthKey>();
+    for (const a of record.rows) {
+      if (a.muerto) continue;
+      const peso = parseStockPeso(a.peso);
+      if (peso <= 0) continue;
+      const iso = a.ingresoDate?.trim();
+      if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) continue;
+      const tag = normalizeTag(a.caravana);
+      if (!tag) continue;
+      const mk = iso.slice(0, 7);
+      const rec = nextWeights[mk] ?? { rows: [], notes: "" };
+      if (rec.rows.some((r) => normalizeTag(r.tagId) === tag)) continue;
+      nextWeights[mk] = {
+        ...rec,
+        rows: [...rec.rows, { tagId: a.caravana.trim(), weightKg: peso }],
+      };
+      touchedMonths.add(mk);
+    }
 
     set((s) => ({
       db: {
         ...s.db,
         stock: { ...s.db.stock, [lotId]: record },
+        weights: touchedMonths.size
+          ? { ...s.db.weights, [lotId]: nextWeights }
+          : s.db.weights,
         lots: headCountChanged
           ? s.db.lots.map((l) =>
               l.id === lotId ? { ...l, headCount: newCount } : l,
@@ -407,10 +439,13 @@ export const useStore = create<StoreState>()((set, get) => ({
           : s.db.lots,
       },
     }));
-    if (get().userId) {
+    if (userId) {
       swallow(remote.upsertStock(lotId, record));
       if (headCountChanged) {
         swallow(remote.updateLot(lotId, { headCount: newCount }));
+      }
+      for (const mk of touchedMonths) {
+        swallow(remote.upsertWeights(lotId, mk, nextWeights[mk]));
       }
     }
   },

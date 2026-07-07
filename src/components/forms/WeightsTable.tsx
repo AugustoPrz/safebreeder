@@ -4,11 +4,13 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Field, Input, Textarea } from "@/components/ui/Input";
 import {
+  adgWithFallback,
   calculateAdg,
   formatInt,
   formatMonthKey,
   formatNumber,
   monthsDiffDays,
+  normalizeTag,
   previousWeighedMonthKey,
   summarizeWeights,
 } from "@/lib/calc";
@@ -39,11 +41,19 @@ export function WeightsTable({ lotId, monthKey }: Props) {
   const deleteRow = useStore((s) => s.deleteWeightRow);
   const setNotes = useStore((s) => s.setWeightNotes);
 
+  // Per-row previous weight, keyed by normalized tag. Empty tags are excluded
+  // (unidentified rows can't be paired per-row → their ADG shows "—").
   const prevMap = new Map(
-    previousRecord.rows.map((r) => [r.tagId.trim(), r.weightKg]),
+    previousRecord.rows
+      .filter((r) => normalizeTag(r.tagId) !== "")
+      .map((r) => [normalizeTag(r.tagId), r.weightKg]),
   );
 
   const summary = summarizeWeights(record.rows, previousRecord.rows, gapDays);
+  // Average GDP with a general-average fallback: when the month's sample was
+  // weighed WITHOUT matching caravanas, compare the two months' overall
+  // average weights over the real day gap instead of showing "—".
+  const avgAdg = adgWithFallback(record.rows, previousRecord.rows, gapDays);
 
   const parseNum = (v: string): number | null =>
     v === "" ? null : Number.isNaN(Number(v)) ? null : Number(v);
@@ -88,7 +98,7 @@ export function WeightsTable({ lotId, monthKey }: Props) {
                 </tr>
               ) : (
                 record.rows.map((row, idx) => {
-                  const prev = prevMap.get(row.tagId.trim()) ?? null;
+                  const prev = prevMap.get(normalizeTag(row.tagId)) ?? null;
                   const adg = calculateAdg(row.weightKg, prev, gapDays);
                   const gain =
                     row.weightKg !== null && prev !== null
@@ -182,7 +192,7 @@ export function WeightsTable({ lotId, monthKey }: Props) {
             </div>
           ) : (
             record.rows.map((row, idx) => {
-              const prev = prevMap.get(row.tagId.trim()) ?? null;
+              const prev = prevMap.get(normalizeTag(row.tagId)) ?? null;
               const adg = calculateAdg(row.weightKg, prev, gapDays);
               return (
                 <div key={idx} className="p-4 space-y-3">
@@ -278,7 +288,7 @@ export function WeightsTable({ lotId, monthKey }: Props) {
         />
         <StatBox
           label={t.weights.avgAdg}
-          value={formatNumber(summary.avgAdg, 2)}
+          value={formatNumber(avgAdg, 2)}
         />
       </div>
 

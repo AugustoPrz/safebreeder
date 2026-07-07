@@ -21,6 +21,7 @@ import {
 } from "@/components/forms/TreatmentsLog";
 import { useStore } from "@/lib/store";
 import {
+  adgWithFallback,
   averageHpg,
   classifyHpg,
   formatInt,
@@ -31,8 +32,10 @@ import {
   liveStockRows,
   lotProduction,
   monthsDiffDays,
-  previousWeighedMonthKey,
+  monthsInInterval,
+  normalizeTag,
   summarizeWeights,
+  weighedMonthKeys,
 } from "@/lib/calc";
 import { t } from "@/lib/i18n";
 import { generateStatsReport } from "@/lib/pdf";
@@ -225,50 +228,45 @@ export default function DashboardPage() {
   // For each month key with weights, compute GDP vs the lot's most recent
   // prior month (per-tag if tagIds match, fall back to avg-weight delta).
   const gdpEvolution = useMemo(() => {
-    const monthSet = new Set<string>();
+    const rowByMonth = new Map<string, Record<string, number | string>>();
+    const ensureRow = (key: string) => {
+      let r = rowByMonth.get(key);
+      if (!r) {
+        r = { label: formatMonthKey(key, t.months) };
+        rowByMonth.set(key, r);
+      }
+      return r;
+    };
     for (const lot of lots) {
-      for (const key of Object.keys(weightsByLot[lot.id] ?? {})) {
-        if (inYearMonth(key)) monthSet.add(key);
+      const lotMonths = weightsByLot[lot.id];
+      if (!lotMonths) continue;
+      const weighed = weighedMonthKeys(lotMonths);
+      if (weighed.length === 0) continue;
+      // Keep every weighed month's label on the axis (so the first month shows,
+      // even though it has no prior to diff against).
+      for (const k of weighed) if (inYearMonth(k)) ensureRow(k);
+      // Consecutive weighed months → daily GDP spread across the whole gap, so
+      // skipping months (May→Aug) still fills Jun, Jul, Aug with the same rate.
+      for (let i = 1; i < weighed.length; i++) {
+        const prevKey = weighed[i - 1];
+        const key = weighed[i];
+        const days = monthsDiffDays(prevKey, key);
+        const adg = adgWithFallback(
+          lotMonths[key].rows,
+          lotMonths[prevKey].rows,
+          days,
+        );
+        if (adg === null) continue;
+        const value = Number(adg.toFixed(2));
+        for (const m of monthsInInterval(prevKey, key)) {
+          if (inYearMonth(m)) ensureRow(m)[lot.id] = value;
+        }
       }
     }
-    const monthKeys = Array.from(monthSet).sort();
-    const rows = monthKeys.map((key) => {
-      const row: Record<string, number | string> = {
-        label: formatMonthKey(key, t.months),
-      };
-      for (const lot of lots) {
-        const lotMonths = weightsByLot[lot.id];
-        const current = lotMonths?.[key];
-        if (!current) continue;
-        const priorKeys = Object.keys(lotMonths)
-          .filter((k) => k < key)
-          .sort();
-        const prevKey = priorKeys[priorKeys.length - 1];
-        if (!prevKey) continue;
-        const prev = lotMonths[prevKey];
-        const days = monthsDiffDays(prevKey, key);
-        const perTag = summarizeWeights(current.rows, prev.rows, days);
-        let adg: number | null = perTag.avgAdg;
-        if (adg === null) {
-          const lastSum = summarizeWeights(current.rows);
-          const prevSum = summarizeWeights(prev.rows);
-          if (
-            lastSum.avgWeight !== null &&
-            prevSum.avgWeight !== null &&
-            days > 0
-          ) {
-            adg = (lastSum.avgWeight - prevSum.avgWeight) / days;
-          }
-        }
-        if (adg !== null) {
-          row[lot.id] = Number(adg.toFixed(2));
-        }
-      }
-      return row;
-    });
-    // Drop empty months (only the label, no lot data).
-    const filtered = rows.filter((r) => Object.keys(r).length > 1);
-    return { rows: filtered, lots };
+    const rows = Array.from(rowByMonth.keys())
+      .sort()
+      .map((k) => rowByMonth.get(k)!);
+    return { rows, lots };
   }, [lots, weightsByLot, yearFilter]);
 
   // Build caravana→origen map per lot from ALL stock rows. Origen is
@@ -279,7 +277,7 @@ export default function DashboardPage() {
     for (const lot of lots) {
       const m = new Map<string, string>();
       for (const a of stockByLot[lot.id]?.rows ?? []) {
-        const tag = a.caravana.trim();
+        const tag = normalizeTag(a.caravana);
         if (tag) m.set(tag, a.origen.trim() || t.dashboard.sinOrigen);
       }
       map.set(lot.id, m);
@@ -309,7 +307,7 @@ export default function DashboardPage() {
         for (const r of rec.rows) {
           if (typeof r.weightKg !== "number" || !Number.isFinite(r.weightKg))
             continue;
-          const origen = omap?.get(r.tagId.trim()) ?? t.dashboard.sinOrigen;
+          const origen = omap?.get(normalizeTag(r.tagId)) ?? t.dashboard.sinOrigen;
           const cur = acc.get(origen) ?? { sum: 0, count: 0 };
           cur.sum += r.weightKg;
           cur.count += 1;
@@ -334,59 +332,64 @@ export default function DashboardPage() {
   // Monthly GDP (kg/day) per origin — per-tag gain over the real day gap to
   // the most recent prior weighing.
   const gdpByOriginEvolution = useMemo(() => {
-    const monthSet = new Set<string>();
-    for (const lot of lots) {
-      for (const key of Object.keys(weightsByLot[lot.id] ?? {})) {
-        if (inYearMonth(key)) monthSet.add(key);
-      }
-    }
-    const monthKeys = Array.from(monthSet).sort();
     const seriesKeys = new Set<string>();
-    const rows = monthKeys.map((key) => {
-      const row: Record<string, number | string> = {
-        label: formatMonthKey(key, t.months),
-      };
-      const acc = new Map<string, { sum: number; count: number }>();
-      for (const lot of lots) {
-        const lotMonths = weightsByLot[lot.id];
-        const current = lotMonths?.[key];
-        if (!current) continue;
-        const prevKey = previousWeighedMonthKey(lotMonths, key);
-        if (!prevKey) continue;
+    const rowByMonth = new Map<string, Record<string, number | string>>();
+    const ensureRow = (key: string) => {
+      let r = rowByMonth.get(key);
+      if (!r) {
+        r = { label: formatMonthKey(key, t.months) };
+        rowByMonth.set(key, r);
+      }
+      return r;
+    };
+    for (const lot of lots) {
+      const lotMonths = weightsByLot[lot.id];
+      if (!lotMonths) continue;
+      const omap = origenByLot.get(lot.id);
+      const weighed = weighedMonthKeys(lotMonths);
+      // Per-tag GDP grouped by origin, spread across the interval between
+      // consecutive weighings (same daily rate in every month of the gap).
+      for (let i = 1; i < weighed.length; i++) {
+        const prevKey = weighed[i - 1];
+        const key = weighed[i];
         const days = monthsDiffDays(prevKey, key);
         if (days <= 0) continue;
         const prevMap = new Map(
           (lotMonths[prevKey].rows ?? []).map((r) => [
-            r.tagId.trim(),
+            normalizeTag(r.tagId),
             r.weightKg,
           ]),
         );
-        const omap = origenByLot.get(lot.id);
-        for (const r of current.rows) {
+        const acc = new Map<string, { sum: number; count: number }>();
+        for (const r of lotMonths[key].rows) {
           if (typeof r.weightKg !== "number") continue;
-          const prevW = prevMap.get(r.tagId.trim());
+          const prevW = prevMap.get(normalizeTag(r.tagId));
           if (typeof prevW !== "number") continue;
           const adg = (r.weightKg - prevW) / days;
-          const origen = omap?.get(r.tagId.trim()) ?? t.dashboard.sinOrigen;
+          const origen = omap?.get(normalizeTag(r.tagId)) ?? t.dashboard.sinOrigen;
           const cur = acc.get(origen) ?? { sum: 0, count: 0 };
           cur.sum += adg;
           cur.count += 1;
           acc.set(origen, cur);
         }
-      }
-      for (const [origen, { sum, count }] of acc) {
-        if (count > 0) {
-          row[`o::${origen}`] = Number((sum / count).toFixed(2));
+        for (const [origen, { sum, count }] of acc) {
+          if (count <= 0) continue;
+          const value = Number((sum / count).toFixed(2));
+          const skey = `o::${origen}`;
           seriesKeys.add(origen);
+          for (const m of monthsInInterval(prevKey, key)) {
+            if (inYearMonth(m)) ensureRow(m)[skey] = value;
+          }
         }
       }
-      return row;
-    });
-    const filtered = rows.filter((r) => Object.keys(r).length > 1);
+    }
+    const rows = Array.from(rowByMonth.keys())
+      .sort()
+      .map((k) => rowByMonth.get(k)!);
     const series = Array.from(seriesKeys)
       .sort()
       .map((o) => ({ key: `o::${o}`, name: o }));
-    return { rows: filtered, series };
+    return { rows, series };
   }, [lots, weightsByLot, origenByLot, yearFilter]);
 
   // Origins available to the by-origin charts (union of both series). Drives
@@ -416,20 +419,12 @@ export default function DashboardPage() {
         if (keys.length < 2) return null;
         const lastKey = keys[keys.length - 1];
         const prevKey = keys[keys.length - 2];
-        const last = summarizeWeights(months[lastKey].rows);
-        const prev = summarizeWeights(months[prevKey].rows);
         const daysBetween = monthsDiffDays(prevKey, lastKey);
-        const perTag = summarizeWeights(
+        const adg = adgWithFallback(
           months[lastKey].rows,
           months[prevKey].rows,
           daysBetween,
         );
-        const adg =
-          perTag.avgAdg !== null
-            ? perTag.avgAdg
-            : last.avgWeight !== null && prev.avgWeight !== null && daysBetween > 0
-              ? (last.avgWeight - prev.avgWeight) / daysBetween
-              : null;
         if (adg === null) return null;
         return { name: lot.name, value: Number(adg.toFixed(3)) };
       })
@@ -1561,44 +1556,28 @@ function buildGdpTableRows(
   const rows = lots.map((lot) => {
     const lotMonths = weightsByLot[lot.id] ?? {};
     const values: Record<string, number | null> = {};
-    const monthlyGdps: number[] = [];
-    for (const m of months) {
-      const current = lotMonths[m.key];
-      if (!current) {
-        values[m.key] = null;
-        continue;
-      }
-      const priorKeys = Object.keys(lotMonths)
-        .filter((k) => k < m.key)
-        .sort();
-      const prevKey = priorKeys[priorKeys.length - 1];
-      if (!prevKey) {
-        values[m.key] = null;
-        continue;
-      }
-      const prev = lotMonths[prevKey];
-      const days = monthsDiffDays(prevKey, m.key);
-      const perTag = summarizeWeights(current.rows, prev.rows, days);
-      let adg: number | null = perTag.avgAdg;
-      if (adg === null) {
-        const lastSum = summarizeWeights(current.rows);
-        const prevSum = summarizeWeights(prev.rows);
-        if (
-          lastSum.avgWeight !== null &&
-          prevSum.avgWeight !== null &&
-          days > 0
-        ) {
-          adg = (lastSum.avgWeight - prevSum.avgWeight) / days;
-        }
-      }
-      if (adg === null) {
-        values[m.key] = null;
-      } else {
-        const rounded = Number(adg.toFixed(3));
-        values[m.key] = rounded;
-        monthlyGdps.push(rounded);
+    for (const m of months) values[m.key] = null;
+    // Consecutive weighed months → daily GDP spread across the interval, so a
+    // May→Aug gap fills Jun, Jul, Aug in this year's columns with the same rate.
+    const weighed = weighedMonthKeys(lotMonths);
+    for (let i = 1; i < weighed.length; i++) {
+      const prevKey = weighed[i - 1];
+      const key = weighed[i];
+      const days = monthsDiffDays(prevKey, key);
+      const adg = adgWithFallback(
+        lotMonths[key].rows,
+        lotMonths[prevKey].rows,
+        days,
+      );
+      if (adg === null) continue;
+      const rounded = Number(adg.toFixed(3));
+      for (const mk of monthsInInterval(prevKey, key)) {
+        if (mk in values) values[mk] = rounded;
       }
     }
+    const monthlyGdps = months
+      .map((m) => values[m.key])
+      .filter((v): v is number => v !== null);
     const average =
       monthlyGdps.length === 0
         ? null

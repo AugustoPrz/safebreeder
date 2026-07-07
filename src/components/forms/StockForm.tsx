@@ -21,6 +21,7 @@ const emptyAnimal: StockAnimal = {
   origen: "",
   sexo: "",
   peso: "",
+  ingresoDate: "",
   tamano: "",
   raza: "",
   observaciones: "",
@@ -150,6 +151,7 @@ export function StockForm({ lotId }: Props) {
               <th className="px-2 py-2.5 text-left">{t.stock.origen}</th>
               <th className="px-2 py-2.5 text-left">{t.stock.sexo}</th>
               <th className="px-2 py-2.5 text-left">{t.stock.peso}</th>
+              <th className="px-2 py-2.5 text-left">{t.stock.ingreso}</th>
               <th className="px-2 py-2.5 text-left">{t.stock.tamano}</th>
               <th className="px-2 py-2.5 text-left">{t.stock.raza}</th>
               <th className="px-2 py-2.5 text-left">{t.stock.observaciones}</th>
@@ -225,6 +227,16 @@ export function StockForm({ lotId }: Props) {
                     value={row.peso}
                     onChange={(e) => updateRow(idx, { peso: e.target.value })}
                     placeholder="kg"
+                  />
+                </td>
+                <td className="px-2 py-1.5">
+                  <Input
+                    className="h-9"
+                    type="date"
+                    value={row.ingresoDate ?? ""}
+                    onChange={(e) =>
+                      updateRow(idx, { ingresoDate: e.target.value })
+                    }
                   />
                 </td>
                 <td className="px-2 py-1.5">
@@ -362,6 +374,15 @@ export function StockForm({ lotId }: Props) {
                   value={row.peso}
                   onChange={(e) => updateRow(idx, { peso: e.target.value })}
                   placeholder="kg"
+                />
+              </Field>
+              <Field label={t.stock.ingreso}>
+                <Input
+                  type="date"
+                  value={row.ingresoDate ?? ""}
+                  onChange={(e) =>
+                    updateRow(idx, { ingresoDate: e.target.value })
+                  }
                 />
               </Field>
               <Field label={t.stock.tamano}>

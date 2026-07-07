@@ -103,6 +103,7 @@ export function generateLotReport(
           t.treatment.diarrhea,
           t.treatment.diarrheaLevels[treatment.diarrhea],
         ],
+        [t.treatment.mineralsTitle, treatment.minerals || "—"],
         [t.common.observations, treatment.notes || "—"],
       ],
       margin: { left: margin, right: margin },

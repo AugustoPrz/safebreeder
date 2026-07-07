@@ -50,6 +50,7 @@ const emptyTreatment: Treatment = {
   ectoRoute: "",
   diarrhea: "none",
   notes: "",
+  minerals: "",
 };
 
 const ectoOptions: {
@@ -370,6 +371,25 @@ export function TreatmentForm({ lotId, monthKey }: Props) {
               + {t.vaccines.addAnother}
             </Button>
           </div>
+        </CardBody>
+      </Card>
+
+      {/* ── Minerales card (texto libre) ────────────────────────────────── */}
+      <Card>
+        <div className="px-5 pt-4 pb-3 border-b border-border">
+          <h2 className="font-semibold">{t.treatment.mineralsTitle}</h2>
+          <p className="text-xs text-text-muted">
+            {t.treatment.mineralsSubtitle}
+          </p>
+        </div>
+        <CardBody>
+          <Field label={t.treatment.mineralsTitle}>
+            <Textarea
+              value={treatment.minerals ?? ""}
+              onChange={(e) => patch({ minerals: e.target.value })}
+              placeholder={t.treatment.mineralsPlaceholder}
+            />
+          </Field>
         </CardBody>
       </Card>
     </div>

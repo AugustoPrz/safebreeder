@@ -67,6 +67,8 @@ export interface Treatment {
   ectoRoute?: string;
   diarrhea: DiarrheaLevel;
   notes: string;
+  /** Free-text: mineral applications (e.g. cobre). */
+  minerals?: string;
 }
 
 export interface WeightRow {
@@ -115,6 +117,9 @@ export interface StockAnimal {
   origen: string;
   sexo: StockSex | "";
   peso: string;
+  /** ISO date (YYYY-MM-DD) the animal entered. Its `peso` seeds the Pesadas
+   *  entry of that month and becomes the baseline for the first GDP. */
+  ingresoDate?: string;
   tamano: StockSize | "";
   raza: StockBreed | "";
   observaciones: string;

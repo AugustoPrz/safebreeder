@@ -156,6 +156,9 @@ export const t = {
       mild: "Leve",
       severe: "Severa",
     },
+    mineralsTitle: "Minerales",
+    mineralsSubtitle: "Aplicación de minerales (cobre, etc.)",
+    mineralsPlaceholder: "Ej: Cobre inyectable 1ml/animal el 12/05",
   },
 
   vaccines: {
@@ -189,6 +192,7 @@ export const t = {
     origen: "Origen",
     sexo: "Sexo",
     peso: "Peso inicial (kg)",
+    ingreso: "Fecha de ingreso",
     tamano: "Tamaño",
     raza: "Raza",
     observaciones: "Observaciones",
