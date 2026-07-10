@@ -54,13 +54,28 @@ export function StockForm({ lotId }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lotId]);
 
+  // Single lot-level entry date: animals generally enter the same day, so one
+  // control writes `ingresoDate` to every row (fast to load in the chute). The
+  // displayed value is the first row that has one.
+  const sharedIngreso =
+    displayRows.find((r) => r.ingresoDate?.trim())?.ingresoDate ?? "";
+
+  const setIngresoAll = (iso: string) => {
+    setStock(lotId, {
+      rows: displayRows.map((r) => ({ ...r, ingresoDate: iso })),
+    });
+  };
+
   const updateRow = (idx: number, patch: Partial<StockAnimal>) => {
     const next = displayRows.map((r, i) => (i === idx ? { ...r, ...patch } : r));
     setStock(lotId, { rows: next });
   };
 
   const addRow = () => {
-    setStock(lotId, { rows: [...displayRows, { ...emptyAnimal }] });
+    // New animals inherit the lot's entry date so they seed the same month.
+    setStock(lotId, {
+      rows: [...displayRows, { ...emptyAnimal, ingresoDate: sharedIngreso }],
+    });
   };
 
   const deleteRow = (idx: number) => {
@@ -112,11 +127,20 @@ export function StockForm({ lotId }: Props) {
 
   return (
     <Card>
-      <div className="px-5 pt-4 pb-3 border-b border-border flex items-start justify-between gap-3">
+      <div className="px-5 pt-4 pb-3 border-b border-border flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h2 className="font-semibold">{t.stock.title}</h2>
           <p className="text-xs text-text-muted">{t.stock.subtitle}</p>
         </div>
+        <div className="flex items-end gap-3">
+          <Field label={t.stock.ingreso}>
+            <Input
+              className="h-9"
+              type="date"
+              value={sharedIngreso}
+              onChange={(e) => setIngresoAll(e.target.value)}
+            />
+          </Field>
         <Button
           variant="secondary"
           size="sm"
@@ -139,6 +163,7 @@ export function StockForm({ lotId }: Props) {
           </svg>
           {t.stock.download}
         </Button>
+        </div>
       </div>
 
       {/* Desktop / wide screens */}
@@ -151,7 +176,6 @@ export function StockForm({ lotId }: Props) {
               <th className="px-2 py-2.5 text-left">{t.stock.origen}</th>
               <th className="px-2 py-2.5 text-left">{t.stock.sexo}</th>
               <th className="px-2 py-2.5 text-left">{t.stock.peso}</th>
-              <th className="px-2 py-2.5 text-left">{t.stock.ingreso}</th>
               <th className="px-2 py-2.5 text-left">{t.stock.tamano}</th>
               <th className="px-2 py-2.5 text-left">{t.stock.raza}</th>
               <th className="px-2 py-2.5 text-left">{t.stock.observaciones}</th>
@@ -227,16 +251,6 @@ export function StockForm({ lotId }: Props) {
                     value={row.peso}
                     onChange={(e) => updateRow(idx, { peso: e.target.value })}
                     placeholder="kg"
-                  />
-                </td>
-                <td className="px-2 py-1.5">
-                  <Input
-                    className="h-9"
-                    type="date"
-                    value={row.ingresoDate ?? ""}
-                    onChange={(e) =>
-                      updateRow(idx, { ingresoDate: e.target.value })
-                    }
                   />
                 </td>
                 <td className="px-2 py-1.5">
@@ -374,15 +388,6 @@ export function StockForm({ lotId }: Props) {
                   value={row.peso}
                   onChange={(e) => updateRow(idx, { peso: e.target.value })}
                   placeholder="kg"
-                />
-              </Field>
-              <Field label={t.stock.ingreso}>
-                <Input
-                  type="date"
-                  value={row.ingresoDate ?? ""}
-                  onChange={(e) =>
-                    updateRow(idx, { ingresoDate: e.target.value })
-                  }
                 />
               </Field>
               <Field label={t.stock.tamano}>

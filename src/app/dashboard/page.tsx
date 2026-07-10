@@ -1043,6 +1043,7 @@ export default function DashboardPage() {
               <MonthlyEvolutionLine
                 rows={weightByOriginEvolution.rows}
                 series={filterSeries(weightByOriginEvolution.series)}
+                zoomY
               />
             )}
           </ChartCard>
@@ -1054,6 +1055,7 @@ export default function DashboardPage() {
               <MonthlyEvolutionLine
                 rows={gdpByOriginEvolution.rows}
                 series={filterSeries(gdpByOriginEvolution.series)}
+                zoomY
               />
             )}
           </ChartCard>

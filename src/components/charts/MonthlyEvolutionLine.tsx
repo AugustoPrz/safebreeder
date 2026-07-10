@@ -32,9 +32,22 @@ interface Props {
   rows: Record<string, number | string>[];
   /** One line per series; `key` matches the data key in each row. */
   series: { key: string; name: string }[];
+  /** Fit the Y axis to the data range (with padding) instead of anchoring at
+   *  0 — spreads apart lines whose values sit close together (e.g. weights). */
+  zoomY?: boolean;
 }
 
-export function MonthlyEvolutionLine({ rows, series }: Props) {
+// Padded data-fitted Y domain: tight to the values so close lines separate,
+// with a little breathing room so the top/bottom lines aren't glued to edges.
+const ZOOM_DOMAIN: [
+  (dataMin: number) => number,
+  (dataMax: number) => number,
+] = [
+  (min) => Math.floor(min - Math.max(2, Math.abs(min) * 0.03)),
+  (max) => Math.ceil(max + Math.max(2, Math.abs(max) * 0.03)),
+];
+
+export function MonthlyEvolutionLine({ rows, series, zoomY = false }: Props) {
   const multiSeries = series.length > 1;
   return (
     // Legend rendered as plain HTML OUTSIDE the SVG — Recharts' <Legend>
@@ -50,7 +63,11 @@ export function MonthlyEvolutionLine({ rows, series }: Props) {
               tick={{ fontSize: 11, fill: "#6b6f5d" }}
               stroke="#e3e6dc"
             />
-            <YAxis tick={{ fontSize: 11, fill: "#6b6f5d" }} stroke="#e3e6dc" />
+            <YAxis
+              tick={{ fontSize: 11, fill: "#6b6f5d" }}
+              stroke="#e3e6dc"
+              domain={zoomY ? ZOOM_DOMAIN : undefined}
+            />
             {series.map((s, i) => {
               const { stroke, strokeDasharray } = strokeStyle(i);
               return (
